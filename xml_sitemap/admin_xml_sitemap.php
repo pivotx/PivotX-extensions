@@ -1,11 +1,11 @@
 <?php
 // - Extension: XML Sitemap
-// - Version: 1.0.3
+// - Version: 1.0.4
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension to provide a XML sitemap (for search engines).
-// - Date: 2010-01-20
+// - Date: 2010-05-12
 // - Identifier: xml_sitemap
 
 global $xml_sitemap_config;
@@ -13,7 +13,8 @@ global $xml_sitemap_config;
 $xml_sitemap_config = array(
     'xml_sitemap_include_weblogs' => 0,
     'xml_sitemap_include_entries' => 1,
-    'xml_sitemap_include_pages' => 1
+    'xml_sitemap_include_pages' => 1,
+    'xml_sitemap_content_type' => 'text/xml',
 );
 
 
@@ -206,7 +207,7 @@ EOM;
     }
 
     // Output the Sitemap file as XML
-    header("content-type: text/xml; charset=utf-8"); 
+    header("content-type: $xml_sitemap_content_type; charset=utf-8"); 
     $output = str_replace('%frontpages%', implode("\n",$frontpages), $output); 
     echo str_replace('%items%', implode("\n",$items), $output); 
     die();

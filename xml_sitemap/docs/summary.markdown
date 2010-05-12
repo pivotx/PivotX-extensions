@@ -22,4 +22,11 @@ If you prefer the cleaner URL `example.org/sitemap.xml` add
 
 to your `.htaccess` file.
 
+Some search engines require:
+
+    User-agent: *
+    Sitemap: http://www.example.org/sitemap.xml
+
+
 [1]: http://sitemaps.org
+

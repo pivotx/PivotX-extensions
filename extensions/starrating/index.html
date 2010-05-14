@@ -1,0 +1,37 @@
+<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Transitional//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd'>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head> 
+ <title>jQuery Star Rating Plugin</title>
+ <script src="jquery-latest.js" type="text/javascript" language="javascript"></script>
+ <script src="jquery.rating.js" type="text/javascript" language="javascript"></script>
+ <link type="text/css" rel="stylesheet" href="jquery.rating.css"/>
+</head>
+<body>
+
+
+<script>
+jQuery(function(){
+    jQuery('input.star').rating({
+        callback: function(value){ 
+            jQuery.get("starrating_submit.php?" + $(this).attr('name') + "=" + this.value);
+        }
+    });
+    jQuery('.starsubmit').hide();
+});
+</script>
+
+
+   <form class="starrating" action="starrating_submit.php" method="get">
+    <input class="star" type="radio" name="entry-225" value="1"/>
+    <input class="star" type="radio" name="entry-225" value="2" checked="checked"/>
+    <input class="star" type="radio" name="entry-225" value="3"/>
+    <input class="star" type="radio" name="entry-225" value="4"/>
+    <input class="star" type="radio" name="entry-225" value="5"/>    
+
+
+   <pre><code> $('.auto-submit-star').rating({ callback: function(value, link){ alert(value); } });</code></pre>
+   <input type="submit" class='starsubmit' value="Submit scores!" />
+ 
+</form>
+</body>
+</html>

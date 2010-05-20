@@ -1,11 +1,11 @@
 <?php
 // - Extension: Sociable Bookmarking
-// - Version: 0.2
-// - Author: PivotX Team / Logfather
+// - Version: 0.3
+// - Author: PivotX Team / Logfather / Michael Heca
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A snippet extension to show links to various social bookmark sites.
-// - Date: 2010-05-14
+// - Date: 2010-05-20
 // - Identifier: sociable
 
 
@@ -92,6 +92,11 @@ $sociable_sites = array(
       'url' => 'http://extension.fleck.com/?v=b.0.804&amp;url=%link%',
    ),
 
+   'Linkuj.cz' => array(
+      'favicon' => 'linkuj-cz.gif',
+      'url' => 'http://linkuj.cz/?id=linkuj&url=%link%&amp;title=%title%',
+   ),
+
    'Live' => array(
       'favicon' => 'live.png',
       'url' => 'https://favorites.live.com/quickadd.aspx?marklet=1&amp;url=%link%&amp;title=%title%',
@@ -139,6 +144,11 @@ $sociable_sites = array(
       'url' => 'http://twitter.com/?status=Must+check:+%title%+%link%',
    ),
 
+   'vybrali.sme.sk' => array(
+      'favicon' => 'vybrali-sme-sk.gif',
+      'url' => 'http://vybrali.sme.sk/submit.php?url=%link%',
+   )
+
 );
 
 
@@ -170,16 +180,16 @@ $PIVOTX['template']->register_function('sociable', 'smarty_sociable');
 function smarty_sociable($params, &$smarty) {
     global $sociable_config, $sociable_sites, $PIVOTX;
 
-   $sociable_items = explode(',', $PIVOTX['config']->get('sociable_items'));
+    $sociable_items = explode(',', $PIVOTX['config']->get('sociable_items'));
     $tagline = getDefault($PIVOTX['config']->get('sociable_tagline'), $sociable_config['sociable_tagline']);
     $blank = getDefault($PIVOTX['config']->get('sociable_blank'), $sociable_config['sociable_blank']);
-   $imagepath = $PIVOTX['paths']['extensions_url'] . 'sociable/images/';
+    $imagepath = $PIVOTX['paths']['extensions_url'] . 'sociable/images/';
     $csspath = $PIVOTX['paths']['extensions_url'] . 'sociable/sociable.css';
 
-   // if no sites are active, display nothing
-   if (empty($sociable_items)) {
-      return "";
-   }
+    // if no sites are active, display nothing
+    if (empty($sociable_items)) {
+        return "";
+    }
 
     // Add the hook to display the CSS..
     $PIVOTX['extensions']->addHook(
@@ -188,44 +198,43 @@ function smarty_sociable($params, &$smarty) {
         "\t<link href=\"$csspath\" rel=\"stylesheet\" type=\"text/css\" />\n"
     );
 
-   // Get the entry's data
+    // Get the entry's data
     $vars = $PIVOTX['template']->get_template_vars();
-    $entry = $vars['entry'];
+    $entry = getDefault($vars['entry'], $vars['page']);
 
-   $permalink = urlencode($PIVOTX['paths']['host'].$entry['link']);
-   $title = urlencode($entry['title']);
+    $permalink = urlencode($PIVOTX['paths']['host'].$entry['link']);
+    $title = urlencode($entry['title']);
     $blank = ($blank ? "target=\"_blank\" " : "");
 
-   $html = "\n<div class=\"sociable\">\n<span class=\"sociable_tagline\">\n";
-   $html .= stripslashes($PIVOTX['config']->get('sociable_tagline'));
-   $html .= "\n\t<span>" . __("These icons link to social bookmarking sites where readers can share and discover new web pages.", 'sociable') . "</span>";
-   $html .= "\n</span>\n<ul>\n";
+    $html = "\n<div class=\"sociable\">\n<span class=\"sociable_tagline\">\n";
+    $html .= stripslashes($PIVOTX['config']->get('sociable_tagline'));
+    $html .= "\n\t<span>" . __("These icons link to social bookmarking sites where readers can share and discover new web pages.", 'sociable') . "</span>";
+    $html .= "\n</span>\n<ul>\n";
 
-   foreach($sociable_items as $sitename) {
+    foreach($sociable_items as $sitename) {
 
-      // if they specify an unknown or inactive site, ignore it
-      if (!isset($sociable_sites[$sitename])) {
-         continue;
-      }
+        // if they specify an unknown or inactive site, ignore it
+        if (!isset($sociable_sites[$sitename])) {
+           continue;
+        }
 
-      $site = $sociable_sites[$sitename];
-      $html .= "\t<li>";
+        $site = $sociable_sites[$sitename];
+        $html .= "\t<li>";
 
-      $url = $site['url'];
-      $url = str_replace('%link%', $permalink, $url);
-      $url = str_replace('%title%', $title, $url);
+        $url = $site['url'];
+        $url = str_replace('%link%', $permalink, $url);
+        $url = str_replace('%title%', $title, $url);
 
+        $html .= sprintf("<a rel=\"nofollow\" %shref=\"%s\" title=\"%s\">",
+                          $blank, $url, $sitename);
+        $html .= sprintf("<img src=\"%s%s\" title=\"%s\" alt=\"%s\" class=\"sociable-hovers\" />",
+                          $imagepath, $site['favicon'], $sitename, $sitename);
+        $html .= "</a></li>\n";
+    }
 
-      $html .= sprintf("<a rel=\"nofollow\" %shref=\"%s\" title=\"%s\">",
-                        $blank, $url, $sitename);
-      $html .= sprintf("<img src=\"%s%s\" title=\"%s\" alt=\"%s\" class=\"sociable-hovers\" />",
-                        $imagepath, $site['favicon'], $sitename, $sitename);
-      $html .= "</a></li>\n";
-   }
+    $html .= "</ul>\n</div>\n";
 
-   $html .= "</ul>\n</div>\n";
-
-   return $html;
+    return $html;
 
 }
 

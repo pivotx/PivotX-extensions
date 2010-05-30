@@ -7,12 +7,12 @@
  * Two Kings Form Class and all its parts are licensed under the GPL version 2.
  * see: http://www.twokings.eu/tools/license for more information.
  *
- * @version 0.19
+ * @version 0.21
  * @author Lodewijk evers, lodewijk@twokings.nl
  * @copyright GPL, version 2
  * @link http://twokings.eu/tools/
  *
- * Date: 2010-05-03
+ * Date: 2010-05-28
  *
  */
 
@@ -136,6 +136,7 @@ class FormBuilder
 					//Mail
 					$transport = Swift_MailTransport::newInstance();
 			}
+			// hide exposed critical information
 			$mail_config['smtp']['password'] = $form['mail_config']['smtp']['password'] = '***';
 
 			//Create the Mailer using your created Transport
@@ -147,56 +148,54 @@ class FormBuilder
 			} else {
 				$subject = $mail_config['subject'];
 			}
-			$message = Swift_Message::newInstance($subject)
-				->setFrom(array($mail_config['sender']['email'] => $mail_config['sender']['name']));
-			debug('set email sender from form config '. $$mail_config['sender']['email'] .' - '. $mail_config['sender']['name']);
 
-			// add recipient mail address from form name and email values
+			// add mail addresses from form name and email values
 			// or use the default configured settings
-			if($mail_config['recipient']['formfield_email'] && $mail_config['recipient']['formfield_name']) {
-				foreach($this->form->fields as $value) {
-					if($value['name']==$mail_config['recipient']['formfield_email'] && isset($value['post_value'])) {
-						$recipient_email = $value['post_value'];
-					}
-					if($value['name']==$mail_config['recipient']['formfield_name'] && isset($value['post_value'])) {
-						$recipient_name = $value['post_value'];
+			foreach(array('recipient', 'sender', 'cc', 'bcc') as $emailtype) {
+				if(array_key_exists($emailtype, $mail_config) && is_array($mail_config[$emailtype])) {
+					// check explicitly if mail and name fields are false and if the formfield fields exist
+					if(($mail_config[$emailtype]['email']===false && $mail_config[$emailtype]['name']===false)
+					&&($mail_config[$emailtype]['formfield_email'] && $mail_config[$emailtype]['formfield_name'])) {
+						foreach($this->form->fields as $value) {
+							if($value['name']==$mail_config[$emailtype]['formfield_email'] && isset($value['post_value'])) {
+								$_mail[$emailtype]['email'] = $value['post_value'];
+							}
+							if($value['name']==$mail_config[$emailtype]['formfield_name'] && isset($value['post_value'])) {
+								$_mail[$emailtype]['name'] = $value['post_value'];
+							}
+						}
+						if($_mail[$emailtype]['email'] && $_mail[$emailtype]['name']) {
+							debug('set email '.$emailtype.' from form values '. $_mail[$emailtype]['email'] .' - '. $_mail[$emailtype]['name']);
+						}
+					} else {
+      					$_mail[$emailtype]['email'] = $mail_config[$emailtype]['email'];
+						$_mail[$emailtype]['name'] = $mail_config[$emailtype]['name'];
+						debug('set email '.$emailtype.' from form config '. $_mail[$emailtype]['email'] .' - '. $_mail[$emailtype]['namee']);
 					}
 				}
-				if($recipient_email && $recipient_name) {
-					$message->setTo(array($recipient_email => $recipient_name));
-					debug('set email recipient from form values '. $recipient_email .' - '. $recipient_name);
-				}
+			}
+
+			// we have subject sender and recipient, lets start
+			if($subject && $_mail['sender']['email'] && $_mail['recipient']['email']) {
+				$message = Swift_Message::newInstance($subject)
+					->setFrom(array($_mail['sender']['email'] => $_mail['sender']['name']))
+					->setTo(array($_mail['recipient']['email'] => $_mail['recipient']['name']));
 			} else {
-				$message->setTo(array($mail_config['recipient']['email'] => $mail_config['recipient']['name']));
-				debug('set email recipient from form config '. $$mail_config['recipient']['email'] .' - '. $mail_config['recipient']['name']);
+				debug('trying to send email without the necessary data - please provide at least a subject, sender and recipient, and dont forget the message too');
 			}
 
-			// bcc kan ook voor monitoring
-			if(array_key_exists('bcc', $mail_config) && is_array($mail_config['bcc'])) {
-				$message->addBcc($mail_config['bcc']['email'], $mail_config['bcc']['name']);
-				debug('added bcc from form config '. $$mail_config['bcc']['email'] .' - '. $mail_config['bcc']['name']);
+			// carbon copy adresses
+			if(array_key_exists('cc', $_mail) && is_array($_mail['cc'])) {
+			    $_mail['cc']['name'] = (isset($_mail['cc']['name']))?$_mail['cc']['name']:$_mail['recipient']['name'];
+				$message->setCc(array($_mail['cc']['email'] => $_mail['cc']['name']));
 			}
 
-			// cc naar de inschijvende persoon
-			if(array_key_exists('cc', $mail_config) && is_array($mail_config['cc'])) {
-				if(!$mail_config['cc']['email'] && $mail_config['cc']['formfield_email']) {
-					foreach($this->form->fields as $value) {
-						if($value['name']==$mail_config['cc']['formfield_email'] && isset($value['post_value'])) {
-							$cc_email = $value['post_value'];
-						}
-						if($value['name']==$mail_config['cc']['formfield_name'] && isset($value['post_value'])) {
-							$cc_name = $value['post_value'];
-						}
-					}
-					if($cc_email && $cc_name) {
-						$message->addCc($cc_email, $cc_name);
-						debug('added cc from form values '. $cc_email .' - '. $cc_name);
-					}
-				} else {
-					$message->addCc($mail_config['cc']['email'], $mail_config['cc']['name']);
-					debug('added cc from form config '. $$mail_config['cc']['email'] .' - '. $mail_config['cc']['name']);
-				}
+			// bcc is also possible for stealthy purposes
+			if(array_key_exists('bcc', $_mail) && is_array($_mail['bcc'])) {
+			    $_mail['bcc']['name'] = (isset($_mail['bcc']['name']))?$_mail['bcc']['name']:$_mail['recipient']['name'];
+				$message->setBcc(array($_mail['bcc']['email'] => $_mail['bcc']['name']));
 			}
+
 
 			// mail sent and form complete
 			$mail_template = $this->find_templates($this->config['templates']['mailreply']);

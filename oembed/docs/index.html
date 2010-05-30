@@ -1,0 +1,59 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="stylesheet" type="text/css" href="../../../../pivotx/templates_internal/assets/pivotx_docs.css"/>
+<title>oEmbed documentation</title>
+</head>
+<body>
+<div id="header">
+  <h1>oEmbed</h1>
+</div>
+<div id="content">
+  <div id="menu">
+    <ul>
+      <li>Home</li>
+      </ul>
+  </div>
+  <div id="main">
+    <h2>What is it</h2>
+    <p>A snippet to add oEmbed (<a href="http://www.oembed.com/" target="_blank">http://www.oembed.com/</a>) to your site.</p>
+    <h2>Usage</h2>
+    <p>The bookmarklet will automatically try to recognize url's from sites that are oEmbed capable, and return the embed code.</p>
+    <p>After enabling the extension you can add tags like <code class="tag">[[embed url="http://www.youtube.com/watch?v=EK2tWVj6lXw"]]</code> to your entries, pages and templates. The external media will magically be included in your entries.</p>
+    <p>The bookmarklet will automatically try to recognize url's from sites that are oEmbed capable, and return the embed code.</p>
+    <p>PivotX with a MySQL database is recommended for faster cacheing of the media code, but it is not required.</p>
+    
+    <h2>Installation</h2>
+    <p>Extract the archive and move the directory oembed to your PivotX extentions directory. After that, log in to PivotX and enable the snippet in the extensions configuration screen.</p>
+
+	<h2>FAQ</h2>
+	<h3>Why is the size of my Youtube video is not what I expect?</h3>
+	<p>If you set a width and a height it should work, if you don't set them, or only one of them, the default value will be used for the other one, and that may influence the size because youtube scales the output to fit inside the dimensions.</p>
+
+    <div class="meta">
+      <h3>Version Information</h3>
+      <ul>
+        <li>Version: 0.8</li>
+        <li>Date: 2010-05-03</li>
+        <li>Requirements: PivotX 2.1.0 or higher</li>
+        <li>Recommended: mysql, PHP 5.2.0 or higher</li>
+        <li>Includes: <a href="http://code.google.com/p/jquery-oembed/">jquery-oembed</a></li>
+      </ul>
+      <ul>
+        <li>Author: Two Kings // Lodewijk Evers</li>
+        <li>E-mail: <a href="mailto:lodewijk@twokings.nl">lodewijk@twokings.nl</a></li>
+        <li>Support: <a href="http://forum.pivotx.net/viewtopic.php?f=10&t=1377">http://forum.pivotx.net/viewtopic.php?f=10&t=1377</a></li>
+        <li>Download: <a href="http://extensions.pivotx.net/entry/5/oembed">http://extensions.pivotx.net/entry/5/oembed</a></li>
+      </ul>
+      <h3>Maintainers</h3>
+      <ul>
+        <li>Two Kings: <a href="mailto:info@twokings.nl">info@twokings.nl</a></li>
+        <li>Lodewijk Evers: <a href="mailto:lodewijk@twokings.nl">info@twokings.nl</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+</body>
+</html>

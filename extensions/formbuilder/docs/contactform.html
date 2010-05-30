@@ -1,0 +1,89 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="stylesheet" type="text/css" href="../../../../pivotx/templates_internal/assets/pivotx_docs.css"/>
+<title>Example contactform quicktag - Formbuilder for PivotX documentation</title>
+</head>
+<body>
+<div id="header">
+  <h1><a href="index.html">Formbuilder for PivotX</a></h1>
+</div>
+<div id="content">
+<div id="menu">
+  <ul>
+    <li><a href="index.html">Home</a></li>
+    <li><a href="install.html">Installation</a></li>
+    <li><a href="usage.html">Usage</a></li>
+    <li><a href="examples.html">Examples</a></li>
+    <li><a href="options.html">Options</a>
+      <ul>
+        <li>contactform</li>
+        <li><a href="orderform.html">orderform</a></li>
+        <li><a href="templates.html">templates</a></li>
+      </ul>
+    </li>
+    <li><a href="faq.html">FAQ</a></li>
+    <li><a href="changelog.html">Changelog</a></li>
+  </ul>
+</div>
+<div id="main">
+  <h2><a href="options.html">Options</a> - Contactform quicktag</h2>
+  <p>The <code class="tag">[[contactform]]</code> tag makes a simple contactform that looks like the following:</p>
+  <div><img src="simplecontactform.png" width="380" height="272" alt="simple contactform" /></div>
+  <p>This form will only be shown in the full page view of an entry or page - even if you put it in the introduction. If a user submits
+    the form it will be sent to the e-mail address of the author of the page and the user will see a confirmation on screen.</p>
+  <p>The default form can also be created with the following tag:</p>
+  <pre>[[ contactform
+fields="text:Naam,required;text:E-mail address,email|required;textarea:Message,required"
+submit="Send message" ]]</pre>
+  <p>If you want the form to be visible in a weblog listing you may use the showinweblog parameter.</p>
+  <h3>Extra options</h3>
+  <p>Both those tags have optional values where you can override the defaults.</p>
+  <dl>
+    <dt>to="email@example.com"</dt>
+    <dd>An email address where you want the mail to be sent, other than the author of the entry or page.</dd>
+    <dt>from="email@example.com"</dt>
+    <dd>An email address where you want the mailoriginate from, other than the author of the entry or page.</dd>
+    <dt>subject="A nice subject"</dt>
+    <dd>Overrides the default subject which would be "Contactform" or "Orderform".</dd>
+    <dt>confirmation="contactform.confirm.tpl.php"</dt>
+    <dd>The name of a template file in the <code>./pivotx/extensions/formbuilder/templates/</code> directory or a HTML text that you
+      want the user to see when the form is submitted successfully. You can use the <em>name</em> attributes of the input fields surrounded
+      by % signs in the template as placeholders for the values the visitor enters. eg. the fieldcode <code>text:Name</code> is represented
+      by <em>%text_name%</em> in your templates. See the <a href="templates.html">template options</a> for more info.</dd>
+    <dt>mailtemplate="contactform.mail.tpl.php"</dt>
+    <dd>Similar to the confirmation message, but with the text or template that will be put into the mail. See the <a href="templates.html">template
+        options</a> for more info.</dd>
+    <dt>submit="Send mail"</dt>
+    <dd>The text on the submit button</dd>
+    <dt>fields</dt>
+    <dd>If you want to customize the fields in the form you can use the fields parameter. The configuration is done via a long structured
+      string that defines the fields in the form. The each field is defined by the following string <code>type:Label,validation|validation;</code>.
+      Valid types are <code>text</code>, <code>textarea</code>, <code>checkbox</code> and <code>markup</code>. The label is the name
+      of the field. The validation may be the following validation types: <code>required</code> for required fields, <code>email</code> for
+      email fields, <code>zipcodenl</code> for postal codes / zipcodes, <code>phonenumber</code> for phone numbers and <code>ifany</code> for
+      optional fields. You may combine the validation types separated by a <code>|</code>. The type <code>markup</code> is not available
+      in the php templates and has no validation.</dd>
+    <dt>showinweblog=1</dt>
+    <dd>With this parameter forms will be shown in weblogs listings. Use only when you are sure you know what you're doing. You must set the recipient for the form when using this parameter.</dd>
+  </dl>
+  <h3>Example</h3>
+  <p>A typical form might be initialized with the following tag:</p>
+  <pre>
+[[ contactform
+to="email@example.com"
+from="email@example.com"
+subject="Contactformulier"
+confirmation="You message has been sent"
+mailtemplate="contactform.mail.tpl.php"
+fields=" text:Naam,required; text:E-mail,email|required; markup:De adresgegevens zijn handig; text:Adres; text:Postcode,postcode; text:Plaats; text:Telefoon,phonenumber; textarea:Reactie,required; checkbox:Ja ik wil me aanmelden voor de nieuwsbrief"
+submit="Versturen" ]]
+</pre>
+  <p>Which will result in a form that looks like this:</p>
+  <div> <img src="customcontactform.png" width="414" height="442" alt="custom contact form" /> </div>
+</div>
+</div>
+</body>
+</html>

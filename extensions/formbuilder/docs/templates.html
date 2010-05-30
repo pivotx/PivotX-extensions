@@ -1,0 +1,59 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="stylesheet" type="text/css" href="../../../../pivotx/templates_internal/assets/pivotx_docs.css"/>
+<title>Template options - Formbuilder for PivotX documentation</title>
+</head>
+<body>
+<div id="header">
+  <h1><a href="index.html">Formbuilder for PivotX</a></h1>
+</div>
+<div id="content">
+<div id="menu">
+  <ul>
+    <li><a href="index.html">Home</a></li>
+    <li><a href="install.html">Installation</a></li>
+    <li><a href="usage.html">Usage</a></li>
+    <li><a href="examples.html">Examples</a></li>
+    <li><a href="options.html">Options</a>
+      <ul>
+        <li><a href="contactform.html">contactform</a></li>
+        <li><a href="orderform.html">orderform</a></li>
+        <li>templates</li>
+      </ul>
+    </li>
+    <li><a href="changelog.html">Changelog</a></li>
+  </ul>
+</div>
+<div id="main">
+  <h2><a href="options.html">Options</a> - Template options</h2>
+  <p>Each form can have two extra templates for the confirmation. These templates may contain replacement keys for the submitted values.</p>
+  <h3>Location of the templates</h3>
+  <p>The default installation has a few templates in the <code class="path">./pivotx/extensions/formclass/templates/</code> directory. These templates are the default templates for the <code class="tag">[[ contactform ]]</code> and the <code class="tag">[[ orderform ]]</code> tags.</p>
+  <p>You may place your own email and confirmation templates in any pivotx theme directory. This will help if you need to override the default email and confirmation templates and want to keep them apart from the extension.</p>
+  <p>The order in which te templates are selected is:</p>
+  <ul>
+    <li>Your templates directory: if you select <code class="path">skinny/form.confirm.html</code> it will search in <code class="path">./pivotx/templates/skinny/form.confirm.html</code></li>
+    <li>If you use the <code class="tag">[[ contactform ]]</code> or the <code class="tag">[[ orderform ]]</code> tags you may use the templates directory of the extension and use <code class="path">form.confirm.html</code> to use <code class="path">./pivotx/templates/{your theme name}/form.confirm.html</code> where {your theme name} will obviously be replaced with the theme name of the selected theme for your site.</li>
+    <li>If a file with the selected name exists in the <code class="path">./pivotx/extensions/formclass/templates/</code> directory that file will be used.</li>
+    <li>If no file is found, the filename will be displayed. This means you may use a message instead of the filename. Eg. '<em>Thank you for your submission, we will get back to you shortly.</em>'</li>
+  </ul>
+  <h3>The mail template file</h3>
+  <p>The mail template is a simple textfile with the contents of the e-mail that will be sent when the form is validated and submitted. You may use <em>%replacement%</em> tags to personalize the e-mail message.</p>
+  <h3>The confirmation template file</h3>
+  <p>The confirmation template is a HTML snippet with the message you want to show on your site when a user successfully submits a form. You may use <em>%replacement%</em> tags to personalize the confirmation message.</p>
+  <h3><em>%replacement%</em> tags</h3>
+  <p>Replacement tags will be replaced with the content of the field they represent. For example if the form contains an e-mail field named <code>user_email</code> and a message named <code>site-comment</code> - the replacement tags will be <code>%user_email%</code> and <code>%site-comment%</code>.</p>
+  <p>If you use custom fields in the <code class="tag">[[ contactform ]]</code> and the <code class="tag">[[ orderform ]]</code> tags the replacement tag will be generated from the type of your input field, an underscore and the label of your input field without spaces or punctuation marks. So an input field like <code>checkbox:Yes, I want to subscribe to the newsletter</code> will become <code>%checkbox_yesiwantosubscribetothenewsletter%</code> and <code>text:Your name,required</code> will be <code>%text_yourname%</code>.</p>
+  <h3>Special <em>%replacement%</em> tags</h3>
+  <p>There are some special replacement tags that will do some nifty stuff for you.</p>
+  <h4><em>%uniqid%</em></h4>
+  <p>The uniqid tag will be replaced by a unique identifier (something like: 05d96806e3) that you can use to distinguish between submissions of a form.</p>
+  <h4><em>%posted_content%</em></h4>
+  <p>The posted_content replacement tag is usefull if you don't want to bother with manyally defining all fields in your form. It will list all field names and the submitted form values.</p>
+</div>
+</div>
+</body>
+</html>

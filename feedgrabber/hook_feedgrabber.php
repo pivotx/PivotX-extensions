@@ -1,12 +1,13 @@
 <?php
 // - Extension: Feedgrabber
-// - Version: 0.2
+// - Version: 0.3
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: Fetch one or more RSS feeds, insert them as entries
-// - Date: 2010-05-07
+// - Date: 2010-05-30
 // - Identifier: feedgrabber
+// - Required PivotX Version: 2.1.0
 
 
 global $feedgrabber_config;

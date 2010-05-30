@@ -1,10 +1,10 @@
 <?php
 // - Extension: Del.ico.us
-// - Version: 0.3 - development
+// - Version: 0.3.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
-// - Description: A widget to display your Delicous feed.
+// - Description: A widget to display your Delicous.com feed.
 // - Date: 2007-12-06
 // - Identifier: delicious
 

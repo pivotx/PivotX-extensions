@@ -1,6 +1,7 @@
 <?php
 // default provider
-$providers['default'] = array('endpoint' => 'http://oohembed.com/oohembed/', 'format' => 'json', 'type' => 'rich');
+//$providers['default'] = array('endpoint' => 'http://oohembed.com/oohembed/', 'format' => 'json', 'type' => 'rich');
+$providers['default'] = array('endpoint' => 'http://api.embed.ly/v1/api/oembed', 'format' => 'json', 'type' => 'rich');
 
 // specific providers by url pattern
 $providers['nos.nl'] = array(
@@ -51,6 +52,27 @@ $providers['blip.tv'] = array(
 	'endpoint' => 'http://blip.tv/oembed/',
 	'format' => 'json',
 	'type' => 'video');
+$providers['mob.to'] = array(
+	'endpoint' => 'http://api.mobypicture.com/oEmbed',
+	'format' => 'json',
+	'type' => 'photo');
+$providers['mobypicture.com'] = array(
+	'endpoint' => 'http://api.mobypicture.com/oEmbed',
+	'format' => 'json',
+	'type' => 'photo');
+$providers['yfrog'] = array(
+	'endpoint' => 'http://api.embed.ly/v1/api/oembed',
+	'format' => 'json',
+	'type' => 'photo');
+$providers['twitpic.com'] = array(
+	'endpoint' => 'http://api.embed.ly/v1/api/oembed',
+	'format' => 'json',
+	'type' => 'photo');
+$providers['tweetphoto.com'] = array(
+	'endpoint' => 'http://api.embed.ly/v1/api/oembed',
+	'format' => 'json',
+	'type' => 'photo');
+
 //$providers[''] = array('endpoint' => '', 'format' => 'json', 'type' => 'video');
 
 ?>

@@ -3,7 +3,7 @@ oEmbed
 
 What is it
 ----------
-A snippet to add oEmbed (http://www.oembed.com/) to your site.
+A snippet to add oEmbed (<a href="http://www.oembed.com/" target="_blank">http://www.oembed.com/</a>) to your site.
 
 Usage
 -----
@@ -36,14 +36,14 @@ Version Information
   * Date: 2010-09-02
   * Requirements: PivotX 2.1.0 or higher
   * Recommended: mysql, PHP 5.2.0 or higher
-  * Includes: jquery-oembed (http://code.google.com/p/jquery-oembed/)
+  * Includes: <a href="http://code.google.com/p/jquery-oembed/">jquery-oembed</a>
 
   * Author: Two Kings // Lodewijk Evers
-  * E-mail: lodewijk@twokings.nl
-  * Support: http://forum.pivotx.net/viewtopic.php?f=10&t=1377
-  * Download: http://extensions.pivotx.net/entry/5/oembed
+  * E-mail: <a href="mailto:lodewijk@twokings.nl">lodewijk@twokings.nl</a>
+  * Support: <a href="http://forum.pivotx.net/viewtopic.php?f=10&t=1377">http://forum.pivotx.net/viewtopic.php?f=10&t=1377</a>
+  * Download: <a href="http://extensions.pivotx.net/entry/5/oembed">http://extensions.pivotx.net/entry/5/oembed</a>
 
 Maintainers
 -----------
-  * Two Kings: info@twokings.nl
-  * Lodewijk Evers: info@twokings.nl
+  * Two Kings: <a href="mailto:info@twokings.nl">info@twokings.nl</a>
+  * Lodewijk Evers: <a href="mailto:lodewijk@twokings.nl">info@twokings.nl</a>

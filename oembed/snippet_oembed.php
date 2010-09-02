@@ -1,11 +1,11 @@
 <?php
 // - Extension: oEmbed
-// - Version: 0.8
+// - Version: 0.10
 // - Author: Two Kings // Lodewijk Evers
 // - Email: lodewijk@twokings.nl
 // - Site: http://extensions.pivotx.net/entry/5/oembed
 // - Description: Add [[embed]] snippets to your entries and pages
-// - Date: 2010-05-03
+// - Date: 2010-09-02
 // - Identifier: oembed
 // - Required PivotX version: 2.1
 
@@ -15,9 +15,13 @@ if($PIVOTX['config']->get('db_model')=='mysql') {
     if(file_exists($oembedbasedir.'/oembed_sql.php')) {
         require_once($oembedbasedir.'/oembed_sql.php');
     }
-} else {
+}
+/*
+// silentify
+ else {
     debug("oEmbed is working without database\noEmbed will still work, but it can't use the cache so it will be slower.");
 }
+*/
 
 // Register 'embed' as a smarty tag.
 $PIVOTX['template']->register_function('oembed', 'smarty_oembed');
@@ -56,7 +60,11 @@ function smarty_oembed($params, &$smarty) {
     // try to get the code from the cache
     $oembed = oembedLoadContent($params['url'], 'embed', $params['maxwidth'], $params['maxheight'], $params['provider']);
 
-    return $oembed;
+	if($params['assign']) {
+		$smarty->assign($params['assign'], $oembed);
+	} else {
+    	return $oembed;
+    }
 }
 
 // Register a hook, to insert oembed tags in the bookmarklet..
@@ -98,6 +106,7 @@ function oembedBookmarkletCallback(&$entry) {
 function oembedLoadContent($url, $mode='embed', $maxwidth=false, $maxheight=false, $provider="default") {
     global $PIVOTX;
 
+    $url = trim($url);
     //debug("oembedLoadContent('$url, $maxwidth, $maxheight, $provider'");
 
     if(!function_exists('json_decode')) {
@@ -201,7 +210,8 @@ function oembedLoadContent($url, $mode='embed', $maxwidth=false, $maxheight=fals
 
         // on the fly fallback for content that is not cached (and if a embed tag was called)
         if(empty($params['title'])) {
-            $title = 'loading something from '. $provider;
+            //$title = 'loading something from '. $provider;
+            $title = $url;
         }
         // telling pivot to include the jquery headers
         $PIVOTX['needs_oembed_jquery'] = true;
@@ -231,18 +241,22 @@ function oembedCheckEndpoint($url, $provider='default') {
     if(file_exists($oembedbasedir.'/oembed_providers.php')) {
         include($oembedbasedir.'/oembed_providers.php');
     } else {
-        $providers['default'] = array('endpoint' => 'http://oohembed.com/oohembed/', 'format' => 'json');
+		debug('The oEmbed installation is broken, the providers file is not accessible.');
+        // there's something serieusly wrong in the installation
+        //$providers['default'] = array('endpoint' => 'http://oohembed.com/oohembed/', 'format' => 'json');
+        $providers['default'] = array('endpoint' => 'http://api.embed.ly/v1/api/oembed', 'format' => 'json');
+
     }
 
     // check if the provider is known and set the endpoints
     if($provider!='default') {
         $params['custom_provider'] = $provider;
-        debug('custom oEmbed provider: '.$provider);
+        // debug('custom oEmbed provider: '.$provider);
         $patterns = array_keys($providers);
         foreach($patterns as $key => $pattern) {
             if(stristr($url, $pattern)) {
                 $provider = $pattern;
-                debug('custom oEmbed endpoint exists in defaults: '.$provider);
+                // debug('custom oEmbed endpoint exists in defaults: '.$provider);
                 break;
             }
         }
@@ -271,7 +285,7 @@ function oembedCheckEndpoint($url, $provider='default') {
  * Try to insert the includes for oEmbed in the <head> section of the HTML
  * that is to be outputted to the browser. Inserts Jquery if not already
  * included. (This is just the default "thickboxIncludeCallback" function
- * adapted to Codaslider.)
+ * adapted to oEmbed.)
  *
  * @param string $html
  */
@@ -285,7 +299,7 @@ function oembedIncludeCallback(&$html) {
 
     // If we've set the hidden config option for 'never_jquery', just return without doing anything.
     if ($PIVOTX['config']->get('never_jquery') == 1) {
-        debug("jQuery is disabled by the 'never_jquery' config option. oEmbed won't work.");
+        debug("jQuery is disabled by the 'never_jquery' config option. oEmbed won't work. You must enable jQuery first.");
         return;
     }
     $jqueryincluded = false;
@@ -438,4 +452,27 @@ function oembedUpdateTables_4() {
 
     return true;
 }
-?>
+
+// Add a hook to the scheduler, to periodically empty the cache tables
+$this->addHook(
+    'scheduler',
+    'callback',
+    'oembedSchedulerCallback'
+    );
+
+function oembedSchedulerCallback() {
+	global $PIVOTX;
+    // check if installation is okay
+    if($PIVOTX['config']->get('db_model')=='mysql') {
+	    $oembed = new OembedCacheSql();
+	    $lastweek = time() - (7 * 24 * 60 * 60);
+	    $queries[] = sprintf("DELETE FROM %s WHERE last_updated < %d", $oembed->oemcachetable, $lastweek);
+
+	    foreach($queries as $query) {
+	        $oembed->sql->query($query);
+	    }
+	    debug('cleaned up old entries from the oEmbed cache table');
+		// lets just pretend that worked
+	    return true;
+    }
+}

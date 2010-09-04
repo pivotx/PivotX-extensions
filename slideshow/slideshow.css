@@ -1,0 +1,61 @@
+/*preload classes*/ 
+.svw {width: 50px; height: 20px; background: #fff; } 
+.svw ul {position: relative; left: -999em;} 
+ 
+/*core classes*/ 
+.stripViewer {  
+    position: relative; 
+    overflow: hidden;    
+    margin: 0 !important;
+    padding: 0 !important; 
+} 
+.stripViewer ul { /* this is your UL of images */ 
+    margin: 0; 
+    padding: 0; 
+    position: relative; 
+    left: 0; 
+    top: 0; 
+    width: 1%; 
+    list-style-type: none; 
+} 
+.stripViewer ul li {  
+    float:left; 
+    margin: 0;
+    padding: 0;
+} 
+
+.stripViewer a, .stripViewer img {
+    margin: 0 !important;
+    border: 0px !important;
+}
+
+.stripTransmitter { 
+overflow: auto; 
+width: 1%; 
+display: none; /* Hide the buttons.. */
+visibility: hidden; /* Hide the buttons.. */
+} 
+.stripTransmitter ul { 
+margin: 0; 
+padding: 0; 
+position: relative; 
+list-style-type: none; 
+} 
+.stripTransmitter ul li{ 
+width: 20px; 
+float:left; 
+margin: 0 1px 1px 0; 
+} 
+.stripTransmitter a{ 
+font: bold 10px Verdana, Arial; 
+text-align: center; 
+line-height: 22px; 
+background: #ff0000; 
+color: #fff; 
+text-decoration: none; 
+display: block; 
+} 
+.stripTransmitter a:hover, a.current{ 
+background: #fff; 
+color: #ff0000; 
+} 

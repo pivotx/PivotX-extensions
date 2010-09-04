@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="robots" content="noindex, nofollow" />
+    <script src="../../../includes/js/pivotx.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="../../../templates_internal/assets/pivotx.css"/>
+    <!--[if lte IE 7]>
+    <link rel="stylesheet" type="text/css" href="../../../templates_internal/assets/pivotx_ie.css"/>
+    <![endif]-->
+    <title>PivotX &raquo; Google Maps Extension Docs</title>
+</head>
+<body>
+<div id="header">
+    <div id="logo">
+    <a href="../../../index.php"><img src="../../../templates_internal/assets/pivotx.png" alt="PivotX" /></a>
+    </div>
+</div>
+<div id="content">
+    <h1>Google Maps Extension Docs</h1>
+    <p>This extension enables you to display a map from Google Maps in your 
+    PivotX blog. Additionally, you can add an overlay on the map defined by a 
+    <a href="http://code.google.com/apis/kml/documentation/whatiskml.html">KML-file</a>. </p>
+    
+    <p>The extension uses the 
+    <a href="http://code.google.com/apis/maps/">Google Maps (JavaScript) API</a>.
+    This has many benefits compared to using an iframe as the normal map embedding does.
+    The biggest benefit being the ease of adding (KML) overlays.</p>
+
+    <h2>Usage</h2>
+    
+    <h3>Setup and configuration</h3>
+    <p>The extension consists of an admin page and a snippet. Before starting to use the snippet 
+    (but after enabling), you must visit the &quot;Google Maps&quot; tab on the 
+    &quot;Configuration&quot; and set the correct 
+    <a href="http://code.google.com/apis/maps/signup.html">Google Maps API key</a> for your
+    domain. On the same form you can also set the default size of the map, map zoom level and
+    latitude and longiture (x and y coordinates).</p>
+
+    <h3>Snippet syntax</h3>
+    <p>The minimal usage is:</p>
+    <pre>[[ googlemaps ]]</pre>
+    <p>The snippet takes six optional parameters:</p>
+    <ul>
+    <li><tt>overlay</tt> - an absolute URL to an offsite KML file or the name of a KML file you have
+        uploaded to the media folder.</li>
+    <li><tt>width</tt> - the width of the map, overriding the default value.</li>
+    <li><tt>height</tt> - the height of the map, overriding the default value.</li>
+    <li><tt>zoom</tt> - the zoom level of the map, overriding the default value.</li>
+    <li><tt>lat</tt> - the latitude of the (centre of the) map, overriding the default value.</li>
+    <li><tt>long</tt> - the longitude of the (centre of the) map, overriding the default value.</li>
+    </ul>
+    <p>A complex usage example replicating 
+    <a href="http://code.google.com/apis/maps/documentation/examples/geoxml-kml.html">an example</a> from 
+    the Google Maps documentation:</p>
+    <pre>[[ googlemaps overlay=http://mapgadgets.googlepages.com/cta.kml height=480 width=640 lat=41.875696 long=-87.624207 zoom=11 ]]</pre>
+    <h3>Tips</h3>
+    <ul>
+    <li>To upload KML files (using the Media Manager) add <tt>application/vnd.google-earth.kml+xml</tt> to the
+    list of allowed file types in the PivotX configuration.</li>
+    </ul>
+</div>
+</body>
+</html>
+
+ 

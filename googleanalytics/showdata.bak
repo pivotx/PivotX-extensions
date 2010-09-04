@@ -1,0 +1,125 @@
+<?php
+
+require_once(dirname(dirname(dirname(__FILE__))).'/lib.php');
+require_once(dirname(__FILE__).'/analytics_api.php');
+
+initializePivotX(false);
+
+// 14 dagen hits
+// totale stats.
+// populaire pages, deze week.
+// referers, deze week
+
+
+$PIVOTX['session']->minLevel(PIVOTX_UL_NORMAL);
+
+echo "<h1>Testing Google Analytics Login</h1>"; 
+
+$login = $PIVOTX['config']->get("ga_login");
+$password = $PIVOTX['config']->get("ga_password");
+$id = 'ga:'.$PIVOTX['config']->get("ga_profileid");
+
+echo "<pre>$id: \n";
+
+$statistics = array();
+
+$api = new analytics_api();
+if($api->login($login, $password)) {
+
+    
+    // totals for 'forever', this month, this week, today.
+    $statistics['totals'] = $api->data($id, '', 'ga:visits,ga:pageviews', '', "2005-01-01", false, 15, 1);
+    
+    $statistics['month'] = $api->data($id, '', 'ga:visits,ga:pageviews');
+    
+    $startdate = date("Y-m-d", mktime(1,1,1,date('m'),date('d')-7,date('Y')));        
+    $statistics['week'] = $api->data($id, '', 'ga:visits,ga:pageviews', '', $startdate, false, 15, 1);
+    
+    $startdate = date("Y-m-d", mktime(1,1,1,date('m'),date('d'),date('Y')));        
+    $statistics['today'] = $api->data($id, '', 'ga:visits,ga:pageviews', '', $startdate, $startdate, 15, 1);
+    
+    // Viewed pages, this week.. 
+    $startdate = date("Y-m-d", mktime(1,1,1,date('m'),date('d')-7,date('Y')));  
+    $data = $api->data($id, 'ga:pagePath', 'ga:pageviews', '', $startdate, false, 10, 1);
+    
+    foreach($data as $key=>$value) {
+        $statistics['pages'][$key] = $value['ga:pageviews'];
+    }
+    
+    // Referers, this week
+    $data = $api->data($id, 'ga:source,ga:referralpath', 'ga:pageviews', '', $startdate, false, 50, 1);
+    
+    foreach($data as $host=>$value) {
+        foreach($value as $path=>$value) {
+            if ($path=="(not set)") {
+                $path="";
+            }
+            
+            if (strpos($host, 'google')!==false) {
+                $statistics['referers']['google.com'] += $value['ga:pageviews'];            
+            } else {
+                $statistics['referers'][$host.$path] = $value['ga:pageviews'];
+                
+            }
+            
+        }
+    }
+     
+    // Graph of the past two weeks..
+    
+    $startdate = date("Y-m-d", mktime(1,1,1,date('m'),date('d')-14,date('Y')));
+    
+    $data = $api->data($id, 'ga:date', 'ga:visits,ga:pageviews', 'ga:date', $startdate, false, 15, 1);
+    // print_r($data);
+    
+    $visits = array();
+    $pageviews = array();
+    $labels = array();
+    
+    $odd=false;
+    
+    foreach($data as $date=>$point) {
+        
+        $visits[] = $point['ga:visits'];
+        $pageviews[] = $point['ga:pageviews'];
+    
+        if($odd) {
+            $date = (0+substr($date, 4,2)) . "/" . (0+substr($date, 6,2));
+            $odd = false;            
+        } else {
+            $date = "";
+            $odd = true;
+        }
+        
+        $labels[] = urlencode($date);
+    }
+    
+    $max = round(max($pageviews) * 1.1);
+    
+    $labels = implode('|', $labels);
+    
+    $url = "http://chart.apis.google.com/chart".
+        "?cht=lc" .
+        "&chs=300x160" .
+        "&chxt=x,y" .
+        "&chxr=0,0," . count($visits). "|1,0,". $max .
+        "&chxl=0:|".$labels . 
+        "&chdlp=b&" .
+        "&chls=2,1,0|2,1,0" . 
+        "&chdl=Visits|Pageviews,+last+14+days".
+        "&chco=6F8082,404F52".
+        "&chm=b,9FB0B2,0,1,0|B,AFC0C2,0,1,0". 
+        "&chds=0," . $max .
+        "&chxtc=0,3|1,3" .  // Tickmarks
+        "&chd=t:" . implode(",", $visits) . "|" . implode(",", $pageviews);
+    
+    
+    $statistics['chart'] = $url;
+    
+    save_serialize($PIVOTX['paths']['db_path'].'analytics.php', $statistics);
+
+}
+
+echo "<p>klaar</p>";
+
+debug ("klaar!");

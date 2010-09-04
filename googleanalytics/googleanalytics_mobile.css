@@ -1,0 +1,54 @@
+
+#ga-simpletabs {
+    padding: 4px 0 0;
+    margin: 4px 0 0 0;
+    border-bottom: 1px solid #999;
+}
+
+
+#ga-simpletabs span {
+    cursor: pointer;
+    border-top: 1px solid #999;
+    border-bottom: 1px solid #999;
+    border-right: 1px solid #999;
+    background-color: #DDD;
+    padding: 4px 6px;
+    margin: 0;
+}
+
+#ga-simpletabs .first {
+    border-left: 1px solid #999;
+    margin-left: 3px;
+}
+
+#ga-simpletabs span.active {
+    border-bottom: 1px solid #FFF;
+    background-color: #FFF;
+}
+
+#ga-simpletab1, #ga-simpletab2, #ga-simpletab3, #ga-simpletab4 {
+    padding: 4px 0 0 0;
+    margin: 0;
+    display: none;
+}
+
+.ga-simpletab {
+    font-size: 12px;
+}
+
+.ga-simpletab small {
+    display: inline;
+}
+
+
+table.googleanalytics th {
+    margin: 0;
+    padding: 0 8px 0 0;
+}
+
+table.googleanalytics td {
+    margin: 0;
+    padding: 0 8px 0 0;
+    text-align: right;    
+}
+

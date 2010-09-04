@@ -1,0 +1,37 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<title>SWFObject v2.0 dynamic embed sample page</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+		<script type="text/javascript" src="swfobject.js"></script>
+		<script type="text/javascript" src="audio-player.js"></script>
+	</head>
+	<body>
+
+  
+<div id="player1">
+    <a href="/pivotx/extensions/media/02-i-got-mine.mp3">Download <tt>02-i-got-mine.mp3</tt>.</a>
+</div>
+<script type="text/javascript">
+    var flashvars = { playerID: "1", soundFile: "/pivotx/extensions/media/02-i-got-mine.mp3"  };
+    var params = {};
+    var attributes = { id: "audioplayer1" };
+    swfobject.embedSWF("player.swf", "player1", "290", "24", "9.0.0", "expressInstall.swf", flashvars, params, attributes);
+</script>
+
+<br />
+
+<div id="player2">
+    <a href="/pivotx/extensions/media/03-strange-times.mp3">Download <tt>03-strange-times.mp3</tt>.</a>
+</div>
+<script type="text/javascript">
+    var flashvars = { playerID: "2", soundFile: "/pivotx/extensions/media/03-strange-times.mp3"  };
+    var params = {};
+    var attributes = { id: "audioplayer2" };
+    swfobject.embedSWF("player.swf", "player2", "290", "24", "9.0.0", "expressInstall.swf", flashvars, params, attributes);
+</script>
+
+        
+        
+	</body>
+</html>

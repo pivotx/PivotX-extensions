@@ -1,0 +1,93 @@
+/* Calendar Widget Styles */
+
+/* Sets the width of the table (the margin centers it) */
+div.dlCalendarTable {
+   width: 210px;
+   margin: 0px auto;
+}
+
+/* Formats how entry titles are displayed below the calendar */
+div#dlCalendarEntries {
+   display: none;
+   text-align: center;
+   overflow: hidden;
+}
+
+/* Basic calendar formatting */
+table.dlCalendar {
+   font-family: Tahoma, Verdana, Arial, Helvetica, sans-serif;
+   font-size: 0.9em;
+   margin: 0px;
+   width: 100%;
+   background-color: #ECF3F7;
+   border-collapse: collapse;
+   border: 1px solid #666;
+   cursor: default;
+}
+
+/* Formats the main Header (that displays the month and year) */
+table.dlCalendar th {
+   background-color: #0047ab;
+   color: #ffffff;
+   padding: 2px 0px;
+   text-align: center;
+}
+
+table.dlCalendar th.dlCalendarHead {
+   font-weight: bold;
+   font-size: 1.1em;
+   border-top: 1px solid #666;
+   border-bottom: 1px solid #666;
+}
+
+table.dlCalendar th.previous {
+   border-top: 1px solid #666;
+   border-left: 1px solid #666;
+   border-bottom: 1px solid #666;
+}
+
+table.dlCalendar th.next {
+   border-top: 1px solid #666;
+   border-right: 1px solid #666;
+   border-bottom: 1px solid #666;
+}
+
+/* Formats the secondary header (that displays the days of the week
+   and cancels out the calendar's mouse hover effects for that header */
+table.dlCalendar tr.dlCalendarSubHead,
+table.dlCalendar tr.dlCalendarSubHead td:hover {
+   background-color: #3a71bf;
+   color: #FFFFFF;
+   font-weight: bold;
+}
+
+/* General formatting for all cells in the calendar */
+table.dlCalendar td {
+   width: 30px;
+   text-align: center;
+   border: 1px solid #BBB;
+   padding: 2px;
+}
+
+/* Formats the current day cell */
+table.dlCalendar td.dlCalendarCurrentDay {
+   background-color: #fafad2;
+   color: #FF0000;
+   border-style: inset;
+}
+
+/* Mouse hover effect */
+table.dlCalendar td:hover {
+   background-color: #fafad2;
+   color: #000;
+   border-style: outset;
+}
+
+/* Formats day links on the calendar */
+table a.dlCalendarDivLink {
+   /* Double cursor declaration is for compatibility between MSIE and other browsers */
+   cursor: pointer;
+   cursor: hand;
+   text-decoration: underline;
+   color: #000080;
+}

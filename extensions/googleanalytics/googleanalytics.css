@@ -1,0 +1,33 @@
+
+#ga-simpletabs {
+    padding: 4px 0;
+    margin: 4px 4px 0 4px;
+    border-bottom: 1px solid #999;
+}
+
+
+#ga-simpletabs span {
+    cursor: pointer;
+    border-top: 1px solid #999;
+    border-bottom: 1px solid #999;
+    border-right: 1px solid #999;
+    background-color: #DDD;
+    padding: 4px 6px;
+    margin: 0;
+}
+
+#ga-simpletabs .first {
+    border-left: 1px solid #999;
+    margin-left: 3px;
+}
+
+#ga-simpletabs span.active {
+    border-bottom: 1px solid #FFF;
+    background-color: #FFF;
+}
+
+#ga-simpletab1, #ga-simpletab2, #ga-simpletab3, #ga-simpletab4 {
+    padding: 4px;
+    margin: 0 4px;
+    display: none;
+}

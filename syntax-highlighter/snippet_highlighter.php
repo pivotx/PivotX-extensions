@@ -1,6 +1,6 @@
 <?php
 // - Extension: Syntax Highlighter
-// - Version: 0.1
+// - Version: 0.1.1
 // - Author: PivotX Team /
 // - Email: admin@pivotx.net 
 // - Site: http://www.pivotx.net
@@ -43,7 +43,7 @@ $html .= '</script>' . "\n";
 
 
 
-$path = $PIVOTX['paths']['extensions_url']."syntaxhighlighter/";
+$path = $PIVOTX['paths']['extensions_url']."syntax-highlighter/";
 $html = str_replace('%path%', $path, $html);
 
 // Add a hook to insert the generator meta tag and possibly a favicon link

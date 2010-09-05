@@ -7,7 +7,7 @@ website, with proper highlighting. It is powered by
 by Alex Gorbatchev. 
 
 Usage is pretty simple. Inside your entries, pages or templates, insert a
-`<pre>` or `<code>` block.
+`<pre>` block with your code sample.
 
 Example 1:
 

@@ -1,6 +1,6 @@
 <?php
 // - Extension: Extra Image field
-// - Version: 0.3
+// - Version: 0.4
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
@@ -17,15 +17,15 @@ $this->addHook(
 
 /**
  * Callback function for our hook..
- */ 
+ */
 function extraImageFieldEntryIntroduction($entry) {
-    
+
     $output = <<< EOM
     <table class="formclass" border="0" cellspacing="0" width="650">
         <tbody>
             <tr>
             <td colspan="3"><hr noshade="noshade" size="1" /></td></tr>
-            
+
             <tr>
                 <td width="150">
                     <label><strong>%title%:</strong></label>
@@ -36,7 +36,7 @@ function extraImageFieldEntryIntroduction($entry) {
                 <td width="100" class="buttons_small">
                     <a href="javascript:;" onclick="openUploadWindow('%label1%', $('#extrafield-image'), 'gif,jpg,png');">
                         <img src='pics/page_lightning.png' alt='' /> %label2%
-                    </a>                                  
+                    </a>
                 </td>
             </tr>
             <tr>
@@ -47,7 +47,7 @@ function extraImageFieldEntryIntroduction($entry) {
                     <input id="extrafield-image-description" name="extrafields[image_description]" value="%image_description%" type="text" />
                 </td>
             </tr>
-        
+
         </tbody>
     </table>
 EOM;
@@ -69,7 +69,7 @@ EOM;
     $output = preg_replace("/%([a-z0-9_-]+)%/i", "", $output);
 
     return $output;
-    
+
 }
 
 
@@ -83,17 +83,17 @@ $this->addHook(
 
 /**
  * Callback function for our hook..
- */ 
+ */
 function extraImageFieldPageIntroduction($page) {
-    
+
     // print("<pre>\n"); print_r($entry); print("\n</pre>\n");
-    
+
     $output = <<< EOM
     <table class="formclass" border="0" cellspacing="0" width="650">
         <tbody>
             <tr>
             <td colspan="3"><hr noshade="noshade" size="1" /></td></tr>
-            
+
             <tr>
                 <td width="150">
                     <label><strong>%title%:</strong></label>
@@ -104,7 +104,7 @@ function extraImageFieldPageIntroduction($page) {
                 <td width="100" class="buttons_small">
                     <a href="javascript:;" onclick="openUploadWindow('%label1%', $('#extrafield-image'), 'gif,jpg,png');">
                         <img src='pics/page_lightning.png' alt='' /> %label2%
-                    </a>                                  
+                    </a>
                 </td>
             </tr>
             <tr>
@@ -115,7 +115,7 @@ function extraImageFieldPageIntroduction($page) {
                     <input id="extrafield-image-description" name="extrafields[image_description]" value="%image_description%" type="text" />
                 </td>
             </tr>
-        
+
         </tbody>
     </table>
 EOM;
@@ -137,7 +137,7 @@ EOM;
     $output = preg_replace("/%([a-z0-9_-]+)%/i", "", $output);
 
     return $output;
-    
+
 }
 
 

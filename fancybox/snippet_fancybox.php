@@ -5,7 +5,7 @@
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
 // - Description: Replace boring old Thickbox with a FancyBox!
-// - Date: 2010-06-01
+// - Date: 2010-09-10
 // - Identifier: fancybox 
 // - Required PivotX version: 2.0.2
 

@@ -1,6 +1,6 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.9
+// - Version: 0.10
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
@@ -35,7 +35,7 @@ function smarty_fancybox($params, &$smarty) {
     $params = cleanParams($params);
 
     $filename      = $params['file'];
-    $thumbname     = getDefault($params['description'], "?");
+    $thumbname     = getDefault($params['description'], "(thumbnail)");
     $org_thumbname = $thumbname;
     $alt           = $params['alt'];
     $title         = $params['title'];

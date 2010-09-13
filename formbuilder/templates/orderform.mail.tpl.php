@@ -1,15 +1,15 @@
 De volgende bestelling is ontvangen:
 
-Naam: %text_name%
-E-mail adres: %text_email%
+Naam: %name%
+E-mail adres: %email%
 
 
 Address:
-%text_address%
-%text_postcode% %text_city%
+%address%
+%postcode% %city%
 
 Bericht:
-%textarea_message%
+%message%
 
 
 --

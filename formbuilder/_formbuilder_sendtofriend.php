@@ -13,11 +13,23 @@ $PIVOTX['template']->register_function('sendtofriend', 'smarty_sendtofriend');
 function smarty_sendtofriend($params, &$smarty) {
 		global $PIVOTX;
 
+		$params = cleanParams($params);
+
 		$vars = $smarty->get_template_vars();
-		$pageuri = get_default($vars['page']['uri'], $vars['entry']['uri']);
-		$pagelink = get_default($vars['entry']['link'], $vars['page']['link']);
 		
-		$sendtofriendlink = $PIVOTX['config']->get('canonical_host').get_default($pagelink, $pageuri);
+		if(!isset($params['link'])) {
+				//debug('sendtofriend tries to determine the default link');
+				
+				$pageuri = get_default($vars['page']['uri'], $vars['entry']['uri']);
+				$pagelink = get_default($vars['entry']['link'], $vars['page']['link']);
+				
+				$sendtofriendlink = $PIVOTX['config']->get('canonical_host').get_default($pagelink, $pageuri);
+		} else {
+				//debug('sendtofriend knows the default link by param');
+				$pageuri = '';
+				$pagelink = '';
+				$sendtofriendlink = $params['link'];
+		}
 
 		//debug("Doet nu contactform voor: REQUEST_URI:". $_SERVER["REQUEST_URI"] ." / link:". $pagelink ." / uri:".$pageuri);
 
@@ -28,12 +40,15 @@ function smarty_sendtofriend($params, &$smarty) {
 		}
 		//debug_printbacktrace();
 
-		if(!in_array($PIVOTX['parser']->modifier['pagetype'], array('page', 'entry')) && !isset($params['showinweblog'])) {
+		if(in_array($PIVOTX['parser']->modifier['pagetype'], array('weblog')) && !isset($params['showinweblog'])) {
+			debug("You might want to set a showinweblog parameter.");
 			return;
 		} elseif(!in_array($PIVOTX['parser']->modifier['pagetype'], array('page', 'entry')) && isset($params['showinweblog'])) {
 			if(empty($params['to']) || !isemail($params['to'])) {
 				return 'Formbuilder ERROR: the recipient must be set for this form';
 			}
+		} elseif(!in_array($PIVOTX['parser']->modifier['pagetype'], array('page', 'entry'))) {
+			debug("Continue at your own peril - you're not in page-and-entryland anymore");
 		}
 
 		$username = get_default($PIVOTX['db']->entry['user'] , $PIVOTX['pages']->currentpage['user']);
@@ -89,53 +104,53 @@ function smarty_sendtofriend($params, &$smarty) {
 
 			'name' => array(
 				'name' => 'name',
-				'label' => 'Naam ontvanger',
+				'label' => __('Naam'),
 				'type' => 'text',
 				'isrequired' => true,
-				'requiredmessage' => 'Vul uw naam in',
 				'validation' => 'string',
 				'class' => 'default-value',
-				'error' => 'Please enter a name'
+				'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Naam')) . sprintf(__("Please enter a \"%s\""), __('Naam')),
+				'error' => sprintf(__("Please enter a \"%s\""), __('Naam'))
 			),
 			'email' => array(
 				'name' => 'email',
-				'label' => 'Emailadres ontvanger',
+				'label' => __('Email adres'),
 				'type' => 'text',
 				'isrequired' => true,
-				'requiredmessage' => 'Vul een E-mailadres in',
 				'validation' => 'email',
 				'class' => 'default-value',
-				'error' => 'Vul een E-mailadres in',
+				'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('E-mail address')) . sprintf(__("Please enter a \"%s\""), __('E-mail address')),
+				'error' => sprintf(__("Please enter a \"%s\""), __('E-mail address'))
 			),
 			'namesender' => array(
 				'name' => 'namesender',
-				'label' => 'Uw eigen naam',
+				'label' => __('Naam'),
 				'type' => 'text',
 				'isrequired' => true,
-				'requiredmessage' => 'Vul uw E-mailadres in',
 				'validation' => 'string',
 				'class' => 'default-value',
-				'error' => 'Vul uw E-mailadres in',
+				'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Naam')) . sprintf(__("Please enter a \"%s\""), __('Naam')),
+				'error' => sprintf(__("Please enter a \"%s\""), __('Naam'))
 			),
 			'emailsender' => array(
 				'name' => 'emailsender',
-				'label' => 'Uw eigen email',
+				'label' => __('E-mail address'),
 				'type' => 'text',
 				'isrequired' => true,
-				'requiredmessage' => 'Vul uw E-mailadres in',
 				'validation' => 'email',
 				'class' => 'default-value',
-				'error' => 'Please enter a correct e-mail address',
+				'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('E-mail address')) . sprintf(__("Please enter a \"%s\""), __('E-mail address')),
+				'error' => sprintf(__("Please enter a \"%s\""), __('E-mail address'))
 			),
 			'message' => array(
 				'name' => 'message',
-				'label' => 'Het bericht',
+				'label' => __('Message'),
 				'value' => 'Ik kwam deze pagina tegen, misschien is dit wel iets voor jou.'."\n\n".$sendtofriendlink,
-				'type' => 'textarea',
+				'type' => 'hidden',
 				'isrequired' => true,
-				'requiredmessage' => '&quot;Message&quot; is a required field. Please enter a message',
 				'validation' => 'string',
-				'error' => 'Please enter a message'
+				'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Message')) . sprintf(__("Please enter a \"%s\""), __('Message')),
+				'error' => sprintf(__("Please enter a \"%s\""), __('Message'))
 			),
 		);
 		
@@ -156,16 +171,17 @@ function smarty_sendtofriend($params, &$smarty) {
 			$submit = array(
 				'verzenden' => array(
 					'type' => 'submit',
+					'class' => 'button',
 					'label' => '',
-					'value' => 'Send message'
+					'value' => __('Send message')
 				)
 			);
 		}
 
 		$config = array(
-			'id' => 'sendtofriend-'.$pageuri,
-			'name' => 'sendtofriend',
-			'action' => $formaction,
+			'id' => 'tellafriend-form' . $pageuri,
+			'name' => 'tellafriend-form',
+			'action' => $formaction . '#tellafriend-form' . $pageuri,
 			'templates' => array(
 				'confirmation' => $confirmation, // filename in form overrides path or html string
 				'elements' => 'formclass_defaulthtml.php',
@@ -173,13 +189,13 @@ function smarty_sendtofriend($params, &$smarty) {
 			),
 
 			'fieldsets' => array(
-				'left' => array(
-					'label' => 'Recipient',
-					'fields' => array('name','email')
+				'sender-info' => array(
+					'label' => __('Sender'),
+					'fields' => array('namesender', 'emailsender')
 				),
-				'right' => array(
-					'label' => 'Your message',
-					'fields' => array('namesender','emailsender','message'),
+				'recipient-info' => array(
+					'label' => __('Recipient'),
+					'fields' => array('name', 'email'),
 				),
 			),
 			'redirect' => $redirect, // url for redirect after successfull submission of form
@@ -189,6 +205,14 @@ function smarty_sendtofriend($params, &$smarty) {
 			'fields' => $fields,
 			'mail_config' => $mail_config,
 		);
+
+		if(!empty($params['pre_html'])) {
+			$config['pre_html'] = $params['pre_html'];
+		}
+		if(!empty($params['post_html'])) {
+			$config['post_html'] = $params['post_html'];
+		}
+
 
 		$form = new FormBuilder($config);
 		$form->execute_form();

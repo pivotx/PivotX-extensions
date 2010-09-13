@@ -1,9 +1,9 @@
 <p>De volgende inzending is verzonden:</p>
 
-<p>Naam: %text_name%<br />
-E-mail adres: %text_email%</p>
+<p>Naam: %name%<br />
+E-mail adres: %email%</p>
 
 <p>Bericht:<p>
 <div>
-%textarea_message%
+%message%
 </div>

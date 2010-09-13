@@ -13,6 +13,8 @@ $PIVOTX['template']->register_function('orderform', 'smarty_orderform');
 function smarty_orderform($params, &$smarty) {
 		global $PIVOTX;
 
+		$params = cleanParams($params);
+
 		$vars = $smarty->get_template_vars();
 		$pageuri = get_default($vars['page']['uri'], $vars['entry']['uri']);
 		$pagelink = get_default($vars['entry']['link'], $vars['page']['link']);
@@ -25,23 +27,26 @@ function smarty_orderform($params, &$smarty) {
 			$formaction = $_SERVER["REQUEST_URI"];
 		}
 
-		if(!in_array($PIVOTX['parser']->modifier['pagetype'], array('page', 'entry')) && !isset($params['showinweblog'])) {
+		if(in_array($PIVOTX['parser']->modifier['pagetype'], array('weblog')) && !isset($params['showinweblog'])) {
+			debug("You might want to set a showinweblog parameter.");
 			return;
 		} elseif(!in_array($PIVOTX['parser']->modifier['pagetype'], array('page', 'entry')) && isset($params['showinweblog'])) {
 			if(empty($params['to']) || !isemail($params['to'])) {
 				return 'Formbuilder ERROR: the recipient must be set for this form';
 			}
+		} elseif(!in_array($PIVOTX['parser']->modifier['pagetype'], array('page', 'entry'))) {
+			//debug("Continue at your own peril - you're not in page-and-entryland anymore");
 		}
 
 		$mail_config = array(
 			'subject' => 'Order form -'.$PIVOTX['config']->data['sitename'],
 			'recipient' => array(
 				'email' => 'contactform@example.com',
-				'name' => 'Order form'
+				'name' => __('Order form')
 			),
 			'sender' => array(
 				'email' => 'contactform@example.com',
-				'name' => 'Order form'
+				'name' => __('Order form')
 			),
 			'method' => 'mail' // mail | smtp
 		);
@@ -91,7 +96,7 @@ function smarty_orderform($params, &$smarty) {
 				$type = $labelval = $label = $rule = $key = false;
 				list($type, $labelval) = explode(':', trim($typerule));
 				list($label, $rule) = explode(',', trim($labelval));
-				$key = $type ."_". preg_replace('/[^a-z0-9]/i','',trim(strtolower(strip_tags($label))));
+				$key = preg_replace('/[^a-z0-9]/i','',trim(strtolower(strip_tags($label))));
 				$required = stristr($rule, 'required')?true:false;
 				if(!$required && !empty($rule) && !stristr($rule, 'ifany')) {
 					$rule = 'ifany|'.$rule;
@@ -102,62 +107,74 @@ function smarty_orderform($params, &$smarty) {
 					'label' => $label,
 					'required' => $required,
 					'validation' => $rule,
-					'requiredmessage' => $label.' is a required field. Please enter a '.$label,
-					'error' => 'Please enter a '.$label
+					'requiredmessage' => sprintf(__("\"%s\" is a required field."), $label) . sprintf(__("Please enter a \"%s\""), $label),
+					'error' => sprintf(__("Please enter a \"%s\""), $label)
 				);
 			}
 		} else {
 			$fields = array(
 				'name' => array(
-					'name' => 'text_name',
-					'label' => 'Name',
+					'name' => 'name',
+					'label' => __('Name'),
 					'type' => 'text',
-					'requiredmessage' => 'This is a required field. Please enter a name',
 					'validation' => 'string',
-					'error' => 'Please enter a name'
+					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Name')) . sprintf(__("Please enter a \"%s\""), __('Name')),
+					'error' => sprintf(__("Please enter a \"%s\""), __('Name'))
 				),
 				'email' => array(
-					'name' => 'text_email',
-					'label' => 'E-mail address',
+					'name' => 'email',
+					'label' => __('E-mail address'),
 					'type' => 'text',
-					'requiredmessage' => 'This is a required field. Please enter a valid e-mail address',
 					'validation' => 'email',
-					'error' => 'Please enter a correct e-mail address'
+					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('E-mail address')) . sprintf(__("Please enter a \"%s\""), __('E-mail address')),
+					'error' => sprintf(__("Please enter a \"%s\""), __('E-mail address'))
+				),
+				'phone' => array(
+					'name' => 'phone',
+					'label' => __('Phone number'),
+					'type' => 'text',
+					'validation' => 'phonenumber',
+					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Phone number')) . sprintf(__("Please enter a \"%s\""), __('Phone number')),
+					'error' => sprintf(__("Please enter a \"%s\""), __('Phone number'))
 				),
 				'address' => array(
-					'name' => 'text_address',
-					'label' => 'Address',
+					'name' => 'address',
+					'label' => __('Street address'),
 					'type' => 'text',
-					'requiredmessage' => 'This is a required field. Please enter an address',
 					'validation' => 'string',
-					'error' => 'Please enter an address'
+					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Street address')) . sprintf(__("Please enter a \"%s\""), __('Street address')),
+					'error' => sprintf(__("Please enter a \"%s\""), __('Street address'))
 				),
 				'postcode' => array(
-					'name' => 'text_postcode',
-					'label' => 'Postal code',
+					'name' => 'postcode',
+					'label' => __('Postal code'),
 					'type' => 'text',
-					'requiredmessage' => 'This is a required field. Please enter a postal code',
 					'validation' => 'string',
-					'error' => 'Please enter a postal code'
+					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Postal code')) . sprintf(__("Please enter a \"%s\""), __('Postal code')),
+					'error' => sprintf(__("Please enter a \"%s\""), __('Postal code'))
 				),
 				'city' => array(
-					'name' => 'text_city',
-					'label' => 'City',
-					'type' => 'text',
-					'requiredmessage' => 'This is a required field. Please enter a city',
+					'name' => 'city',
+					'label' => __('City'),
 					'validation' => 'string',
-					'error' => 'Please enter a city'
+					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('City')) . sprintf(__("Please enter a \"%s\""), __('City')),
+					'error' => sprintf(__("Please enter a \"%s\""), __('City'))
 				),
 				'message' => array(
-					'name' => 'textarea_message',
-					'label' => 'Message',
+					'name' => 'message',
+					'label' => __('Message'),
 					'type' => 'textarea',
-					'requiredmessage' => 'This is a required field. Please enter a message',
 					'validation' => 'string',
-					'error' => 'Please enter a message'
+					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Message')) . sprintf(__("Please enter a \"%s\""), __('Message')),
+					'error' => sprintf(__("Please enter a \"%s\""), __('Message'))
 				)
 			);
 		}
+
+		if(!empty($params['defaultmessage'])) {
+			$fields['message']['value'] = $params['defaultmessage'];
+		}
+		
 		if(!empty($params['submit'])) {
 			$submit = array(
 				'verzenden' => array(
@@ -171,7 +188,7 @@ function smarty_orderform($params, &$smarty) {
 				'verzenden' => array(
 					'type' => 'submit',
 					'label' => '',
-					'value' => 'Send message'
+					'value' => __('Send message')
 				)
 			);
 		}
@@ -180,11 +197,22 @@ function smarty_orderform($params, &$smarty) {
 		$config = array(
 			'id' => 'orderform-'.$pageuri,
 			'name' => 'orderform',
-			'action' => $formaction,
+			'action' => $formaction . '#orderform-' . $pageuri,
 			'templates' => array(
 				'confirmation' => $confirmation, // filename in form overrides path or html string
 				'elements' => 'formclass_defaulthtml.php',
 				'mailreply' => $mailtemplate // filename in form overrides path or html string
+			),
+
+			'fieldsets' => array(
+				'sender-info' => array(
+					'label' => __('Personal info'),
+					'fields' => array('name', 'email', 'phone')
+				),
+				'sender-address' => array(
+					'label' => __('Address'),
+					'fields' => array('address', 'postcode', 'city'),
+				),
 			),
 			'redirect' => $redirect, // url for redirect after successfull submission of form
 			'method' => 'post', // get | post
@@ -193,6 +221,13 @@ function smarty_orderform($params, &$smarty) {
 			'fields' => $fields,
 			'mail_config' => $mail_config,
 		);
+		
+		if(!empty($params['pre_html'])) {
+			$config['pre_html'] = $params['pre_html'];
+		}
+		if(!empty($params['post_html'])) {
+			$config['post_html'] = $params['post_html'];
+		}
 
 		$form = new FormBuilder($config);
 		$form->execute_form();

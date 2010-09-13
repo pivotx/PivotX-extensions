@@ -1,16 +1,15 @@
 <p>De volgende bestelling is verzonden:</p>
 
-<p>Naam: %text_name%<br />
-E-mail adres: %text_email%</p>
-
-
+<p>Naam: %name%<br />
+E-mail adres: %email%</p>
+<p>Phone number: %phone%</p>
 <p>Address:<br />
-%text_address%<br />
-%text_postcode% %text_city%</p>
+%address%<br />
+%postcode% %city%</p>
 
 <p>Bericht:<p>
 <div>
-%textarea_message%
+%message%
 </div>
 
 

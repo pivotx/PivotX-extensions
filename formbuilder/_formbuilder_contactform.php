@@ -13,6 +13,8 @@ $PIVOTX['template']->register_function('contactform', 'smarty_contactform');
 function smarty_contactform($params, &$smarty) {
 		global $PIVOTX;
 
+		$params = cleanParams($params);
+	
 		$vars = $smarty->get_template_vars();
 		$pageuri = get_default($vars['page']['uri'], $vars['entry']['uri']);
 		$pagelink = get_default($vars['entry']['link'], $vars['page']['link']);
@@ -26,23 +28,26 @@ function smarty_contactform($params, &$smarty) {
 		}
 		//debug_printbacktrace();
 
-		if(!in_array($PIVOTX['parser']->modifier['pagetype'], array('page', 'entry')) && !isset($params['showinweblog'])) {
+		if(in_array($PIVOTX['parser']->modifier['pagetype'], array('weblog')) && !isset($params['showinweblog'])) {
+			debug("You might want to set a showinweblog parameter.");
 			return;
 		} elseif(!in_array($PIVOTX['parser']->modifier['pagetype'], array('page', 'entry')) && isset($params['showinweblog'])) {
 			if(empty($params['to']) || !isemail($params['to'])) {
 				return 'Formbuilder ERROR: the recipient must be set for this form';
 			}
+		} elseif(!in_array($PIVOTX['parser']->modifier['pagetype'], array('page', 'entry'))) {
+			debug("Continue at your own peril - you're not in page-and-entryland anymore");
 		}
 
 		$mail_config = array(
 			'subject' => 'Contact form -'.$PIVOTX['config']->data['sitename'],
 			'recipient' => array(
 				'email' => 'contactform@example.com',
-				'name' => 'Contact form'
+				'name' => __('Contact form')
 			),
 			'sender' => array(
 				'email' => 'contactform@example.com',
-				'name' => 'Contact form'
+				'name' => __('Contact form')
 			),
 			'method' => 'mail' // mail | smtp
 		);
@@ -101,7 +106,7 @@ function smarty_contactform($params, &$smarty) {
 				$type = $labelval = $label = $rule = $key = false;
 				list($type, $labelval) = explode(':', trim($typerule));
 				list($label, $rule) = explode(',', trim($labelval));
-				$key = $type ."_". preg_replace('/[^a-z0-9]/i','',trim(strtolower(strip_tags($label))));
+				$key = preg_replace('/[^a-z0-9]/i','',trim(strtolower(strip_tags($label))));
 				$required = stristr($rule, 'required')?true:false;
 				if(!$required && !empty($rule) && !stristr($rule, 'ifany')) {
 					$rule = 'ifany|'.$rule;
@@ -112,35 +117,35 @@ function smarty_contactform($params, &$smarty) {
 					'label' => $label,
 					'required' => $required,
 					'validation' => $rule,
-					'requiredmessage' => $label.' is a required field. Please enter a '.$label,
-					'error' => 'Please enter a '.$label
+					'requiredmessage' => sprintf(__("\"%s\" is a required field."), $label) . sprintf(__("Please enter a \"%s\""), $label),
+					'error' => sprintf(__("Please enter a \"%s\""), $label)
 				);
 			}
 		} else {
 			$fields = array(
 				'name' => array(
-					'name' => 'text_name',
-					'label' => 'Name',
+					'name' => 'name',
+					'label' => __('Name'),
 					'type' => 'text',
-					'requiredmessage' => 'This is a required field. Please enter a name',
 					'validation' => 'string',
-					'error' => 'Please enter a name'
+					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Name')) . sprintf(__("Please enter a \"%s\""), __('Name')),
+					'error' => sprintf(__("Please enter a \"%s\""), __('Name'))
 				),
 				'email' => array(
-					'name' => 'text_email',
-					'label' => 'E-mail address',
+					'name' => 'email',
+					'label' => __('E-mail address'),
 					'type' => 'text',
-					'requiredmessage' => 'This is a required field. Please enter a valid e-mail address',
 					'validation' => 'email',
-					'error' => 'Please enter a correct e-mail address'
+					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('E-mail address')) . sprintf(__("Please enter a \"%s\""), __('E-mail address')),
+					'error' => sprintf(__("Please enter a \"%s\""), __('E-mail address'))
 				),
 				'message' => array(
-					'name' => 'textarea_message',
-					'label' => 'Message',
+					'name' => 'message',
+					'label' => __('Message'),
 					'type' => 'textarea',
-					'requiredmessage' => 'This is a required field. Please enter a message',
 					'validation' => 'string',
-					'error' => 'Please enter a message'
+					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Message')) . sprintf(__("Please enter a \"%s\""), __('Message')),
+					'error' => sprintf(__("Please enter a \"%s\""), __('Message'))
 				)
 			);
 		}
@@ -157,7 +162,7 @@ function smarty_contactform($params, &$smarty) {
 				'verzenden' => array(
 					'type' => 'submit',
 					'label' => '',
-					'value' => 'Send message'
+					'value' => __('Send message')
 				)
 			);
 		}
@@ -178,6 +183,14 @@ function smarty_contactform($params, &$smarty) {
 			'fields' => $fields,
 			'mail_config' => $mail_config,
 		);
+		
+		if(!empty($params['pre_html'])) {
+			$config['pre_html'] = $params['pre_html'];
+		}
+		if(!empty($params['post_html'])) {
+			$config['post_html'] = $params['post_html'];
+		}
+		
 		//var_dump($config);
 		$form = new FormBuilder($config);
 		$form->execute_form();

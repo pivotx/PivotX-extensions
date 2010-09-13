@@ -40,11 +40,3 @@ The uniqid tag will be replaced by a unique identifier (something like: 05d96806
 ### *%posted_content%*
 
 The posted_content replacement tag is usefull if you don't want to bother with manyally defining all fields in your form. It will list all field names and the submitted form values.
-
-*   [Home](index.markdown)
-*   [Installation](installation.markdown)
-*   [Usage](usage.markdown)
-*   [Examples](examples.markdown)
-*   [Options](options.markdown)
-*   [FAQ](faq.markdown)
-*   [Changelog](changelog.markdown)

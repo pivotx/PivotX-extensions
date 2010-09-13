@@ -145,26 +145,27 @@ fieldsets
 
 mail_config
 :   Configuration variables for the e-mail function.
-    subject
-    :   Simple string with the subject of the email
 
-    recipient
-    :   Named array of `email` and `name` for the recipient, both keys are required. If the optional keys `formfield_email` and `formfield_name` exist they must contain the identifying key for an e-mail and a name field, and will be added as an extra recipient.
+subject
+:   Simple string with the subject of the email
 
-    sender
-    :   Named array of `email` and `name` for the sender.
+recipient
+:   Named array of `email` and `name` for the recipient, both keys are required. If the optional keys `formfield_email` and `formfield_name` exist they must contain the identifying key for an e-mail and a name field, and will be added as an extra recipient.
 
-    bcc
-    :   Named array of `email` and `name` for the bcc field.
+sender
+:   Named array of `email` and `name` for the sender.
 
-    cc
-    :   Named array of `email` and `name` for the cc field. If `email` and `name` are false the keys `formfield_email` and `formfield_name` are required and must contain the identifying key for an e-mail and a name field
+bcc
+:   Named array of `email` and `name` for the bcc field.
 
-    method
-    :   E-mail send method. `mail` or `smtp`
+cc
+:   Named array of `email` and `name` for the cc field. If `email` and `name` are false the keys `formfield_email` and `formfield_name` are required and must contain the identifying key for an e-mail and a name field
 
-    smtp
-    :   Only used with smtp method. Named array with `login`, `password` and SMTP `server` values.
+method
+:   E-mail send method. `mail` or `smtp`
+
+smtp
+:   Only used with smtp method. Named array with `login`, `password` and SMTP `server` values.
 
     $config['mail_config'] = array(
       'subject' => 'E-mail subject',
@@ -278,3 +279,10 @@ If you include `'listentoget'=>true` the form will use the get value for the fie
 ## Extra markup options
 
 Every field, fieldset and the form itself can have a `pre_html` and/or a `post_html` keys where you can insert extra custom text before or after those elements.
+
+These parameters also work for the smarty shortcuts.
+
+    [[ contactform
+    pre_html="<p>this will be shown before the form</p>"
+    pre_html="<p>this will be shown after the form</p>"
+    submit="Send message" ]]

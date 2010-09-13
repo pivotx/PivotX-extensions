@@ -27,7 +27,7 @@ The confirmation template is a HTML snippet with the message you want to show on
 
 Replacement tags will be replaced with the content of the field they represent. For example if the form contains an e-mail field named `user_email` and a message named `site-comment`  the replacement tags will be `%user_email%` and `%site-comment%`.
 
-If you use custom fields in the `[[ contactform ]]` and the `[[ orderform ]]` tags the replacement tag will be generated from the type of your input field, an underscore and the label of your input field without spaces or punctuation marks. So an input field like `checkbox:Yes, I want to subscribe to the newsletter` will become `%checkbox_yesiwantosubscribetothenewsletter%` and `text:Your name,required` will be `%text_yourname%`.
+If you use custom fields in the `[[ contactform ]]` and the `[[ orderform ]]` tags the replacement tag will be generated from the the label of your input field without spaces or punctuation marks. So an input field like `checkbox:Yes, I want to subscribe to the newsletter` will become `%yesiwantosubscribetothenewsletter%` and `text:Your name,required` will be `%yourname%`.
 
 ## Special *%replacement%* tags
 

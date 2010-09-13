@@ -52,7 +52,7 @@ EOM;
  * The submit button
  */
 $this->html['submit'] = <<< EOM
-<input type="submit" tabindex="%tabindex%" value="%submit%" />
+<input type="submit" tabindex="%tabindex%" value="%submit%" name="%submit%" class="button" />
 EOM;
 
 /**

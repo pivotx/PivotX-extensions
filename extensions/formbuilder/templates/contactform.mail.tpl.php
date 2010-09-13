@@ -1,10 +1,10 @@
 De volgende inzending is ontvangen:
 
-Naam: %text_name%
-E-mail adres: %text_email%
+Naam: %name%
+E-mail adres: %email%
 
 Bericht:
-%textarea_message%
+%message%
 
 
 --

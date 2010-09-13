@@ -7,12 +7,12 @@
  * Two Kings Form Class and all its parts are licensed under the GPL version 2.
  * see: http://www.twokings.eu/tools/license for more information.
  *
- * @version 0.21
+ * @version 0.22
  * @author Lodewijk evers, lodewijk@twokings.nl
  * @copyright GPL, version 2
  * @link http://twokings.eu/tools/
  *
- * Date: 2010-05-28
+ * Date: 2010-08-03
  *
  */
 

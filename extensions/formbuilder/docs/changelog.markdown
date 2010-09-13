@@ -1,5 +1,13 @@
 # Changelog
 
+*   ## Version 0.22
+	2010-08-03
+	
+	*   added gettext to default templates
+	*   added pre_html and post_html to all short formbuilder tags
+	*   modified sendtofriend, changed defaults handling
+	*   modified orderform, added phone number field
+	*   removed the type labels from the replacement variables in the confirmation templates
 *   ## Version 0.21
 	2010-05-28
 	

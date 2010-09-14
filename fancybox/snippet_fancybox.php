@@ -499,7 +499,7 @@ function fancyboxIncludeCallback(&$html) {
     // in the header) or if no charset meta tag we insert it at the top of the head section.
     if (!$jqueryincluded) {
         $html = preg_replace("#<script ([^>]*?/jquery[a-z0-9_-]*\.js['\"][^>]*?)>\s*</script>#si", 
-            "<script $1></script>\n" . $insert, $html);
+            "<script $1></script>\n" . $insert, $html, 1);
     } elseif (preg_match("/<meta http-equiv=['\"]Content-Type/si", $html)) {
         $html = preg_replace("/<meta http-equiv=(['\"]Content-Type[^>]*?)>/si", "<meta http-equiv=$1>\n" . $insert, $html);
     } else {

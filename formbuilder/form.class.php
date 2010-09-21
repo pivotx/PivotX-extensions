@@ -204,7 +204,8 @@ class FormBuilder
 			// prepare all key/value pairs for %posted_data%
 			$key_values = '';
 			foreach($this->form->fields as $value) {
-				if($value['post_value'] && !in_array(array('check_referrer', 'hidden_formid'), $value['name'])) {
+				// exclude hidden system fields
+				if($value['post_value'] && !in_array($value['name'], array('check_referrer', 'hidden_formid'))) {
 					$key_values .= $value['name'] .": %". $value['name'] ."%\n";
 				}
 			}
@@ -262,6 +263,16 @@ class FormBuilder
 	}
 
 	function execute_form() {
+		if(is_array($_REQUEST) && isset($_REQUEST) && $_REQUEST['hidden_formid'] != md5($this->config['id'].$this->form->spamkey)) {
+			//debug('form identifier is not right: '. $_REQUEST['hidden_formid'] ." != ".md5($this->config['id'].$this->form->spamkey));
+			//debug('redirected request, post and get');
+			$oldrequest = $_REQUEST;
+			$oldpost = $_POST;
+			$oldget = $_GET;
+			unset($_REQUEST);
+			unset($_POST);
+			unset($_GET);
+		}
 		if(is_array($_REQUEST) && !empty($_REQUEST)) {
 			foreach($_REQUEST as $key => $value) {
 				if(isset($this->config['fields'][$key]['listentoget']) && $this->config['fields'][$key]['listentoget']==true) {
@@ -318,7 +329,7 @@ class FormBuilder
 			'validation' => 'string',
 			'error' => ''
 		);
-		$this->formsubmissionkey = md5($_SERVER['REMOTE_ADDR'].$this->form->spamkey);
+		$this->formsubmissionkey = md5($_SERVER['REMOTE_ADDR'].$_SERVER["HTTP_USER_AGENT"].$this->form->spamkey);
 		//debug($_SERVER['REMOTE_ADDR']. ' ' .$this->form->spamkey . ' ' . $this->formsubmissionkey );
 		$this->config['fields']['referrer'] = array(
 			'name' => 'check_referrer',
@@ -382,13 +393,13 @@ class FormBuilder
 		}
 		
 		if(isset($_POST['check_referrer']) && ($_POST['check_referrer'] != $this->formsubmissionkey)) {
-			debug('spam referrer is not right: '. $_POST['check_referrer'] .' should be '. $this->formsubmissionkey." - javascript must be disabled or you're a spammer.");
+			debug('spam referrer is not right: '. $_POST['check_referrer'] .' should be '. $this->formsubmissionkey." - javascript must be disabled or someone is a spammer.");
 			$this->form->add(array('type' => 'custom', 'text' => '<noscript><p>'. __('To prevent spam JavaScript must be enabled for submitting this form.') .'</p></noscript>'));
 			$this->validationvalue = 0;
 		} elseif(isset($_POST['hidden_formid']) && ($_POST['hidden_formid'] != md5($this->config['id'].$this->form->spamkey))) {
 			debug('form identifier is not right: '. $_POST['hidden_formid'] ." != ".md5($this->config['id'].$this->form->spamkey) ."\nYou were probably submitting another form.");
 			$this->validationvalue = 0;
-		} elseif(!array_key_exists('silent', $_REQUEST) || $_REQUEST['silent']!=true) {
+		} elseif(is_array($_REQUEST) && !array_key_exists('silent', $_REQUEST) || $_REQUEST['silent']!=true) {
 			//debug('form identifier is right or empty: '. $_POST['hidden_formid'] ." != ".md5($this->config['id'].$this->form->spamkey));
 			$this->validationvalue = $this->form->validate();
 			//debug('form validated... status is: '.$this->validationvalue);
@@ -423,6 +434,16 @@ class FormBuilder
 			print $_POST['hidden_confirmation'];
 		} else {
 			$this->form->display();
+		}
+		if(is_array($oldrequest) && is_array($oldpost) && is_array($oldget)) {
+			//debug('reloaded request, post and get');
+			
+			$_REQUEST = $oldrequest;
+			$_POST = $oldpost;
+			$_GET = $oldget;
+			unset($oldrequest);
+			unset($oldpost);
+			unset($oldget);
 		}
 	}
 }

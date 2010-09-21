@@ -1,12 +1,12 @@
 <?php
 // - Extension: Formbuilder and contactforms
-// - Version: 0.22
+// - Version: 0.23
 // - Author: Two Kings // Lodewijk Evers
 // - E-mail: lodewijk@twokings.nl
 // - Description: Add form templates and [[contactform]] snippets to your entries and pages
-// - Date: 2010-08-03
+// - Date: 2010-09-21
 // - Identifier: formbuilder
-// - Required PivotX version: 2.1.0 beta7
+// - Required PivotX version: 2.1.0
 
 if(!class_exists('FormBuilder')) {
 	$formbuilderbasedir = dirname(__FILE__);

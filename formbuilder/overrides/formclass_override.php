@@ -45,12 +45,12 @@ class FormOverride {
     var $use_javascript = false;
     var $uploads = array();
     var $submitloc = " bottom";
-    var $tabindex = 500;
+    static $tabindex = false;
 
 
 
 
-    function form($name, $action="", $submit="Submit") {
+    function FormOverride($name, $action="", $submit="Submit") {
 
         // Set up the default HTML for the various form elements
         $this->init_html();
@@ -75,6 +75,9 @@ class FormOverride {
         $this->formname = $name;
 
 
+        if (self::$tabindex === false) {
+            self::$tabindex = 700;
+        }
     }
 
 
@@ -296,7 +299,7 @@ class FormOverride {
 
             // After the header we print a submit button, if we need one.
             if ( ($field['type']=="header") && (!$skip_submit) && (strpos($this->submitloc, "top") > 0) ) {
-                $submit = str_replace("%tabindex%", $this->tabindex++, $this->html['submit']);
+                $submit = str_replace("%tabindex%", self::$tabindex++, $this->html['submit']);
                 $output .= $submit."\n";
             }
 
@@ -304,8 +307,8 @@ class FormOverride {
 
 
         if ( (!$skip_submit) && (strpos($this->submitloc, "bottom") > 0) ) {
-            $this->tabindex++;
-            $submit = str_replace("%tabindex%", $this->tabindex++, $this->html['submit']);
+            self::$tabindex++;
+            $submit = str_replace("%tabindex%", self::$tabindex++, $this->html['submit']);
             $output .= $submit."\n";
         }
 
@@ -727,7 +730,7 @@ class FormOverride {
 
         }
         $output = str_replace('%formname%', $this->formname, $output);
-        $output = str_replace("%tabindex%", $this->tabindex++, $output);
+        $output = str_replace("%tabindex%", self::$tabindex++, $output);
 
         // Hidden fields are collected and inserted outside the table at the end.
         if (($field['type'] == "hidden") || ($field['type'] == "csrf")) {

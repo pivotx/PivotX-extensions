@@ -28,10 +28,10 @@ For including and styling the form you need a basic knowledge of HTML, CSS. For 
 
 ## Version Information
 
-*   Version: 0.22
-*   Date: 2010-08-03
+*   Version: 0.23
+*   Date: 2010-09-21
 *   Requirements:
-    *   PivotX 2.1.0 beta7 or higher
+    *   PivotX version: 2.1.0 or higher
     *   PHP (Version 5.x)
     *   Access to the mail function or an SMTP account
     *   You must enable jQuery on the pages with forms

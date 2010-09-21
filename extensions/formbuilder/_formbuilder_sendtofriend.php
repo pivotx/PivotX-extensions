@@ -48,7 +48,8 @@ function smarty_sendtofriend($params, &$smarty) {
 				return 'Formbuilder ERROR: the recipient must be set for this form';
 			}
 		} elseif(!in_array($PIVOTX['parser']->modifier['pagetype'], array('page', 'entry'))) {
-			debug("Continue at your own peril - you're not in page-and-entryland anymore");
+			// does not do anything
+			//debug("Continue at your own peril - you're not in page-and-entryland anymore");
 		}
 
 		$username = get_default($PIVOTX['db']->entry['user'] , $PIVOTX['pages']->currentpage['user']);
@@ -68,7 +69,6 @@ function smarty_sendtofriend($params, &$smarty) {
 		    'formfield_name' => 'namesender',
 		    'email' => false,
 		    'name' => false
-
 		  ),
 		  'method' => 'mail'
 		);

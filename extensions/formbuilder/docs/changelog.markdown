@@ -1,5 +1,10 @@
 # Changelog
 
+*   ## Version 0.23
+	2010-09-21
+
+	*   added extra protection against parsing the wrong forms
+	*   added tabindex improvements (tnx marcel)
 *   ## Version 0.22
 	2010-08-03
 	

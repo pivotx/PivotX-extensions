@@ -36,7 +36,8 @@ function smarty_contactform($params, &$smarty) {
 				return 'Formbuilder ERROR: the recipient must be set for this form';
 			}
 		} elseif(!in_array($PIVOTX['parser']->modifier['pagetype'], array('page', 'entry'))) {
-			debug("Continue at your own peril - you're not in page-and-entryland anymore");
+			// does not do anything
+			//debug("Continue at your own peril - you're not in page-and-entryland anymore");
 		}
 
 		$mail_config = array(

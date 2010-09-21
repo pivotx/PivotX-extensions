@@ -35,6 +35,7 @@ function smarty_orderform($params, &$smarty) {
 				return 'Formbuilder ERROR: the recipient must be set for this form';
 			}
 		} elseif(!in_array($PIVOTX['parser']->modifier['pagetype'], array('page', 'entry'))) {
+			// does not do anything
 			//debug("Continue at your own peril - you're not in page-and-entryland anymore");
 		}
 
@@ -63,6 +64,7 @@ function smarty_orderform($params, &$smarty) {
 		}
 		if(!empty($params['from']) && isemail($params['from'])) {
 			$mail_config['sender']['email'] = $params['from'];
+			$mail_config['sender']['name'] = $params['from_name'];
 		} else {
 			$mail_config['sender']['email'] = $user['email'];
 			$mail_config['sender']['name'] = $user['nickname'];
@@ -156,6 +158,7 @@ function smarty_orderform($params, &$smarty) {
 				'city' => array(
 					'name' => 'city',
 					'label' => __('City'),
+					'type' => 'text',
 					'validation' => 'string',
 					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('City')) . sprintf(__("Please enter a \"%s\""), __('City')),
 					'error' => sprintf(__("Please enter a \"%s\""), __('City'))

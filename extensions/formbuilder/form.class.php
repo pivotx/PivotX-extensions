@@ -286,8 +286,12 @@ class FormBuilder
 		}
 		// prepare all fieldsets
 		foreach($this->config['fieldsets'] as $fieldset => $fieldset_values) {
-			$safeid = preg_replace('/[^a-z0-9]/i','',trim(strtolower(strip_tags($fieldset_values['label']))));
-			$this->form->add(array('type' => 'custom', 'text' => '<fieldset id="fieldset-'.$safeid.'" class="formfieldset">'));
+			if(!$fieldset_values['id']) {
+				$safeid = 'fieldset-'. preg_replace('/[^a-z0-9]/i','',trim(strtolower(strip_tags($fieldset_values['label']))));
+			} else {
+				$safeid = preg_replace('/[^a-z0-9]/i','',trim(strtolower(strip_tags($fieldset_values['id']))));
+			}
+			$this->form->add(array('type' => 'custom', 'text' => '<fieldset id="'.$safeid.'" class="formfieldset">'));
 			if(!empty($fieldset_values['label'])) {
 				$this->form->add(array('type' => 'custom', 'text' => '<legend>'.$fieldset_values['label'].'</legend>'));
 			}

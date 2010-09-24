@@ -209,10 +209,12 @@ function smarty_orderform($params, &$smarty) {
 
 			'fieldsets' => array(
 				'sender-info' => array(
+					'id' => 'personal',
 					'label' => __('Personal info'),
 					'fields' => array('name', 'email', 'phone')
 				),
 				'sender-address' => array(
+					'id' => 'address',
 					'label' => __('Address'),
 					'fields' => array('address', 'postcode', 'city'),
 				),

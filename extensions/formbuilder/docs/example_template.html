@@ -145,10 +145,12 @@ $config = array(
   ),
   'fieldsets' => array(
     'personal' => array(
+	  'id' => 'personal',
       'label' => 'Personal',
       'fields' => array('name', 'company', 'email', 'phone')
     ),
     'messagebox' => array(
+	  'id' => 'questions',
       'label' => 'Your message or question',
       'fields' => array('message'),
       'post_html' => '<p>We like to hear from you, but please keep it on topic.</p>',

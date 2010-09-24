@@ -1,5 +1,9 @@
 # Changelog
 
+*   ## Version 0.24
+	2010-09-24
+
+	*   added support for custom id's in fieldsets
 *   ## Version 0.23
 	2010-09-21
 

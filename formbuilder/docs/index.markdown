@@ -28,8 +28,8 @@ For including and styling the form you need a basic knowledge of HTML, CSS. For 
 
 ## Version Information
 
-*   Version: 0.23
-*   Date: 2010-09-21
+*   Version: 0.24
+*   Date: 2010-09-24
 *   Requirements:
     *   PivotX version: 2.1.0 or higher
     *   PHP (Version 5.x)

@@ -39,7 +39,7 @@ $this->addHook(
     );
 
 
-require_once('./includes/magpie/rss_fetch.inc');
+require_once(dirname(dirname(dirname(__FILE__)))."/includes/magpie/rss_fetch.inc");
 
 
 /**

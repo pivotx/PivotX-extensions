@@ -1,6 +1,6 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.10
+// - Version: 0.11
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
@@ -421,6 +421,17 @@ function fancyboxIncludeCallback(&$html) {
         $fbparms .= "'titleFormat': function(title, currentArray, currentIndex, currentOpts) { return '<span id=\"fancybox-title-over\">";
         $fbparms .= __("Image");
         $fbparms .= " ' + (currentIndex + 1) + ' / ' + currentArray.length + (title.length ? ' &nbsp; ' + title : '') + '</span>';}";
+        $fbparms .= "});\n";
+    } elseif ($fbprof == 4) {
+        $fbparms = "\t jQuery(\"a.fancybox\").fancybox({ ";
+        // default profile according to fancybox.net
+        $fbparms .= "padding: 10, margin: 20,";
+        $fbparms .= "'titlePosition': 'outside', ";
+        $fbparms .= "'transitionIn': 'fade', 'transitionOut': 'fade', ";
+        $fbparms .= "'overlayShow': true, 'overlayOpacity': 0.3, ";
+        $fbparms .= "'opacity': false, 'speedIn': 300, 'speedOut': 300, 'changeSpeed': 300, ";
+        $fbparms .= "'showCloseButton': true, 'cyclic': false, ";
+        $fbparms .= "'titleFormat': null";
         $fbparms .= "});\n";
     } else {              
         debug("Config option fancybox_profile has an incorrect value, profile set to default.");   

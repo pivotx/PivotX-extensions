@@ -108,16 +108,17 @@ Currently these values exist:
   * **1** - (default) Title over image / Transition fade / Close button visible
   * **2** - Title outside image / Transition elastic / Different zoomspeed / Close button visible / Cyclic display
   * **3** - Title over image with "Image n/n" in front / Transition fade / No close button / Cyclic display / No padding
+  * **4** - Defaults according to fancybox site (see <http://fancybox.net/api>)
 
-If you want additional profiles to be created, let us know!
+If you want additional profiles to be created, please let us know!
 
 Warning!
 --------
 
 If you didn't install PivotX directly under the root directory (public_html) 
-then you'll have to edit the fancybox css file to make it work correctly in 
-Internet Explorer. At the end of this file several src lines are coded to point 
-to the different png files needed for display.
+then you'll have to edit the fancybox css file (IE version) to make it work 
+correctly in Internet Explorer. At the end of this file several src lines are 
+coded to point to the different png files needed for display.
 
 For example:
 

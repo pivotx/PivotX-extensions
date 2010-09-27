@@ -109,6 +109,10 @@ function smarty_fancybox($params, &$smarty) {
         $title = $alt;
     }
 
+    // Clean title and alternative text before using in generated html
+    $title = cleanAttributes($title);
+    $alt = cleanAttributes($alt);
+
     // If the thumbnail exists, make the HTML for it, else just use the text for a link.
     // use the current settings for uploadwidth/height because thumb can have diff.size
     if( file_exists( $PIVOTX['paths']['upload_base_path'].$thumbname )) {
@@ -477,7 +481,7 @@ function fancyboxIncludeCallback(&$html) {
 
     $insert .= "\n\t<!-- Includes for Fancybox script -->\n";
     $insert .= "\t<link rel=\"stylesheet\" href=\"{$path}jquery.fancybox-1.3.1.css\" type=\"text/css\" media=\"screen\" />\n";
-    $insert .= "\t<!--[if IE]>\n";
+    $insert .= "\t<!--[if lt IE 7]>\n";
     $insert .= "\t<link rel=\"stylesheet\" href=\"{$path}jquery.fancybox_IE_-1.3.1.css\" type=\"text/css\" media=\"screen\" />\n";
     $insert .= "\t<![endif]-->\n";
 

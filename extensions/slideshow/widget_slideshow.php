@@ -1,11 +1,11 @@
 <?php
 // - Extension: Slideshow
-// - Version: 0.6
+// - Version: 0.7
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A snippet and widget to add a slideshow to your site or entries/pages/templates.
-// - Date: 2010-02-20
+// - Date: 2010-09-27
 // - Identifier: slideshow
 // - Required PivotX version: 2.0.2
 
@@ -21,6 +21,10 @@ $slideshow_config = array(
     'slideshow_orderby' => "date_desc",
     'slideshow_popup' => 'no',
     'slideshow_only_snippet' => 0,
+    'slideshow_recursion' => 'no',
+    'slideshow_nicenamewithdirs' => 0,
+    'slideshow_iptcindex' => "",
+    'slideshow_iptcencoding' => "",
 );
 
 
@@ -93,6 +97,30 @@ function widget_slideshow() {
 }
 
 /**
+ * Returns a list of sub directories with absolute paths
+ */
+function slideshowGetDirs($dir, $recursion='all') {
+    $array = array();
+    $d = dir($dir);
+    while (false !== ($entry = $d->read())) {
+        if ($entry!='.' && $entry!='..' && $entry!='.svn') {
+            $entry = $entry.DIRECTORY_SEPARATOR;
+            if (is_dir($dir.$entry)) {
+                $subdirs = slideshowGetDirs($dir.$entry);
+                if ($recursion=='all' || count($subdirs) == 0) {
+                    $array[] = $dir.$entry;
+                }
+                if (count($subdirs) > 0) {
+                    $array = array_merge($array, $subdirs);
+                }
+            }
+        }
+    }
+    $d->close();
+    return $array;
+}
+
+/**
  * Output a slideshow feed as a template
  *
  * @param array $params
@@ -135,7 +163,7 @@ function slideNext_%count%() {
 EOF;
 
     $params = clean_params($params);
-    foreach(array('timeout','folder','width','height','limit','orderby','popup') as $key) {
+    foreach(array('timeout','folder','width','height','limit','orderby','popup','recursion','nicenamewithdirs','iptcindex','iptcencoding') as $key) {
         if (isset($params[$key])) {
             $$key = $params[$key];
         } else {
@@ -143,8 +171,7 @@ EOF;
         }
     }
 
-    $imagefolder = addTrailingSlash($PIVOTX['paths']['upload_base_path']."$folder");
-    $imagelink = addTrailingSlash($PIVOTX['paths']['upload_base_url']."$folder");
+    $imagefolder = addTrailingSlash($PIVOTX['paths']['upload_base_path'].$folder);
     $ok_extensions = explode(",", "jpg,jpeg,png,gif");
 
     if (!file_exists($imagefolder) || !is_dir($imagefolder)) {
@@ -161,32 +188,39 @@ EOF;
 
     $key = "";
 
-    $dir = dir($imagefolder);
-    while (false !== ($entry = $dir->read())) {
-        if ( in_array(strtolower(getExtension($entry)), $ok_extensions) ) {
-
-            if (strpos($entry, ".thumb.")>0) {
-                continue;
-            }
-
-            if ($order=='date_asc' || $order=='date_desc') {
-                $key = filemtime($imagefolder.$entry).rand(10000,99999);
-                //echo "[$key - $imagefolder$entry] <br />";
-                $images[$key] = $entry;
-            } else {
-                $images[] = $entry;
-            }
+    if ($recursion == 'no') {
+        $dirs = array($imagefolder);
+    } else {
+        $dirs = slideshowGetDirs($imagefolder, $recursion);
+        if ($recursion == 'all') {
+            array_unshift($dirs, $imagefolder);
         }
     }
-    $dir->close();
+    foreach($dirs as $folder) {
+        $dir = dir($folder);
+        while (false !== ($entry = $dir->read())) {
+            if ( in_array(strtolower(getExtension($entry)), $ok_extensions) ) {
+                if (strpos($entry, ".thumb.")>0) {
+                    continue;
+                }
+                $entry = $folder.$entry;
+                if ($orderby=='date_asc' || $orderby=='date_desc') {
+                    $key = filemtime($entry).rand(10000,99999);
+                    $images[$key] = $entry;
+                } else {
+                    $images[] = $entry;
+                }
+            }
+        }
+        $dir->close();
+    }
 
-
-    if ($order=='date_asc') {
+    if ($orderby=='date_asc') {
         ksort($images);
-    } else if ($order=='date_desc') {
+    } else if ($orderby=='date_desc') {
         ksort($images);
         $images = array_reverse($images);
-    } else if ($order=='alphabet') {
+    } else if ($orderby=='alphabet') {
         natcasesort($images);
     } else {
         shuffle($images);
@@ -201,7 +235,6 @@ EOF;
     $PIVOTX['extensions']->addHook('after_parse', 'insert_before_close_head', $js_insert);
 
     // If a specific popup type is selected execute the callback.
-    // if (isset($params['popup'])) {
     if ($popup != 'no') {
         $callback = $popup."IncludeCallback";
         if (function_exists($callback)) {
@@ -214,15 +247,35 @@ EOF;
     $output = "\n<div id=\"pivotx-slideshow-$slideshowcount\" class=\"svw\">\n<ul>\n";
 
     foreach ($images as $image) {
+        $file = $image;
+        $image = str_replace($PIVOTX['paths']['upload_base_path'], '', $image);
+        $image = str_replace(DIRECTORY_SEPARATOR, '/', $image);
+        $nicefilename = formatFilename($image, $nicenamewithdirs);
 
+        $title = false;
+        if ($iptcindex) {
+            getimagesize($file, $iptc);
+            if (is_array($iptc) && $iptc['APP13']) {
+                $iptc = iptcparse($iptc['APP13']);
+                $title = $iptc[$iptcindex][0];
+                if ($iptcencoding) {
+                    $title = iconv($iptcencoding, 'UTF-8', $title);
+                }
+                $title = cleanAttributes($title);
+            }
+        }
+        if (!$title) {
+            $title = $nicefilename;
+        }
+ 
         $line = "<li>\n";
         if ($popup != 'no') {
             $line .= sprintf("<a href=\"%s%s\" class=\"$popup\" rel=\"slideshow\" title=\"%s\">\n",
-                $imagelink, rawurlencode($image), formatFilename($image));
+                $PIVOTX['paths']['upload_base_url'], $image, $title);
         }
-        $line .= sprintf("<img src=\"%sincludes/timthumb.php?src=%s/%s&amp;w=%s&amp;h=%s&amp;zc=1\" " .
+        $line .= sprintf("<img src=\"%sincludes/timthumb.php?src=%s&amp;w=%s&amp;h=%s&amp;zc=1\" " .
                 "alt=\"%s\" width=\"%s\" height=\"%s\" />\n",
-            $PIVOTX['paths']['pivotx_url'], $folder, rawurlencode($image), $width, $height, formatFilename($entry), $width, $height);
+            $PIVOTX['paths']['pivotx_url'], rawurlencode($image), $width, $height, $title, $width, $height);
         if ($popup != 'no') {
             $line .= "</a>";
         }
@@ -344,10 +397,57 @@ function slideshowAdmin(&$form_html) {
     ));
 
     $form->add( array(
+        'type' => 'select',
+        'name' => 'slideshow_recursion',
+        'label' => __('Use recursion'),
+        'options' => array(
+            'no' => __("No"),
+            'leaf' => __("Leaf"),
+            'all' => __("All"),
+        ),
+        'isrequired' => 1,
+        'validation' => 'any',
+        'text' => sprintf('<p>%s</p>', 
+            __("If recursion is enabled images from either all subdirectories or just the leaf subdirectories will be included in the slide show."))
+    ));
+
+    $form->add( array(
         'type' => 'checkbox',
         'name' => 'slideshow_only_snippet',
         'label' => __("Use only as snippet"),
         'text' => sprintf(__("Yes, I don't want %s to appear among the widgets."), "Slideshow")
+    ));
+
+    $form->add( array(
+        'type' => 'checkbox',
+        'name' => 'slideshow_nicenamewithdirs',
+        'label' => __("Use directories in title"),
+        'text' => __("Yes, include directory names to the automatically generated image titles.")
+    ));
+
+    $form->add( array(
+        'type' => 'custom',
+        'text' => sprintf("<tr><td colspan='2'><h3>%s</h3> <em>(%s)</em></td></tr>",
+            __('Advanced Configuration'),
+            __('Warning! These features are experimental, so use them with caution!') )
+    ));
+
+    $form->add( array(
+        'type' => 'text',
+        'name' => 'slideshow_iptcindex',
+        'label' => __('IPTC Index'),
+        'value' => '',
+        'text' => __("Index of image title in IPTC table. (Picasa coments use '2#120'). Leave blank to generate a nicename."),
+        'size' => 32,
+    ));
+
+    $form->add( array(
+        'type' => 'text',
+        'name' => 'slideshow_iptcencoding',
+        'label' => __('IPTC Encoding'),
+        'value' => '',
+        'text' => __("Encoding of image IPTC texts. (Use the iconv encoding names.) Leave blank for no decoding."),
+        'size' => 32,
     ));
 
 

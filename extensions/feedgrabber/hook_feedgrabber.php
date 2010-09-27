@@ -39,7 +39,7 @@ $this->addHook(
     );
 
 
-require_once(dirname(dirname(dirname(__FILE__)))."/includes/magpie/rss_fetch.inc");
+include_once($PIVOTX['paths']['pivotx_path'].'includes/magpie/rss_fetch.inc');
 
 
 /**

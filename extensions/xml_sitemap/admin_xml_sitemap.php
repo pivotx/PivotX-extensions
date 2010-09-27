@@ -66,10 +66,16 @@ function xml_sitemapAdmin(&$form_html) {
     ));
 
     $form->add( array(
+        'type' => 'custom',
+        'text' => sprintf("<tr><td colspan='2'><h4>%s</h4></em></td></tr>",
+            __('Advanced Configuration'))
+    ));
+
+    $form->add( array(
         'type' => 'checkbox',
         'name' => 'xml_sitemap_filter_as_any_robot',
         'label' => __('Filter as any robot'),
-        'text' => makeJtip(__('Advanced') . ': ' . __('Filter as any robot'), 
+        'text' => makeJtip(__('Filter as any robot'), 
             __('Test each sitemap entry against all Disallow rules in robots.txt. User-agent qualifiers are ignored, every Disallow will contribute to URI exclusion.') . ' ' .
             __('If this doesn\'t make any sense to you, leave the check box unchecked.')),
     ));
@@ -78,7 +84,7 @@ function xml_sitemapAdmin(&$form_html) {
         'type' => 'textarea',
         'name' => 'xml_sitemap_additional_uris',
         'label' => __('Additional URIs'),
-        'text' => makeJtip(__('Advanced') . ': ' . __('Additional URIs'), __('Additional URIs to include in sitemap. Separate the URIs with a comma. The URIs should be absolute paths (i.e. /myuri/here). Last modified will always be set to the current day.')),
+        'text' => makeJtip(__('Additional URIs'), __('Additional URIs to include in sitemap. Separate the URIs with a comma. The URIs should be absolute paths (i.e. /myuri/here). Last modified will always be set to the current day.')),
         'value' => '',
         'rows' => 6,
         'cols' => 60,

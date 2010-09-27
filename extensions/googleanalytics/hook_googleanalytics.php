@@ -144,7 +144,7 @@ pageTracker._trackPageview();
 $this->addHook(
     'configuration_add',
     'googleanalytics',
-    array("googleanalyticsAdmin", "googleanalytics")
+    array("googleanalyticsAdmin", "Google Analytics")
 );
 
 /**
@@ -160,10 +160,10 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_UAcode',
-        'label' => "UA tracking code",
+        'label' => __('UA tracking code'),
         'value' => '',
-        'error' => 'Error - input needs to be in the form of UA-xxxxxx-x',
-        'text' => 'Enter your personal Google Analytics code. This looks like UA-xxxxxx-x. Check your account information after logging in to Google Analytics',
+        'error' => __('Error - input needs to be in the form of UA-xxxxxx-x'),
+        'text' => __('Enter your personal Google Analytics code. This looks like UA-xxxxxx-x. Check your account information after logging in to Google Analytics'),
         'size' => 15,
         'isrequired' => 0,
         'validation' => 'string|minlen=11|maxlen=11'
@@ -172,9 +172,9 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_login',
-        'label' => "Google account login",
+        'label' => __('Google account login'),
         'value' => '',
-        'error' => 'Error - input needs to be text',
+        'error' => __('Error - input needs to be text'),
         'text' => '',
         'size' => 40,
         'isrequired' => 0,
@@ -184,10 +184,11 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_password',
-        'label' => "Google account password",
+        'label' => __('Google account password'),
         'value' => '',
-        'error' => 'Error - input needs to be text',
-        'text' => 'If you want to display a summary of the statisctics on the Dashboard, fill in the specifics of a Google Account that has access to these statisctics. After doing this, click <a class="dialog" href="extensions/googleanalytics/testlogin.php" id="analyticsFetchID">this link</a> to test the login, and fetch the id, to fill in below.',
+        'error' => __('Error - input needs to be text'),
+        'text' => sprintf(__('If you want to display a summary of the statisctics on the Dashboard, fill in the specifics of a Google Account that has access to these statisctics. After doing this, click %sthis link%s to test the login, and fetch the id, to fill in below.'),
+        '<a class="dialog" href="extensions/googleanalytics/testlogin.php" id="analyticsFetchID">', '</a>'),
         'size' => 40,
         'isrequired' => 0,
         'validation' => 'string|minlen=1|maxlen=255'
@@ -197,26 +198,27 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_profileid',
-        'label' => "Profile ID",
+        'label' => __('Profile ID'),
         'value' => '',
-        'error' => 'Error - input needs to be a number',
-        'text' => 'The (secret) Profile ID number, that will be used to display the reports. See above, on how to get this number.',
+        'error' => __('Error - input needs to be a number'),
+        'text' => __('The (secret) Profile ID number, that will be used to display the reports. See above, on how to get this number.'),
         'size' => 15,
         'isrequired' => 0,
         'validation' => 'integer|minlen=1|maxlen=12'
     ));
         
-
     $form->add( array(
-        'type' => "hr"
+        'type' => 'custom',
+        'text' => sprintf("<tr><td colspan='2'><h4>%s</h4></em></td></tr>",
+            __('Advanced Configuration'))
     ));
 
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_setDomainName',
-        'label' => "Advanced: _setDomainName",
+        'label' => "_setDomainName",
         'value' => '',
-        'error' => 'Error - input needs to be text',
+        'error' => __('Error - input needs to be text'),
         'text' => 'Sets the domain name for cookies, e.g. .example.com, allows tracking of all subdomains in one profile',
         'size' => 40,
         'isrequired' => 0,
@@ -226,9 +228,9 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_setCampNameKey',
-        'label' => "Advanced: _setCampNameKey",
+        'label' => "_setCampNameKey",
         'value' => '',
-        'error' => 'Error - input needs to be text',
+        'error' => __('Error - input needs to be text'),
         'text' => 'Custom campaign variables: Campaign Name',
         'size' => 32,
         'isrequired' => 0,
@@ -238,9 +240,9 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_setCampMediumKey',
-        'label' => "Advanced: _setCampMediumKey",
+        'label' => "_setCampMediumKey",
         'value' => '',
-        'error' => 'Error - input needs to be text',
+        'error' => __('Error - input needs to be text'),
         'text' => 'Custom campaign variables: Campaign Medium',
         'size' => 32,
         'isrequired' => 0,
@@ -250,9 +252,9 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_setCampSourceKey',
-        'label' => "Advanced: _setCampSourceKey",
+        'label' => "_setCampSourceKey",
         'value' => '',
-        'error' => 'Error - input needs to be text',
+        'error' => __('Error - input needs to be text'),
         'text' => 'Custom campaign variables: Campaign Source',
         'size' => 32,
         'isrequired' => 0,
@@ -262,9 +264,9 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_setCampTermKey',
-        'label' => "Advanced: _setCampTermKey",
+        'label' => "_setCampTermKey",
         'value' => '',
-        'error' => 'Error - input needs to be text',
+        'error' => __('Error - input needs to be text'),
         'text' => 'Custom campaign variables: Campaign Term',
         'size' => 32,
         'isrequired' => 0,
@@ -274,9 +276,9 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_setCampContentKey',
-        'label' => "Advanced: _setCampContentKey",
+        'label' => "_setCampContentKey",
         'value' => '',
-        'error' => 'Error - input needs to be text',
+        'error' => __('Error - input needs to be text'),
         'text' => 'Custom campaign variables: Campaign Content',
         'size' => 32,
         'isrequired' => 0,
@@ -286,9 +288,9 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_setAllowLinker',
-        'label' => "Advanced: _setsetAllowLinker",
+        'label' => "_setsetAllowLinker",
         'value' => '',
-        'error' => 'Error - input needs to be text',
+        'error' => __('Error - input needs to be text'),
         'text' => 'If set to true, enable linker functionality, e.g. in combination with a 3rd-party shopping cart',
         'size' => 11,
         'isrequired' => 0,
@@ -298,9 +300,9 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_setSessionTimeout',
-        'label' => "Advanced: _setSessionTimeout",
+        'label' => "_setSessionTimeout",
         'value' => '',
-        'error' => 'Error - input needs to be text',
+        'error' => __('Error - input needs to be text'),
         'text' => 'Set the inactive session timeout in seconds',
         'size' => 20,
         'isrequired' => 0,
@@ -310,9 +312,9 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_setLocalServerMode',
-        'label' => "Advanced: _setLocalRemoteServerMode",
+        'label' => "_setLocalRemoteServerMode",
         'value' => '',
-        'error' => 'Error - input needs to be text',
+        'error' => __('Error - input needs to be text'),
         'text' => 'If set to true, allow Analytics to be used in conjunction with Urchin',
         'size' => 11,
         'isrequired' => 0,
@@ -322,9 +324,9 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_setTransactionDelim',
-        'label' => "Advanced: _setTransactionDelim",
+        'label' => "_setTransactionDelim",
         'value' => '',
-        'error' => 'Error - input needs to be text',
+        'error' => __('Error - input needs to be text'),
         'text' => 'Use a character other than "|" as the separator for UTM:T and UTM:I fields',
         'size' => 11,
         'isrequired' => 0,
@@ -334,7 +336,7 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'checkbox',
         'name' => 'ga_useASAC',
-        'label' => "Advanced: use AdSense Analytics Code",
+        'label' => __('Use AdSense Analytics Code'),
         'text' => 'Generate code for AdSense for Analytics reporting. <a href="http://www.google.com/support/googleanalytics/bin/answer.py?hl=en&answer=94743">See description.</a>',
     ));
 

@@ -141,7 +141,7 @@ $sociable_sites = array(
 
    'Twitter' => array(
       'favicon' => 'twitter.png',
-      'url' => 'http://twitter.com/?status=Must+check:+%title%+%link%',
+      'url' => 'http://twitter.com/home?status=Must+check:+%title%+%link%',
    ),
 
    'vybrali.sme.sk' => array(

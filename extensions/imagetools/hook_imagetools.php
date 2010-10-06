@@ -1,6 +1,6 @@
 <?php
 // - Extension: Image Tools
-// - Version: 0.3
+// - Version: 0.4
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
@@ -94,19 +94,25 @@ function smarty_thumbnail($params, &$smarty) {
         $linkmaxsize = getDefault($params['linkmaxsize'], 1000);
         
         if (empty($params['htmlwrap'])) {
-        	$link = $PIVOTX['paths']['pivotx_url'] . "includes/timthumb.php?"; // $PIVOTX['paths']['pivotx_url'] . "includes/timthumb.php?";
+        	$link = $PIVOTX['paths']['pivotx_url'] . "includes/timthumb.php?"; 
         } else {
         	$link = $PIVOTX['paths']['pivotx_url'] . "includes/timwrapper.php?";
         }
         
 		if (!empty($params['linkclass'])) {
-			$class = " class='".$params['class'] ."'";
+			$class = " class='".$params['linkclass'] ."'";
 		} else {
 			$class = "";
 		}
 		
-        $link .= "src=".base64_encode($params['src']);
-        $link .= "&amp;w=" . $linkmaxsize . "&amp;h=" . $linkmaxsize . "&amp;fit=1";        
+		$linkparams = array();
+		$linkparams[] = "src=" . base64_encode($params['src']);
+		$linkparams[] = "w=" . $linkmaxsize;
+		$linkparams[] = "h=" . $linkmaxsize;
+		$linkparams[] = "fit=1";
+		$linkparams[] = "type=." . getExtension($params['src']);
+
+		$link = $link . implode("&amp;", $linkparams);
         	
         $link = sprintf("<a href=\"%s\"%s>%s</a>", $link, $class, $img);
         

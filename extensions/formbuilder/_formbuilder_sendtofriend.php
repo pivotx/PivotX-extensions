@@ -104,17 +104,17 @@ function smarty_sendtofriend($params, &$smarty) {
 
 			'name' => array(
 				'name' => 'name',
-				'label' => __('Naam'),
+				'label' => __('Name'),
 				'type' => 'text',
 				'isrequired' => true,
 				'validation' => 'string',
 				'class' => 'default-value',
-				'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Naam')) . sprintf(__("Please enter a \"%s\""), __('Naam')),
-				'error' => sprintf(__("Please enter a \"%s\""), __('Naam'))
+				'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Name')) . sprintf(__("Please enter a \"%s\""), __('Name')),
+				'error' => sprintf(__("Please enter a \"%s\""), __('Name'))
 			),
 			'email' => array(
 				'name' => 'email',
-				'label' => __('Email adres'),
+				'label' => __('E-mail address'),
 				'type' => 'text',
 				'isrequired' => true,
 				'validation' => 'email',
@@ -124,13 +124,13 @@ function smarty_sendtofriend($params, &$smarty) {
 			),
 			'namesender' => array(
 				'name' => 'namesender',
-				'label' => __('Naam'),
+				'label' => __('Name'),
 				'type' => 'text',
 				'isrequired' => true,
 				'validation' => 'string',
 				'class' => 'default-value',
-				'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Naam')) . sprintf(__("Please enter a \"%s\""), __('Naam')),
-				'error' => sprintf(__("Please enter a \"%s\""), __('Naam'))
+				'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Name')) . sprintf(__("Please enter a \"%s\""), __('Name')),
+				'error' => sprintf(__("Please enter a \"%s\""), __('Name'))
 			),
 			'emailsender' => array(
 				'name' => 'emailsender',

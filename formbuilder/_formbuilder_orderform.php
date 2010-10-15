@@ -58,13 +58,18 @@ function smarty_orderform($params, &$smarty) {
 
 		if(!empty($params['to']) && isemail($params['to'])) {
 			$mail_config['recipient']['email'] = $params['to'];
+			if(!empty($params['to_name']) && isemail($params['to_name'])) {
+				$mail_config['recipient']['name'] = $params['to_name'];
+			}
 		} else {
 			$mail_config['recipient']['email'] = $user['email'];
 			$mail_config['recipient']['name'] = $user['nickname'];
 		}
 		if(!empty($params['from']) && isemail($params['from'])) {
 			$mail_config['sender']['email'] = $params['from'];
-			$mail_config['sender']['name'] = $params['from_name'];
+			if(!empty($params['from_name']) && isemail($params['from_name'])) {
+				$mail_config['sender']['name'] = $params['from_name'];
+			}
 		} else {
 			$mail_config['sender']['email'] = $user['email'];
 			$mail_config['sender']['name'] = $user['nickname'];
@@ -89,6 +94,14 @@ function smarty_orderform($params, &$smarty) {
 		} else {
 			$redirect = false;
 		}
+		
+		if(!empty($params['enable_logging'])&&$params['enable_logging']!='false') {
+				debug('logging on');
+			$enable_logging = true;
+		} else {
+			$enable_logging = false;
+		}
+		
 
 		if(!empty($params['fields'])) {
 			// cleanup fields into something usefull
@@ -225,6 +238,7 @@ function smarty_orderform($params, &$smarty) {
 			'buttons' => $submit,
 			'fields' => $fields,
 			'mail_config' => $mail_config,
+			'enable_logging'=> $enable_logging,
 		);
 		
 		if(!empty($params['pre_html'])) {

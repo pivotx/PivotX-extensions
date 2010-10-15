@@ -97,6 +97,14 @@ function smarty_contactform($params, &$smarty) {
 		} else {
 			$redirect = false;
 		}
+		
+		if(!empty($params['logging'])&&$params['logging']!='false') {
+				debug('logging on');
+			$enable_logging = true;
+		} else {
+			$enable_logging = false;
+		}
+		
 
 		if(!empty($params['fields'])) {
 			//debug('running custom form configuration for contactform-'.$pageuri);
@@ -183,6 +191,7 @@ function smarty_contactform($params, &$smarty) {
 			'buttons' => $submit,
 			'fields' => $fields,
 			'mail_config' => $mail_config,
+			'enable_logging'=> $enable_logging,
 		);
 		
 		if(!empty($params['pre_html'])) {

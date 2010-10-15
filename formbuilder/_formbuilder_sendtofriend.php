@@ -99,6 +99,14 @@ function smarty_sendtofriend($params, &$smarty) {
 		} else {
 			$redirect = false;
 		}
+				
+		if(!empty($params['enable_logging'])&&$params['enable_logging']!='false') {
+				debug('logging on');
+			$enable_logging = true;
+		} else {
+			$enable_logging = false;
+		}
+				
 
 		$fields = array(
 
@@ -204,6 +212,7 @@ function smarty_sendtofriend($params, &$smarty) {
 			'buttons' => $submit,
 			'fields' => $fields,
 			'mail_config' => $mail_config,
+			'enable_logging'=> $enable_logging,
 		);
 
 		if(!empty($params['pre_html'])) {

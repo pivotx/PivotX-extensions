@@ -28,14 +28,16 @@ For including and styling the form you need a basic knowledge of HTML, CSS. For 
 
 ## Version Information
 
-*   Version: 0.24
-*   Date: 2010-09-24
+*   Version: 0.25
+*   Date: 2010-10-15
 *   Requirements:
     *   PivotX version: 2.1.0 or higher
     *   PHP (Version 5.x)
     *   Access to the mail function or an SMTP account
     *   You must enable jQuery on the pages with forms
     *   Formbuilder forms don't work without javascript on the client side
+*   Extra:
+    *   Formbuilder logging will not work without Mysql database
 *   Author: Two Kings // [Lodewijk Evers](mailto:lodewijk@twokings.nl)
 *   Support: [Pivotx support forum](http://forum.pivotx.net/viewtopic.php?f=10&amp;t=1379)
 *   Download: [Pivotx extensions site](http://extensions.pivotx.net/entry/3/formbuilder)

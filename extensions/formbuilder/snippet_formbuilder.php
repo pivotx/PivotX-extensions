@@ -1,10 +1,10 @@
 <?php
 // - Extension: Formbuilder and contactforms
-// - Version: 0.24
+// - Version: 0.25
 // - Author: Two Kings // Lodewijk Evers
 // - E-mail: lodewijk@twokings.nl
 // - Description: Add form templates and [[contactform]] snippets to your entries and pages
-// - Date: 2010-09-24
+// - Date: 2010-10-15
 // - Identifier: formbuilder
 // - Required PivotX version: 2.1.0
 
@@ -14,6 +14,15 @@ if(!class_exists('FormBuilder')) {
 	if(file_exists($formbuilderbasedir.'/form.class.php')) {
 		include_once($formbuilderbasedir.'/form.class.php');
 	}
+
+	if($PIVOTX['config']->get('db_model')=='mysql') {
+		// only load the sql for the extension if it is needed
+		if(file_exists($formbuilderbasedir.'/form.sql.php')) {
+			include_once($formbuilderbasedir.'/form.admin.php');
+			include_once($formbuilderbasedir.'/form.sql.php');
+		}
+	}
+
 	// add the [[contactform]]
 	include_once($formbuilderbasedir.'/_formbuilder_contactform.php');
 	// add the [[orderform]]

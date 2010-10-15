@@ -346,7 +346,7 @@ class FormBuilder
 		);
 		$this->config['fields']['refererscript'] = array(
 			'type' => 'custom',
-			'text' => '<script type="text/javascript">jQuery(function($){$("input[name=check_referrer]").val("'.$this->formsubmissionkey.'");});</script>'
+			'text' => '<script type="text/javascript">jQuery(function($){$("input[name=check_referrer]").val("'.$this->formsubmissionkey.'");});</script>'. "\n" .'<noscript>This form will not work if you have not enabled javascript in your browser.</noscript>'
 		);
 
 
@@ -414,6 +414,30 @@ class FormBuilder
 		//debug('Validation = '.$this->validationvalue);
 		if($this->validationvalue>=2) {
 			$this->send_message();
+
+			if($this->config['enable_logging']==true) {
+				$formbuilderlog= new FormbuilderLogSql();
+
+				foreach($this->form->fields as $value) {
+					// exclude hidden system fields
+					$form_fields[] = $value['name'];
+					$form_values[] = ($value['post_value'])?$value['post_value']:'null';
+				}
+
+				$logsubmission = array(
+						'form_id' =>$this->config['id'],
+						'submission_id' => $_POST['hidden_formid'],
+						'last_updated' => null,
+						'user_email' => 'test@example.com',
+						'user_name' => 'example',
+						'user_ip' => $_SERVER['REMOTE_ADDR'],
+						'user_hostname' => $_SERVER['REMOTE_HOST'],
+						'user_browser' => $_SERVER['HTTP_USER_AGENT'],
+						'form_fields' => serialize($form_fields),
+						'form_values' => serialize($form_values)
+					);
+				$formbuilderlog->saveFormbuilderLog($logsubmission);
+			}
 
 			// kill the hidden_formid for the next time this function will be called
 			$_POST['hidden_formid'] = 'already sent';

@@ -360,8 +360,11 @@ function smarty_fancybox($params, &$smarty) {
 
     $PIVOTX['extensions']->addHook('after_parse', 'callback', 'fancyboxIncludeCallback');
 
-    return $code;
-
+    if (!empty($params['file']) ) {
+        return $code;
+    } else {
+        return "";
+    }
 
 }
 
@@ -385,10 +388,10 @@ function fancyboxIncludeCallback(&$html) {
     $jqueryincluded = false;
     $insert = '';
 
-    if (!preg_match("#<script [^>]*?/jquery[a-z0-9_-]*\.js['\"][^>]*?>\s*</script>#i", $html)) {
+    if (!preg_match("#<script [^>]*?/jquery[a-z0-9_\.-]*\.js['\"][^>]*?>\s*</script>#i", $html)) {
         // We need to include Jquery
         $insert .= "\n\t<!-- Main JQuery include -->\n";
-        $insert .= sprintf("\t<script type=\"text/javascript\" src=\"%sincludes/js/jquery.js\"></script>\n",
+        $insert .= sprintf("\t<script type=\"text/javascript\" src=\"%sincludes/js/jquery-1.4.3.min.js\"></script>\n",
         $PIVOTX['paths']['pivotx_url'] );
         $jqueryincluded = true;
     }
@@ -513,7 +516,7 @@ function fancyboxIncludeCallback(&$html) {
     // insert the code after the meta tag for the charset (since it ought to be first
     // in the header) or if no charset meta tag we insert it at the top of the head section.
     if (!$jqueryincluded) {
-        $html = preg_replace("#<script ([^>]*?/jquery[a-z0-9_-]*\.js['\"][^>]*?)>\s*</script>#si", 
+        $html = preg_replace("#<script ([^>]*?/jquery[a-z0-9_\.-]*\.js['\"][^>]*?)>\s*</script>#si", 
             "<script $1></script>\n" . $insert, $html, 1);
     } elseif (preg_match("/<meta http-equiv=['\"]Content-Type/si", $html)) {
         $html = preg_replace("/<meta http-equiv=(['\"]Content-Type[^>]*?)>/si", "<meta http-equiv=$1>\n" . $insert, $html);

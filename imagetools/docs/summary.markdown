@@ -49,6 +49,7 @@ The available parameters are:
   - htmlwrapper - Whether or not to wrap the linked image in a small HTML page.
   - class - The CSS class given to the image.
   - linkclass - The CSS class given to the link, wrapping the image. 
+  - rel - Add a 'rel' attribute to the thumbnail link, so it can be grouped if using Thickbox or Fancybox.
 
 The Stripimages modifier
 ------------------------

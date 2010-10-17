@@ -1,6 +1,6 @@
 <?php
 // - Extension: Image Tools
-// - Version: 0.4
+// - Version: 0.5
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
@@ -105,6 +105,12 @@ function smarty_thumbnail($params, &$smarty) {
 			$class = "";
 		}
 		
+		if (!empty($params['rel'])) {
+			$rel = " rel='" . htmlentities($params['rel'], ENT_QUOTES) . "'";
+		} else {
+			$rel = "";
+		}	
+		
 		$linkparams = array();
 		$linkparams[] = "src=" . base64_encode($params['src']);
 		$linkparams[] = "w=" . $linkmaxsize;
@@ -114,7 +120,7 @@ function smarty_thumbnail($params, &$smarty) {
 
 		$link = $link . implode("&amp;", $linkparams);
         	
-        $link = sprintf("<a href=\"%s\"%s>%s</a>", $link, $class, $img);
+        $link = sprintf("<a href=\"%s\"%s%s>%s</a>", $link, $rel, $class, $img);
         
         return $link;
         

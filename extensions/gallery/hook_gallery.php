@@ -1,6 +1,6 @@
 <?php
 // - Extension: Gallery
-// - Version: 0.9
+// - Version: 0.10
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
@@ -183,7 +183,18 @@ function smarty_gallery($params, $text, &$smarty) {
         $imgbeg  = getDefault($params['imgbeg'], "0");
         $imgend  = getDefault($params['imgend'], "9999");
         $maxthumb = getDefault($params['specthumbmax'], "0");
-        $uplpath  = $PIVOTX['config']->get('upload_path');
+        $uplpath  = getDefault($PIVOTX['config']->get('upload_path'),"");
+        /* check whether string in uplpath is OK for usage */
+        $uplmain  = $uplpath;
+        $slashpos = strpos($uplpath, "/");
+        if ($slashpos === false) {
+           if ($uplpath != "") {
+               $uplmain = $uplpath . "/";
+           }
+        } else {
+           /* get maindir out of uplpath */
+           $uplmain = substr($uplpath, 0 , ($slashpos + 1));
+        }
         if ($maxthumb == 0) {
            $thumbw = 200;
            $thumbh = 152;

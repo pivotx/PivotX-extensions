@@ -39,34 +39,35 @@ Or show a __Vimeo__ video in a popup:
     [[popup description="Insert coin" fb_type="vimeo" url="http://www.vimeo.com/moogaloop.swf?clip_id=6566857"]]
     [[popup description="Sonar" fb_type="vimeo" url="http://www.vimeo.com/5324878"]]
 
-If possible thumbnails will be displayed for the requested videos.
+If a thumbnail was registered together with Youtube or Vimeo it will be displayed.
 
-Or create popups with a special piece of __Text__:
+Or create textarea popups with a special piece of __Text__:
 (do not use % for width/height; file location is [pivotx_path]/docs/)
     
-    [[popup description="A text" title="Sample text" fb_type="text" width="100px" height="100px" 
+    [[popup description="A text" title="Sample text" fb_type="text" objwidth="300px" objheight="200px" 
       text="This is a text that should contain enough characters to show what can be done by inserting
       a lot of text and using Fancybox to show it. Did this text succeed in that?"]]
 
-    [[popup description="A filetext" title="Textfile" fb_type="text" width="800px" height="400px" 
-      text="file:FBsample.txt"]]
-    [[popup description="A phptext" title="Phptext" fb_type="text" width="700px" height="500px" 
-      text="file:FBsample.php"]]
-
+    [[popup description="A filetext" title="Textfile" fb_type="text" objwidth="800px" objheight="400px" 
+      text="file:FBsample.txt" txtcls="Myclass" txtcol="yellow" txtcolbg="black"]]
+    
 Or create an __Iframe__ to open up a weblink:
 
     [[popup description="A webwindow" title="Google" fb_type="iframe" url="http://www.google.com"]]
+
+    [[popup description="Own window" title="My page" fb_type="iframe" url="pivotx/docs/FBsample.php"]]
 
 Or popup a __SWF/Flash__:
 
     [[popup description="SWF in a window" title="Adobe swf" fb_type="flash" 
       url="http://www.adobe.com/jp/events/cs3_web_edition_tour/swfs/perform.swf"]]
 
-Types "text", "iframe" and "flash" can also be shown with a thumbnail.  
+Types "text", "iframe" and "flash" can also be shown with a thumbnail.
+If the thumbnail does not exist yet it will be created.  
 To do this use parms description and file just like when creating an imagepopup:
 
-    [[popup description="(thumbnail)" title="Phptext" fb_type="text" width="700px" height="500px" 
-      text="file:FBsample.php" file="2010-01/image1.jpg"]]
+    [[popup description="(thumbnail)" title="Thumb and Text" fb_type="text" 
+      text="file:FBsample.txt" file="2010-01/image1.jpg" width="200px" height="150px"]]
 
 Parameters
 ----------
@@ -77,23 +78,29 @@ read `snippet_fancybox.php`.
   * **file** - specify a file that exists in `[upload_base_path]` can be used with 
   all types except 'youtube' and 'vimeo'
   * **description** - specify a string to be used as text for the pop-up or use 
-  (thumbnail) to use the thumbnail for the specified file;
-  in stead of (thumbnail) you can also just specify the filename itself (or another) 
+  (thumbnail) to use/create the thumbnail for the specified file;
+  instead of (thumbnail) you can also just specify a filename directly (perhaps of another thumbnail) 
   * **alt** - string used for title on `imagelink` if title is not specified
-  * **title** - string used for title on `imagelink`
+  * **title** - string used for title on `imagelink` (title="null" results in no title)
   * **align** - used for alignment; regular values (use `inline` for no alignment)
   * **rel_id** - specify your own grouping id (will only work for images)
   * **fb\_type** - specify your fancyboxtype: `image` (default) / `youtube` / `vimeo`
    / `text` / `iframe` / `flash`
-  * **width** - regular approach; useage of % will sometimes result in peculiar displays 
-  * **height** - see width
-  * **specthumbmax** - max. size to be used as either width or height depending on **file**
+  * **width** - regular approach; usage of % will possibly result in peculiar displays 
+  * **height** - see width; both width and height are used for the thumbnail to be displayed
+  * **specthumbmax** - max. size to be used as either width or height depending on dimensions of **file**
+(do not use width/height together with this parameter)
+  * **objwidth** - regular approach; usage of % will possibly result in peculiar displays
+  * **objheight** - see objwidth; both objwidth and objheight are used for the object to be displayed (only youtube, vimeo and text)
   * **url** - specify url for iframe or flash; can also be used for youtube or 
   vimeo (movid is recommended)
   * **movid** - the movid for the YouTube (the string behind the `v=`) or Vimeo 
   video (the string behind `clip_id=`)
   * **text** - either type the whole text you want to be displayed or use the 
-  structure `file:_filename_.txt` or `file:_filename_.php`
+  structure `file:`_filename_`.txt`
+  * **txtcls** - classname to be used on the textarea
+  * **txtcol** - color of text in the textarea
+  * **txtcolbg** - backgroundcolor of textarea
 
 Config options
 --------------

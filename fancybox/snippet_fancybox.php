@@ -1,13 +1,13 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.11
+// - Version: 0.12
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
 // - Description: Replace boring old Thickbox with a FancyBox!
 // - Date: 2010-09-10
 // - Identifier: fancybox 
-// - Required PivotX version: 2.0.2
+// - Required PivotX version: 2.2
 
 
 // Register 'fancybox' as a smarty tag, and override 'popup'
@@ -48,7 +48,12 @@ function smarty_fancybox($params, &$smarty) {
     $fb_type       = getDefault($params['fb_type'], "image");
     $width         = getDefault($params['width'], "560");
     $height        = getDefault($params['height'], "340");
+    $objwidth      = getDefault($params['objwidth'], "0");
+    $objheight     = getDefault($params['objheight'], "0");
     $maxthumb      = getDefault($params['specthumbmax'], "0");
+    $txtcol        = getDefault($params['txtcol'], "black");
+    $txtcolbg      = getDefault($params['txtcolbg'], "white");
+    $txtcls        = getDefault($params['txtcls'], "pivotx-popupimage");
     // this one can be used together with fb_type="youtube" and "vimeo"
     // !! structure should be like explained on youtube e.g. http://www.youtube.com/v/MOVID
     // or for vimeo: http://www.vimeo.com/moogaloop.swf?clip_id=CLIPID
@@ -80,6 +85,12 @@ function smarty_fancybox($params, &$smarty) {
     if ( empty($alt) ) {
         $alt = $filename;
     }
+    if ($objwidth == "0") {
+    	  $objwidth = $width;	
+    }
+    if ($objheight == "0") {
+        $objheight = $height;
+    }
     // Fix Thumbname, perhaps use a thumbname, instead of textual link
     // and try to fill both alt and title if still empty
     if ( $thumbname=="(thumbnail)" ) {
@@ -89,11 +100,20 @@ function smarty_fancybox($params, &$smarty) {
             $thumbname = makeThumbname($filename);
             // If the thumbnail does not exist and extension is jpg or png then try to create it
             // gif could be problematic so don't try it here......
+            // filename could contain a subdir! this part is removed by auto_thumbnail
+            // so save it through specifying a folder var            
             if( !file_exists( $PIVOTX['paths']['upload_base_path'].$thumbname )) {
                 $ext = strtolower(getExtension($filename));
                 if(($ext=="jpeg")||($ext=="jpg")||($ext=="png")) {
                     require_once($PIVOTX['paths']['pivotx_path'].'modules/module_imagefunctions.php');
-                    if (!auto_thumbnail($filename)) {
+                    $folder = $PIVOTX['paths']['upload_base_path'];
+                    $dirpart = dirname($filename);
+                    $basename = basename($filename);
+                    $action = "Fancybox";
+                    if (($dirpart != "") && ($dirpart != ".")) {
+                    		$folder = $folder . $dirpart . "/";
+                    }
+                    if (!auto_thumbnail($basename, $folder, $action)) {
                         debug("Failed to create thumbnail for " . $filename);
                     } 
                 } else {
@@ -107,6 +127,11 @@ function smarty_fancybox($params, &$smarty) {
     }    
     if ( empty($title) ) {
         $title = $alt;
+    }
+    // special string "null" to get rid of any title/alt
+    if (($title=="null")||($alt=="null")) {
+       $title = "";
+       $alt = "";
     }
 
     // Clean title and alternative text before using in generated html
@@ -266,8 +291,8 @@ function smarty_fancybox($params, &$smarty) {
             $urlmain,
             $urlid,
             $urlextra,
-            $width,
-            $height,
+            $objwidth,
+            $objheight,
             $urlmain,
             $urlid,
             $urlextra            
@@ -279,13 +304,16 @@ function smarty_fancybox($params, &$smarty) {
     }  else if ($fb_type=='text') {
         // use random number to be fairly sure that constructed href will be unique 
         // if by chance the number is the same then text shown (when clicked) will be the first one
+        // also use this random number to construct a unique rel because grouping results
+        // in array-reverse errors and crashing of the webpage when scrolling with the mouse!
         $randnum = rand();
-        $code = sprintf( "<a href=\"#%s%s\" class=\"fancytext\" title=\"%s\" rel=\"%s%s\" >%s</a>",
+        $code = sprintf( "<a href=\"#%s%s\" class=\"fancytext\" title=\"%s\" rel=\"%s%s%s\" >%s</a>",
             $rel_id,
             $randnum,
             $title,
             $rel_id,
             $uid,
+            $randnum,
             $thumbname
         );
         $textbegin = substr($text,0,5);
@@ -301,25 +329,30 @@ function smarty_fancybox($params, &$smarty) {
                 debug("Specified file cannot be found or read:'$docfile'");
             }
         }
-        // check whether the lines contain main html elements. If they are there the popup will
-        // still function but results in invalid html
-        $texthtml = strpos($lines, '<html');
-        $texthead = strpos($lines, '<head');
-        $texttitle = strpos($lines, '<title');
-        $textbody = strpos($lines, '<body');
-        if (($texthtml!==false)||($texthead!==false)||($texttitle!==false)||($textbody!==false)) {
-            debug("popup: '$rel_id$randnum' contains main html elements; a text popup should only contain plain html elements (like div or p)");
+        // check whether the lines contain html.
+        // If there are the popup will still function but with visible elements
+        // better use iframe for text with html
+        if (strlen($lines) != strlen(strip_tags($lines))) {
+            debug("Popup: '$rel_id$randnum' contains HTML elements.");
+            debug("A text popup should only contain plain text.");
+            debug("Try using fb_type iframe with an url pointing to a saved file instead.");
         }
-        
-        $anchor_obj = sprintf( "<span style=\"display: none\"><span id=\"%s%s\" style=\"width: %s; height: %s; color: #000000; overflow: auto\"><object type=\"text/html\" width=\"%s\" height=\"%s\">%s</object></span></span>",
+
+        // couldn't get it to work correctly with an object (kept on forcing its own default size)
+        // just specifying a span had the same result; can't use div and so on because pop-up
+        // can be within an open paragraph 
+        // so switched to textarea (which is more customisable anyway); cols and rows are there for valid html
+        $anchor_obj = sprintf( "<span style=\"display: none\"><span id=\"%s%s\"><textarea class=\"%s\" style=\"width: %s; height: %s; overflow: auto; color: %s; background-color: %s\" readonly=\"readonly\" cols=\"\" rows=\"\">%s</textarea></span></span>",
             $rel_id,
             $randnum,
-            $width,
-            $height,
-            $width,
-            $height,
+            $txtcls,
+            $objwidth,
+            $objheight,
+            $txtcol,
+            $txtcolbg,
             $lines
         );
+        
         $code = $code.$anchor_obj ;
         if( 'center'==$align ) {
             $code = '<p class="pivotx-wrapper">'.$code.'</p>' ;
@@ -455,11 +488,11 @@ function fancyboxIncludeCallback(&$html) {
 
     // standard fancybox text profile   
     $fbtext  = "\t jQuery(\"a.fancytext\").fancybox({ ";
-    $fbtext .= "padding: 5, autoScale: true, centerOnScroll: true, ";
+    $fbtext .= "padding: 0, margin: 0, autoScale: true, centerOnScroll: true, ";
     $fbtext .= "'transitionIn': 'none', 'transitionOut': 'none', ";
     $fbtext .= "'overlayShow': true, 'overlayOpacity': 0.7, "; 
     $fbtext .= "'titlePosition': 'outside', ";
-    $fbtext .= "'showCloseButton': true, 'cyclic': false ";
+    $fbtext .= "'showCloseButton': true, 'showNavArrows': false, 'cyclic': false ";
     $fbtext .= "});\n";	
 
     // standard fancybox iframe profile   

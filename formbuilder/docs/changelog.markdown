@@ -1,9 +1,10 @@
 # Changelog
 
 *   ## Version 0.25
-	2010-10-15
+	2010-10-19
 
-	*   added database logging support (by popular demand) still needs docs, admin interface and better examples
+	*   added database logging support (by popular demand) still needs admin interface and better examples
+    * improved documentation
 *   ## Version 0.24
 	2010-09-24
 

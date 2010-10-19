@@ -11,6 +11,7 @@
 	*   [Send to friend](example_sendtofriend.markdown)
 	*   [Template options](confirmation_templates.markdown)
 	*   [Advanced](advanced_options.markdown)
+	*   [Database logging](logging_options.markdown)
 *   [FAQ](faq.markdown)
 *   [Changelog](changelog.markdown)
 
@@ -19,6 +20,12 @@
 The formclass is a 'form to mail' script that you can use for multiple forms on your website. You can also use it as a template based formbuilder.
 
 The script uses the Swiftmailer library ( [http://swiftmailer.org/](http://swiftmailer.org/) ) and a modified version of the formlibrary that is included in PivotX ( [http://www.pivotx.net/](http://www.pivotx.net/) )
+
+## Security Warning!
+
+Using the send to friend (`[[sendtofriend]]`) form will open up your site to a kind of anonymous spam relay where anyone can use your website to __send messages to anyone__ else.
+
+There is a small protection built in, but this will only protect against the simpelest spambots, and has already been bypassed.
 
 ## Requirements
 
@@ -29,9 +36,9 @@ For including and styling the form you need a basic knowledge of HTML, CSS. For 
 ## Version Information
 
 *   Version: 0.25
-*   Date: 2010-10-15
+*   Date: 2010-10-19
 *   Requirements:
-    *   PivotX version: 2.1.0 or higher
+    *   PivotX version: 2.2.0 or higher
     *   PHP (Version 5.x)
     *   Access to the mail function or an SMTP account
     *   You must enable jQuery on the pages with forms

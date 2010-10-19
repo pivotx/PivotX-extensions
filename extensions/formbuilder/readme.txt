@@ -1,7 +1,7 @@
 Formbuilder for PivotX
 
 Version: 0.25
-Date: 2010-10-15
+Date: 2010-10-19
 Requirements:
 * PivotX 2.1.0 or higher
 * PHP (Version 5.x)

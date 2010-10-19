@@ -4,7 +4,7 @@ Each form can have two extra templates for the confirmation. These templates may
 
 ## Location of the templates
 
-The default installation has a few templates in the `./pivotx/extensions/formclass/templates/` directory. These templates are the default templates for the `[[ contactform ]]` and the `[[ orderform ]]` tags.
+The default installation has a few templates in the `./pivotx/extensions/formclass/templates/` directory. These templates are the default templates for `[[ contactform ]]`, the `[[ orderform ]]` and the `[[ sendtofriend ]]` tags.
 
 You may place your own email and confirmation templates in any pivotx theme directory. This will help if you need to override the default email and confirmation templates and want to keep them apart from the extension.
 

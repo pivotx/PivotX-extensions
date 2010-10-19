@@ -1,4 +1,4 @@
-# Options
+# Advanced options (PHP knowledge required)
 
 There are two ways to configure the e-mail function of the form. The simple one is using the normal mail function and the complicated but more reliable one is using SMTP.
 
@@ -110,61 +110,61 @@ If that looks terrible to you, you're right. Let go through all the options.
 <a id="basics"></a>
 ## Basics
 
-id
+__id__
 :   Simple string, with the html id attribute of the form.
 
-name
+__name__
 :   Simple string, with the html name attribute of the form.
 
-action
+__action__
 :   The url for the action attribute of the form. `$_SERVER["REQUEST_URI"]` is usually the best, it's the same as the page you're on when you load the form.
 
-templates
+__templates__
 :   Filenames of the default templates for the form_html, the [e-mail message][7] and the [confirmation page][7].
 
-method
+__method__
 :   The type of form you're creating. Possible values are `post` and `get`.
 
-encoding
+__encoding__
 :   Only used for file uploads (`multipart/form-data`), otherwise empty.
 
-[mail_config](#mail_config)
+__[mail_config](#mail_config)__
 :   Configuration variables for the e-mail function.
 
-buttons
+__buttons__
 :   Used for the submit buttons of the form. Please use only one submit button for now.
 
-[fields](#fields)
+__[fields](#fields)__
 :   The definition of all form fields in a nested array.
 
-fieldsets
+__fieldsets__
 :   Links to the fields grouped and ordered in fieldsets. Fields not in fieldsets will be appended at the end of the form.
 
 <a id="mail_config"></a>
 ### Mail configuration
 
-mail_config
+__mail_config__
 :   Configuration variables for the e-mail function.
 
-subject
+__subject__
 :   Simple string with the subject of the email
 
-recipient
+__recipient__
 :   Named array of `email` and `name` for the recipient, both keys are required. If the optional keys `formfield_email` and `formfield_name` exist they must contain the identifying key for an e-mail and a name field, and will be added as an extra recipient.
 
-sender
+__sender__
 :   Named array of `email` and `name` for the sender.
 
-bcc
+__bcc__
 :   Named array of `email` and `name` for the bcc field.
 
-cc
+__cc__
 :   Named array of `email` and `name` for the cc field. If `email` and `name` are false the keys `formfield_email` and `formfield_name` are required and must contain the identifying key for an e-mail and a name field
 
-method
+__method__
 :   E-mail send method. `mail` or `smtp`
 
-smtp
+__smtp__
 :   Only used with smtp method. Named array with `login`, `password` and SMTP `server` values.
 
     $config['mail_config'] = array(
@@ -206,22 +206,22 @@ The internal name of the field, will be used for the id, and should beunique in 
 
 ### field types
 
-text
+__text__
 :   default text input fields
 
-text_readonly
+__text_readonly__
 :   readonly text input fields, make sure to set a default value
 
-textarea
+__textarea__
 :   default textarea input fields
 
-select
+__select__
 :   select box items, an array of options is required
 
-radios
+__radios__
 :   radio input fields, an array of options is required
 
-checkbox
+__checkbox__
 :   checkbox input fields
 
 ### label
@@ -242,34 +242,33 @@ Yes you can enter a defaultvalue if you want to.
 
 ### validation
 
-required
+__required__
 :   use this for required values
 
-ifany
+__ifany__
 :   use this in combination with string for not-required (optional) string values
 
-string
+__string__
 :   check if the input is a valid string, which means no unsafe html or scripts are included, this is the default for all fields
 
-integer
+__integer__
 :   check if the input is a valid number
 
-email
+__email__
 :   check if the input is a valid e-mail address
 
-/regexppattern/
-:   you can use a regular expression if you want to test the input directly (not implemented, will be added later)
+_/regexppattern/_
+:   you can use a regular expression if you want to test the input directly __(not implemented, will be added later)__
 
-phonenumber
+__phonenumber__
 :   at the moment this just checks if the string contains a valid numeric string with spaces, dashes or + signs
 
-zipcodenl
+__zipcodenl__
 :   checks for valid dutch zipcodes *9999 XX* or *9999XX*
 
-datetime
+__datetime__
 :   checks for a datetime value *YYYY-MM-DD HH:MM:SS*
 
-*There is more, but if you need that you should be able to understand the validation code in `formclass_overrides.php`, and I'm to lazy to explain it all. And it's friday afternoon and I'd like a beer now.*
 
 ### listentoget
 

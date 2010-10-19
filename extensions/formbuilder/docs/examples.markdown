@@ -11,7 +11,7 @@ You can use the quicktags in any template, you can also use the advanced method 
 
 ### Advanced method (PHP knowledge required)
 
-Download or view the [example template](example_template.html) with a text or code editor and start from there.
+Download or view the [example template](example_template.markdown) with a text or code editor and start from there.
 
 The formbuilder in a template is more flexible than the quick tags. Create a template with the form configuration in a `[[ php ]]` block, or copy the example template and start from there.
 

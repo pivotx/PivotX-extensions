@@ -1,31 +1,20 @@
 # Formbuilder for Pivotx
 
-## Table of contents
-
-*   [Home](index.markdown)
-*   [Installation](installation.markdown)
-*   [Usage examples](examples.markdown)
-*   Options
-	*   [Contactform](example_contactform.markdown)
-	*   [Orderform](example_orderform.markdown)
-	*   [Send to friend](example_sendtofriend.markdown)
-	*   [Template options](confirmation_templates.markdown)
-	*   [Advanced](advanced_options.markdown)
-	*   [Database logging](logging_options.markdown)
-*   [FAQ](faq.markdown)
-*   [Changelog](changelog.markdown)
-
 ## What is it
 
 The formclass is a 'form to mail' script that you can use for multiple forms on your website. You can also use it as a template based formbuilder.
 
 The script uses the Swiftmailer library ( [http://swiftmailer.org/](http://swiftmailer.org/) ) and a modified version of the formlibrary that is included in PivotX ( [http://www.pivotx.net/](http://www.pivotx.net/) )
 
+------
+
 ## Security Warning!
 
 Using the send to friend (`[[sendtofriend]]`) form will open up your site to a kind of anonymous spam relay where anyone can use your website to __send messages to anyone__ else.
 
 There is a small protection built in, but this will only protect against the simpelest spambots, and has already been bypassed.
+
+------
 
 ## Requirements
 

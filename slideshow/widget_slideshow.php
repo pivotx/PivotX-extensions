@@ -437,7 +437,7 @@ function slideshowAdmin(&$form_html) {
         'name' => 'slideshow_iptcindex',
         'label' => __('IPTC Index'),
         'value' => '',
-        'text' => __("Index of image title in IPTC table. (Picasa coments use '2#120'). Leave blank to generate a nicename."),
+        'text' => __("Index of image title in IPTC table. (Picasa comments use '2#120'). Leave blank to generate a nicename."),
         'size' => 32,
     ));
 

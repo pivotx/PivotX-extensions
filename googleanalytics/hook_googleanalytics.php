@@ -187,7 +187,7 @@ function googleanalyticsAdmin(&$form_html) {
         'label' => __('Google account password'),
         'value' => '',
         'error' => __('Error - input needs to be text'),
-        'text' => sprintf(__('If you want to display a summary of the statisctics on the Dashboard, fill in the specifics of a Google Account that has access to these statisctics. After doing this, click %sthis link%s to test the login, and fetch the id, to fill in below.'),
+        'text' => sprintf(__('If you want to display a summary of the statistics on the Dashboard, fill in the specifics of a Google Account that has access to these statistics. After doing this, click %sthis link%s to test the login, and fetch the id, to fill in below.'),
         '<a class="dialog" href="extensions/googleanalytics/testlogin.php" id="analyticsFetchID">', '</a>'),
         'size' => 40,
         'isrequired' => 0,

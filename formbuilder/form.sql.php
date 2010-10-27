@@ -51,6 +51,27 @@ class FormbuilderLogSql {
 		return $formbuildercache;
 
 	}
+	
+	/**
+	 * Get a single Formbuilder Log by its submission_id
+	 *
+	 * @param integer $formbuilderlog_uid
+	 * @return array
+	 */
+	function getFormbuilderLogSID($submission_id) {
+		$qry = array();
+		$qry['select'] = "*";
+		$qry['from'] = $this->formbuilderlogtable;
+		$qry['where'][] = "submission_id=" . $this->sql->quote($submission_id);
+		$tmpquery = $this->sql->build_select($qry);
+		
+		//debug("getFormbuilderLog\n" . $tmpquery);
+		
+		$this->sql->query();
+		$formbuildercache = $this->sql->fetch_row();
+		return $formbuildercache;
+
+	}
 
 	/**
 	 * Delete a single Formbuilder Log
@@ -83,13 +104,14 @@ class FormbuilderLogSql {
 			'last_updated' => ($submission['last_updated'])?$submission['last_updated']:date("Y-m-d H:i:s", time()),
 			'response' => $submission['response'],
 			'status' => ($submission['status'])?$submission['status']:'new',
-            'user_email' => $submission['user_email'],
-            'user_name' => $submission['user_name'],
-            'user_ip' => $submission['user_ip'],
-            'user_hostname' => $submission['user_hostname'],
-            'user_browser' => $submission['user_browser'],
-            'form_fields' => $submission['form_fields'],
-            'form_values' => $submission['form_values']
+			'user_email' => $submission['user_email'],
+			'user_name' => $submission['user_name'],
+			'user_ip' => $submission['user_ip'],
+			'user_hostname' => $submission['user_hostname'],
+			'user_browser' => $submission['user_browser'],
+			'form_fields' => $submission['form_fields'],
+			'form_values' => $submission['form_values'],
+			'status' => $submission['status']
 		);
 
 		if ($submission['formbuilderlog_uid']=="" || $submission['formbuilderlog_uid']==null) {
@@ -113,9 +135,11 @@ class FormbuilderLogSql {
 			//debug("saveFormbuilderLog existing\n" . $tmpquery);
 
 			$this->sql->query();
+			
+			$log_uid = $submission['formbuilderlog_uid'];
 		}
 		// Return the uid of the page we just inserted / updated..
-		return $formbuilder['formbuilderlog_uid'];
+		return $log_uid;
 	}
 }
 
@@ -237,18 +261,46 @@ $this->addHook(
     );
 
 function formbuilderlogSchedulerCallback() {
-	global $PIVOTX;
+    global $PIVOTX;
     // check if logfiles are there is okay
     if($PIVOTX['config']->get('db_model') == 'mysql' && $PIVOTX['config']->data['formbuilderlog_version'] > 1) {
 	    $formbuilderlog = new FormbuilderLogSql();
-	    $lastweek = time() - (7 * 24 * 60 * 60);
-	    $queries[] = sprintf("DELETE FROM %s WHERE last_updated < %d AND status = 'junk'", $formbuilderlog->formbuilderlogtable, $lastweek);
+	    //$lastweek = time() - (7 * 24 * 60 * 60);
+	    //$queries[] = sprintf("DELETE FROM %s WHERE last_updated < %d AND status = 'new';", $formbuilderlog->formbuilderlogtable, $lastweek);
+	    $yesterday = time() - (24 * 60 * 60);
+	    $queries[] = sprintf("DELETE FROM %s WHERE last_updated < %d AND LENGTH(form_values) = 0;", $formbuilderlog->formbuilderlogtable, $yesterday);
+	    $not_that_long_ago = time() - (1 * 60 * 60);
+	    $queries[] = sprintf("DELETE FROM %s WHERE last_updated < %d AND status = 'junk';", $formbuilderlog->formbuilderlogtable, $not_that_long_ago);
 
 	    foreach($queries as $query) {
 	        $formbuilderlog->sql->query($query);
+		debug(htmlspecialchars($query));
 	    }
 	    debug('cleaned up old entries from the Formbuilder Log table');
 		// lets just pretend that worked
 	    return true;
     }
+}
+
+function formbuilderlogRequestToken($form_id, $form_spamkey) {
+	$remote_ip = $_SERVER['REMOTE_ADDR'];
+	$remote_agent = $_SERVER["HTTP_USER_AGENT"];
+	$current_time = microtime();
+	$generated_key = $remote_ip . $remote_agent . $form_id . $form_spamkey . $current_time;
+	$generated_key = sha1($generated_key);
+	
+	$formbuilderlog = new FormbuilderLogSql();
+	$formbuildersubmission = $formbuilderlog->getFormbuilderLogSID($generated_key);
+	if(!empty($formbuildersubmission)) {
+		debug('$formbuildersubmission '. $generated_key .' already exists');
+		return formbuilderlogRequestToken($form_id, $form_spamkey);
+	} else {
+		$submission = array(
+			'form_id' => $form_id,
+			'submission_id' => $generated_key,
+			'status' => 'junk');
+		$submission_id = $formbuilderlog->saveFormbuilderLog($submission);
+		debug('$formbuildersubmission '. $generated_key .' created ['. $submission_id .']');
+		return $generated_key;
+	}
 }

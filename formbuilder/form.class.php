@@ -168,7 +168,7 @@ class FormBuilder
 							debug('set email '.$emailtype.' from form values '. $_mail[$emailtype]['email'] .' - '. $_mail[$emailtype]['name']);
 						}
 					} else {
-      					$_mail[$emailtype]['email'] = $mail_config[$emailtype]['email'];
+						$_mail[$emailtype]['email'] = $mail_config[$emailtype]['email'];
 						$_mail[$emailtype]['name'] = $mail_config[$emailtype]['name'];
 						debug('set email '.$emailtype.' from form config '. $_mail[$emailtype]['email'] .' - '. $_mail[$emailtype]['namee']);
 					}
@@ -177,6 +177,7 @@ class FormBuilder
 
 			// we have subject sender and recipient, lets start
 			if($subject && $_mail['sender']['email'] && $_mail['recipient']['email']) {
+				$this->formsender = array('email' => $_mail['sender']['email'], 'name' => $_mail['sender']['name']);
 				$message = Swift_Message::newInstance($subject)
 					->setFrom(array($_mail['sender']['email'] => $_mail['sender']['name']))
 					->setTo(array($_mail['recipient']['email'] => $_mail['recipient']['name']));
@@ -263,8 +264,17 @@ class FormBuilder
 	}
 
 	function execute_form() {
-		if(is_array($_REQUEST) && isset($_REQUEST) && $_REQUEST['hidden_formid'] != md5($this->config['id'].$this->form->spamkey)) {
-			//debug('form identifier is not right: '. $_REQUEST['hidden_formid'] ." != ".md5($this->config['id'].$this->form->spamkey));
+		// get the unique form identifier
+		if(is_array($_REQUEST) && !empty($_REQUEST['hidden_formid'])) {
+			$this->formsessionkey = getDefault($_POST['hidden_formid'], $_GET['hidden_formid']);
+			debug('got '. $this->formsessionkey .' from submitted data');
+		}
+		// redirect the possible get/post and other vars if we're in the wrong form
+		if(
+		   is_array($_REQUEST)
+		   && isset($_REQUEST)
+		   && $_REQUEST['hidden_formid'] != $this->formsessionkey) {
+			debug('form identifier is not right: '. $_REQUEST['hidden_formid'] ." != ". $this->formsessionkey);
 			//debug('redirected request, post and get');
 			$oldrequest = $_REQUEST;
 			$oldpost = $_POST;
@@ -273,6 +283,7 @@ class FormBuilder
 			unset($_POST);
 			unset($_GET);
 		}
+		// set all request values to the real stuff
 		if(is_array($_REQUEST) && !empty($_REQUEST)) {
 			foreach($_REQUEST as $key => $value) {
 				if(isset($this->config['fields'][$key]['listentoget']) && $this->config['fields'][$key]['listentoget']==true) {
@@ -280,6 +291,17 @@ class FormBuilder
 				}
 			}
 		}
+		// load the unique formsessionkey
+		// or request a new one
+		if(!isset($this->formsessionkey)) {
+			if(function_exists('formbuilderlogRequestToken')) {
+				$this->formsessionkey = formbuilderlogRequestToken($this->config['id'], $this->form->spamkey);
+			} else {
+				$this->formsessionkey = md5($_SERVER['REMOTE_ADDR'].$_SERVER["HTTP_USER_AGENT"].$this->form->spamkey);
+			}
+		}
+		
+		
 
 		if(isset($this->config['pre_html'])) {
 			$this->form->add(array('type' => 'custom', 'text' => $this->config['pre_html']));
@@ -312,7 +334,7 @@ class FormBuilder
 					$this->form->add(array('type' => 'custom', 'text' => '</div>'));
 					// remove from form
 				} else {
-					print '<p class="error">Error in fieldset definition for: <em>'.	$field ."</em></p>\n";
+					print '<p class="error">Error in fieldset definition for: <em>'. $field ."</em></p>\n";
 				}
 				$this->config['fields'][$field]['isadded']=true;
 			}
@@ -323,18 +345,18 @@ class FormBuilder
 		}
 
 		// add a form identifier to every form
-		//debug('form identifier: '. md5($this->config['id'].$this->form->spamkey) .' from '.$this->config['id']. ',' .$this->form->spamkey);
-		$this->config['fields']['formid'] = array(
+		$this->config['fields']['formsk'] = array(
 			'name' => 'hidden_formid',
 			'label' => '',
 			'type' => 'hidden',
-			'value' => md5($this->config['id'].$this->form->spamkey),
+			'value' => $this->formsessionkey,
 			'requiredmessage' => '',
 			'validation' => 'string',
 			'error' => ''
 		);
-		$this->formsubmissionkey = md5($_SERVER['REMOTE_ADDR'].$_SERVER["HTTP_USER_AGENT"].$this->form->spamkey);
+
 		//debug($_SERVER['REMOTE_ADDR']. ' ' .$this->form->spamkey . ' ' . $this->formsubmissionkey );
+		$this->formsubmissionkey = md5($_SERVER['REMOTE_ADDR'].$_SERVER["HTTP_USER_AGENT"].$this->form->spamkey);
 		$this->config['fields']['referrer'] = array(
 			'name' => 'check_referrer',
 			'label' => '',
@@ -346,7 +368,7 @@ class FormBuilder
 		);
 		$this->config['fields']['refererscript'] = array(
 			'type' => 'custom',
-			'text' => '<script type="text/javascript">jQuery(function($){$("input[name=check_referrer]").val("'.$this->formsubmissionkey.'");});</script>'. "\n" .'<noscript>This form will not work if you have not enabled javascript in your browser.</noscript>'
+			'text' => '<script type="text/javascript">jQuery(function($){$("#'.$this->config['id'].' input[name=check_referrer]").val("'.$this->formsubmissionkey.'");});</script>'. "\n" .'<noscript>This form will not work if you have not enabled javascript in your browser.</noscript>'
 		);
 
 
@@ -400,11 +422,11 @@ class FormBuilder
 			debug('spam referrer is not right: '. $_POST['check_referrer'] .' should be '. $this->formsubmissionkey." - javascript must be disabled or someone is a spammer.");
 			$this->form->add(array('type' => 'custom', 'text' => '<noscript><p>'. __('To prevent spam JavaScript must be enabled for submitting this form.') .'</p></noscript>'));
 			$this->validationvalue = 0;
-		} elseif(isset($_POST['hidden_formid']) && ($_POST['hidden_formid'] != md5($this->config['id'].$this->form->spamkey))) {
-			debug('form identifier is not right: '. $_POST['hidden_formid'] ." != ".md5($this->config['id'].$this->form->spamkey) ."\nYou were probably submitting another form.");
+		} elseif(isset($_POST['hidden_formid']) && ($_POST['hidden_formid'] != $this->formsessionkey)) {
+			debug('form hidden_formid identifier is not right: '. $_POST['hidden_formid'] ." != ".$this->formsessionkey  ."\nYou were probably submitting another form.");
 			$this->validationvalue = 0;
 		} elseif(is_array($_REQUEST) && !array_key_exists('silent', $_REQUEST) || $_REQUEST['silent']!=true) {
-			//debug('form identifier is right or empty: '. $_POST['hidden_formid'] ." != ".md5($this->config['id'].$this->form->spamkey));
+			//debug('form identifier is right or empty: '. $_POST['hidden_formid'] ." != ".$this->formsessionkey);
 			$this->validationvalue = $this->form->validate();
 			//debug('form validated... status is: '.$this->validationvalue);
 		} else {
@@ -416,27 +438,73 @@ class FormBuilder
 			$this->send_message();
 
 			if($this->config['enable_logging']==true) {
-				$formbuilderlog= new FormbuilderLogSql();
+				$formbuilderlog = new FormbuilderLogSql();
 
 				foreach($this->form->fields as $value) {
 					// exclude hidden system fields
-					$form_fields[] = $value['name'];
-					$form_values[] = ($value['post_value'])?$value['post_value']:'null';
+					if(!empty($value['name'])) {
+						$form_fields[] = $value['name'];
+						$form_values[] = ($value['post_value'])?$value['post_value']:'null';
+					}
 				}
+				
+				$senderemail = ($this->formsender['email'])?$this->formsender['email']:'example@example.com';
+				$sendername = ($this->formsender['name'])?$this->formsender['name']:'Example User';
 
-				$logsubmission = array(
-						'form_id' =>$this->config['id'],
-						'submission_id' => $_POST['hidden_formid'],
-						'last_updated' => null,
-						'user_email' => 'test@example.com',
-						'user_name' => 'example',
-						'user_ip' => $_SERVER['REMOTE_ADDR'],
-						'user_hostname' => $_SERVER['REMOTE_HOST'],
-						'user_browser' => $_SERVER['HTTP_USER_AGENT'],
-						'form_fields' => serialize($form_fields),
-						'form_values' => serialize($form_values)
-					);
+				$formbuildersubmission = $formbuilderlog->getFormbuilderLogSID($_POST['hidden_formid']);
+
+				if(!isset($formbuildersubmission['submission_id'])) {
+					debug('something is wrong with submission id '. $formbuildersubmission['submission_id'] .' it looks like it was removed by the scheduler before the form was completed.');
+					
+					// insert submission
+					// this will hardly happen, because there should usually be a token in the db
+					$logsubmission = array(
+							'form_id' =>$this->config['id'],
+							'submission_id' => $_POST['hidden_formid'],
+							'last_updated' => null,
+							'user_email' => $senderemail,
+							'user_name' => $sendername,
+							'user_ip' => $_SERVER['REMOTE_ADDR'],
+							'user_hostname' => $_SERVER['REMOTE_HOST'],
+							'user_browser' => $_SERVER['HTTP_USER_AGENT'],
+							'form_fields' => serialize($form_fields),
+							'form_values' => serialize($form_values),
+							'status' => 'new'
+						);
+				} else {
+					// update an existing submission
+					$logsubmission = $formbuildersubmission;
+
+					if($this->config['id']!=$logsubmission['form_id']) {
+						$logsubmission['form_id'] = $this->config['id'];
+					}
+					if($_SERVER['REMOTE_ADDR']!=$logsubmission['user_ip']) {
+						$logsubmission['user_ip'] = $_SERVER['REMOTE_ADDR'];
+					}
+					if($_SERVER['REMOTE_HOST']!=$logsubmission['user_hostname']) {
+						$logsubmission['user_hostname'] = $_SERVER['REMOTE_HOST'];
+					}
+					if($_SERVER['HTTP_USER_AGENT']!=$logsubmission['user_browser'] ) {
+						$logsubmission['user_browser'] = $_SERVER['HTTP_USER_AGENT'];
+					}
+					
+					// these values will always change
+					$logsubmission['last_updated'] =  null;
+					$logsubmission['user_email'] = $senderemail;
+					$logsubmission['user_name'] = $sendername;
+					if(!empty($form_fields)) {
+						$logsubmission['form_fields'] = serialize($form_fields);
+					}
+					if(!empty($form_values)) {
+						$logsubmission['form_values'] = serialize($form_values);
+					}
+					//debug_printr($logsubmission);
+					
+				}
 				$formbuilderlog->saveFormbuilderLog($logsubmission);
+				// cleanup junk vars
+				unset($formbuildersubmission);
+				unset($logsubmission);
 			}
 
 			// kill the hidden_formid for the next time this function will be called
@@ -463,6 +531,7 @@ class FormBuilder
 		} else {
 			$this->form->display();
 		}
+		// return to the normal get/post and other vars if we're in the wrong form
 		if(is_array($oldrequest) && is_array($oldpost) && is_array($oldget)) {
 			//debug('reloaded request, post and get');
 			

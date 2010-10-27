@@ -4,7 +4,7 @@
 // - Author: Two Kings // Lodewijk Evers
 // - E-mail: lodewijk@twokings.nl
 // - Description: Add form templates and [[contactform]] snippets to your entries and pages
-// - Date: 2010-10-19
+// - Date: 2010-10-27
 // - Identifier: formbuilder
 // - Required PivotX version: 2.2.0
 

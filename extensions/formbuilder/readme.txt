@@ -1,9 +1,9 @@
 Formbuilder for PivotX
 
 Version: 0.25
-Date: 2010-10-19
+Date: 2010-10-27
 Requirements:
-* PivotX 2.1.0 or higher
+* PivotX 2.2.0 or higher
 * PHP (Version 5.x)
 * Access to the mail function or an SMTP account
 * You must enable jQuery on the pages with forms

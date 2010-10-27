@@ -44,7 +44,7 @@ function passwordprotectAdmin(&$form_html) {
 
 
     // check if the user has the required userlevel to view this page.
-    $PIVOTX['session']->minLevel(3);
+    $PIVOTX['session']->minLevel(PIVOTX_UL_ADMIN);
 
     // When running for the first time, set the default options, if they are not available in config..
     foreach ($passwordprotect_config as $key => $value) {

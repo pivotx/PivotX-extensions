@@ -1,10 +1,11 @@
 # Changelog
 
 *   ## Version 0.25
-	2010-10-19
+	2010-10-27
 
 	*   added database logging support (by popular demand) still needs admin interface and better examples
-    * improved documentation
+	*   improved documentation
+	*   formbuilder now uses token based id's when in mysql mode
 *   ## Version 0.24
 	2010-09-24
 

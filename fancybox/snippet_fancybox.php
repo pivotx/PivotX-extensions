@@ -1,6 +1,6 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.12
+// - Version: 0.13
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
@@ -552,9 +552,9 @@ function fancyboxIncludeCallback(&$html) {
         $html = preg_replace("#<script ([^>]*?/jquery[a-z0-9_\.-]*\.js['\"][^>]*?)>\s*</script>#si", 
             "<script $1></script>\n" . $insert, $html, 1);
     } elseif (preg_match("/<meta http-equiv=['\"]Content-Type/si", $html)) {
-        $html = preg_replace("/<meta http-equiv=(['\"]Content-Type[^>]*?)>/si", "<meta http-equiv=$1>\n" . $insert, $html);
+        $html = preg_replace("/<meta http-equiv=(['\"]Content-Type[^>]*?)>/si", "<meta http-equiv=$1>\n" . $insert, $html, 1);
     } else {
-        $html = preg_replace("/<head([^>]*?)>/si", "<head$1>\n" . $insert, $html);
+        $html = preg_replace("/<head([^>]*?)>/si", "<head$1>\n" . $insert, $html, 1);
     }
 
 }

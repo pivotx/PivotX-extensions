@@ -1,13 +1,13 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.13
+// - Version: 0.11
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
 // - Description: Replace boring old Thickbox with a FancyBox!
 // - Date: 2010-09-10
 // - Identifier: fancybox 
-// - Required PivotX version: 2.2
+// - Required PivotX version: 2.0.2
 
 
 // Register 'fancybox' as a smarty tag, and override 'popup'
@@ -48,12 +48,7 @@ function smarty_fancybox($params, &$smarty) {
     $fb_type       = getDefault($params['fb_type'], "image");
     $width         = getDefault($params['width'], "560");
     $height        = getDefault($params['height'], "340");
-    $objwidth      = getDefault($params['objwidth'], "0");
-    $objheight     = getDefault($params['objheight'], "0");
     $maxthumb      = getDefault($params['specthumbmax'], "0");
-    $txtcol        = getDefault($params['txtcol'], "black");
-    $txtcolbg      = getDefault($params['txtcolbg'], "white");
-    $txtcls        = getDefault($params['txtcls'], "pivotx-popupimage");
     // this one can be used together with fb_type="youtube" and "vimeo"
     // !! structure should be like explained on youtube e.g. http://www.youtube.com/v/MOVID
     // or for vimeo: http://www.vimeo.com/moogaloop.swf?clip_id=CLIPID
@@ -85,12 +80,6 @@ function smarty_fancybox($params, &$smarty) {
     if ( empty($alt) ) {
         $alt = $filename;
     }
-    if ($objwidth == "0") {
-    	  $objwidth = $width;	
-    }
-    if ($objheight == "0") {
-        $objheight = $height;
-    }
     // Fix Thumbname, perhaps use a thumbname, instead of textual link
     // and try to fill both alt and title if still empty
     if ( $thumbname=="(thumbnail)" ) {
@@ -100,20 +89,11 @@ function smarty_fancybox($params, &$smarty) {
             $thumbname = makeThumbname($filename);
             // If the thumbnail does not exist and extension is jpg or png then try to create it
             // gif could be problematic so don't try it here......
-            // filename could contain a subdir! this part is removed by auto_thumbnail
-            // so save it through specifying a folder var            
             if( !file_exists( $PIVOTX['paths']['upload_base_path'].$thumbname )) {
                 $ext = strtolower(getExtension($filename));
                 if(($ext=="jpeg")||($ext=="jpg")||($ext=="png")) {
                     require_once($PIVOTX['paths']['pivotx_path'].'modules/module_imagefunctions.php');
-                    $folder = $PIVOTX['paths']['upload_base_path'];
-                    $dirpart = dirname($filename);
-                    $basename = basename($filename);
-                    $action = "Fancybox";
-                    if (($dirpart != "") && ($dirpart != ".")) {
-                    		$folder = $folder . $dirpart . "/";
-                    }
-                    if (!auto_thumbnail($basename, $folder, $action)) {
+                    if (!auto_thumbnail($filename)) {
                         debug("Failed to create thumbnail for " . $filename);
                     } 
                 } else {
@@ -128,15 +108,6 @@ function smarty_fancybox($params, &$smarty) {
     if ( empty($title) ) {
         $title = $alt;
     }
-    // special string "null" to get rid of any title/alt
-    if (($title=="null")||($alt=="null")) {
-       $title = "";
-       $alt = "";
-    }
-
-    // Clean title and alternative text before using in generated html
-    $title = cleanAttributes($title);
-    $alt = cleanAttributes($alt);
 
     // If the thumbnail exists, make the HTML for it, else just use the text for a link.
     // use the current settings for uploadwidth/height because thumb can have diff.size
@@ -291,8 +262,8 @@ function smarty_fancybox($params, &$smarty) {
             $urlmain,
             $urlid,
             $urlextra,
-            $objwidth,
-            $objheight,
+            $width,
+            $height,
             $urlmain,
             $urlid,
             $urlextra            
@@ -304,16 +275,13 @@ function smarty_fancybox($params, &$smarty) {
     }  else if ($fb_type=='text') {
         // use random number to be fairly sure that constructed href will be unique 
         // if by chance the number is the same then text shown (when clicked) will be the first one
-        // also use this random number to construct a unique rel because grouping results
-        // in array-reverse errors and crashing of the webpage when scrolling with the mouse!
         $randnum = rand();
-        $code = sprintf( "<a href=\"#%s%s\" class=\"fancytext\" title=\"%s\" rel=\"%s%s%s\" >%s</a>",
+        $code = sprintf( "<a href=\"#%s%s\" class=\"fancytext\" title=\"%s\" rel=\"%s%s\" >%s</a>",
             $rel_id,
             $randnum,
             $title,
             $rel_id,
             $uid,
-            $randnum,
             $thumbname
         );
         $textbegin = substr($text,0,5);
@@ -329,30 +297,25 @@ function smarty_fancybox($params, &$smarty) {
                 debug("Specified file cannot be found or read:'$docfile'");
             }
         }
-        // check whether the lines contain html.
-        // If there are the popup will still function but with visible elements
-        // better use iframe for text with html
-        if (strlen($lines) != strlen(strip_tags($lines))) {
-            debug("Popup: '$rel_id$randnum' contains HTML elements.");
-            debug("A text popup should only contain plain text.");
-            debug("Try using fb_type iframe with an url pointing to a saved file instead.");
+        // check whether the lines contain main html elements. If they are there the popup will
+        // still function but results in invalid html
+        $texthtml = strpos($lines, '<html');
+        $texthead = strpos($lines, '<head');
+        $texttitle = strpos($lines, '<title');
+        $textbody = strpos($lines, '<body');
+        if (($texthtml!==false)||($texthead!==false)||($texttitle!==false)||($textbody!==false)) {
+            debug("popup: '$rel_id$randnum' contains main html elements; a text popup should only contain plain html elements (like div or p)");
         }
-
-        // couldn't get it to work correctly with an object (kept on forcing its own default size)
-        // just specifying a span had the same result; can't use div and so on because pop-up
-        // can be within an open paragraph 
-        // so switched to textarea (which is more customisable anyway); cols and rows are there for valid html
-        $anchor_obj = sprintf( "<span style=\"display: none\"><span id=\"%s%s\"><textarea class=\"%s\" style=\"width: %s; height: %s; overflow: auto; color: %s; background-color: %s\" readonly=\"readonly\" cols=\"\" rows=\"\">%s</textarea></span></span>",
+        
+        $anchor_obj = sprintf( "<span style=\"display: none\"><span id=\"%s%s\" style=\"width: %s; height: %s; color: #000000; overflow: auto\"><object type=\"text/html\" width=\"%s\" height=\"%s\">%s</object></span></span>",
             $rel_id,
             $randnum,
-            $txtcls,
-            $objwidth,
-            $objheight,
-            $txtcol,
-            $txtcolbg,
+            $width,
+            $height,
+            $width,
+            $height,
             $lines
         );
-        
         $code = $code.$anchor_obj ;
         if( 'center'==$align ) {
             $code = '<p class="pivotx-wrapper">'.$code.'</p>' ;
@@ -393,11 +356,8 @@ function smarty_fancybox($params, &$smarty) {
 
     $PIVOTX['extensions']->addHook('after_parse', 'callback', 'fancyboxIncludeCallback');
 
-    if (!empty($params['file']) ) {
-        return $code;
-    } else {
-        return "";
-    }
+    return $code;
+
 
 }
 
@@ -418,28 +378,19 @@ function fancyboxIncludeCallback(&$html) {
         return;   
     }
 
-    $jqueryincluded = false;
-    $insert = '';
-
-    if (!preg_match("#<script [^>]*?/jquery[0-9_\.-]*\.(min.js|js)['\"][^>]*?>\s*</script>#i", $html)) { 
-        // We need to include Jquery
-        $insert .= "\n\t<!-- Main JQuery include -->\n";
-        $insert .= sprintf("\t<script type=\"text/javascript\" src=\"%sincludes/js/jquery-1.4.3.min.js\"></script>\n",
-        $PIVOTX['paths']['pivotx_url'] );
-        $jqueryincluded = true;
-    }
+    OutputSystem::instance()->enableCode('jquery');
 
     // Is config option 'fancybox_profile' added and has an expected value?
     $fbprof = $PIVOTX['config']->get('fancybox_profile');
     // default profile (downwards compatible)
     // for parms explanation -- see http://www.fancybox.net/api
-    $fbparms = "\t jQuery(\"a.fancybox\").fancybox({ padding: 2, 'titlePosition': 'over', 'overlayShow': true, 'overlayOpacity': 0.25, 'opacity': true, 'speedIn': 100, 'speedOut': 100, 'changeSpeed': 100, 'showCloseButton': true });\n";
+    $fbparms = "\t\tjQuery(\"a.fancybox\").fancybox({ padding: 2, 'titlePosition': 'over', 'overlayShow': true, 'overlayOpacity': 0.25, 'opacity': true, 'speedIn': 100, 'speedOut': 100, 'changeSpeed': 100, 'showCloseButton': true });\n";
     if ($fbprof == '') {
         // profile will be default = nr. 1
     } elseif ($fbprof == 1) {
         // is the default
     } elseif ($fbprof == 2) {       
-        $fbparms = "\t jQuery(\"a.fancybox\").fancybox({ ";
+        $fbparms = "\t\tjQuery(\"a.fancybox\").fancybox({ ";
         // title outside / elastic transition / diff.speed / cyclic
         $fbparms .= "padding: 2, ";
         $fbparms .= "'titlePosition': 'outside', ";
@@ -450,7 +401,7 @@ function fancyboxIncludeCallback(&$html) {
         $fbparms .= "'showCloseButton': true, 'cyclic': true ";
         $fbparms .= "});\n";		   
     } elseif ($fbprof == 3) {
-        $fbparms = "\t jQuery(\"a.fancybox\").fancybox({ ";
+        $fbparms = "\t\tjQuery(\"a.fancybox\").fancybox({ ";
         // no padding / no close button / Image 1/n before title (over) / cyclic
         $fbparms .= "padding: 0, ";
         $fbparms .= "'titlePosition': 'over', ";
@@ -463,7 +414,7 @@ function fancyboxIncludeCallback(&$html) {
         $fbparms .= " ' + (currentIndex + 1) + ' / ' + currentArray.length + (title.length ? ' &nbsp; ' + title : '') + '</span>';}";
         $fbparms .= "});\n";
     } elseif ($fbprof == 4) {
-        $fbparms = "\t jQuery(\"a.fancybox\").fancybox({ ";
+        $fbparms = "\t\tjQuery(\"a.fancybox\").fancybox({ ";
         // default profile according to fancybox.net
         $fbparms .= "padding: 10, margin: 20,";
         $fbparms .= "'titlePosition': 'outside', ";
@@ -477,7 +428,7 @@ function fancyboxIncludeCallback(&$html) {
         debug("Config option fancybox_profile has an incorrect value, profile set to default.");   
     } 
     // standard fancybox youtube profile   
-    $fbytube = "\t jQuery(\"a.fancytube\").fancybox({ ";
+    $fbytube = "\t\tjQuery(\"a.fancytube\").fancybox({ ";
     $fbytube .= "padding: 0, autoScale: false, centerOnScroll: true, ";
     $fbytube .= "'transitionIn': 'none', 'transitionOut': 'none', ";
     $fbytube .= "'overlayShow': true, 'overlayOpacity': 0.7, "; 
@@ -487,16 +438,16 @@ function fancyboxIncludeCallback(&$html) {
     $fbytube .= "});\n";	
 
     // standard fancybox text profile   
-    $fbtext  = "\t jQuery(\"a.fancytext\").fancybox({ ";
-    $fbtext .= "padding: 0, margin: 0, autoScale: true, centerOnScroll: true, ";
+    $fbtext  = "\t\tjQuery(\"a.fancytext\").fancybox({ ";
+    $fbtext .= "padding: 5, autoScale: true, centerOnScroll: true, ";
     $fbtext .= "'transitionIn': 'none', 'transitionOut': 'none', ";
     $fbtext .= "'overlayShow': true, 'overlayOpacity': 0.7, "; 
     $fbtext .= "'titlePosition': 'outside', ";
-    $fbtext .= "'showCloseButton': true, 'showNavArrows': false, 'cyclic': false ";
+    $fbtext .= "'showCloseButton': true, 'cyclic': false ";
     $fbtext .= "});\n";	
 
     // standard fancybox iframe profile   
-    $fbifram = "\t jQuery(\"a.fancyframe\").fancybox({ ";
+    $fbifram = "\t\tjQuery(\"a.fancyframe\").fancybox({ ";
     $fbifram .= "padding: 3, autoScale: false, centerOnScroll: true, ";
     $fbifram .= "'transitionIn': 'none', 'transitionOut': 'none', ";
     $fbifram .= "'overlayShow': true, 'overlayOpacity': 0.7, "; 
@@ -507,56 +458,73 @@ function fancyboxIncludeCallback(&$html) {
     $fbifram .= "});\n";	
 
     // standard fancybox swf/flash profile   
-    $fbflash = "\t jQuery(\"a.fancyflash\").fancybox({ ";
+    $fbflash = "\t\tjQuery(\"a.fancyflash\").fancybox({ ";
     $fbflash .= "padding: 0, autoScale: false, ";
     $fbflash .= "'transitionIn': 'none', 'transitionOut': 'none', ";
     $fbflash .= "'showCloseButton': true ";
     $fbflash .= "});\n";	
 
+    // insert html comment within this script to fool markup validation
+    $customjs  = "\n<!--\n";
+    $customjs .= "\tjQuery(document).ready(function() {\n";
+    $customjs .= $fbparms;
+    $customjs .= $fbytube;
+    $customjs .= $fbtext;
+    $customjs .= $fbifram;
+    $customjs .= $fbflash;
+    $customjs .= "\t});\n";    
+    // insert html comment within this script to fool markup validation
+    $customjs .= "\t// -->\n";
+
     $path = $PIVOTX['paths']['extensions_url']."fancybox/";
 
-    $insert .= "\n\t<!-- Includes for Fancybox script -->\n";
-    $insert .= "\t<link rel=\"stylesheet\" href=\"{$path}jquery.fancybox-1.3.1.css\" type=\"text/css\" media=\"screen\" />\n";
-    $insert .= "\t<!--[if lt IE 7]>\n";
-    $insert .= "\t<link rel=\"stylesheet\" href=\"{$path}jquery.fancybox_IE_-1.3.1.css\" type=\"text/css\" media=\"screen\" />\n";
-    $insert .= "\t<![endif]-->\n";
+    OutputSystem::instance()->addCode(
+        'fancybox-stylehref',
+        OutputSystem::LOC_HEADEND,
+        'link',
+        array('href'=>$path.'jquery.fancybox-1.3.1.css','media'=>'screen','_priority'=>OutputSystem::PRI_NORMAL+10)
+    );
+
+    OutputSystem::instance()->addCode(
+        'fancybox-stylehref-ie',
+        OutputSystem::LOC_HEADEND,
+        'link',
+        array('href'=>$path.'jquery.fancybox_IE_-1.3.1.css','media'=>'screen','_ms-expression'=>'if IE','_priority'=>OutputSystem::PRI_NORMAL+11)
+    );
 
     // easing only needed for elastic transition
     if ($fbprof == 2){
-        $insert .= "\t<script type=\"text/javascript\" src=\"{$path}jquery.easing-1.3.js\"></script>\n";
+        OutputSystem::instance()->addCode(
+            'fancybox-js-easing',
+            OutputSystem::LOC_HEADEND,
+            'script',
+            array('src'=>$path.'jquery.easying-1.3.js','_priority'=>OutputSystem::PRI_NORMAL+20)
+        );
     }
     // only add mousewheel when fancybox_profile has been set to something
     if (!$fbprof == ''){
-        $insert .= "\t<script type=\"text/javascript\" src=\"{$path}jquery.mousewheel-3.0.2.js\"></script>\n";
-    }
-    $insert .= "\t<script type=\"text/javascript\" src=\"{$path}jquery.fancybox-1.3.1.js\"></script>\n";
-    $insert .= "\t<script type=\"text/javascript\">\n";
-    // insert html comment within this script to fool markup validation
-    $insert .= "\t<!--\n";
-    $insert .= "\t\tjQuery.noConflict();\n";
-    $insert .= "\t\tjQuery(document).ready(function() {\n";
-    $insert .= $fbparms;
-    $insert .= $fbytube;
-    $insert .= $fbtext;
-    $insert .= $fbifram;
-    $insert .= $fbflash;
-    $insert .= "\t});\n";    
-    // insert html comment within this script to fool markup validation
-    $insert .= "\t// -->\n";
-    $insert .= "\t</script>\n";    
-    
-    // If JQuery was added earlier, we must insert the FB code after that. Else we 
-    // insert the code after the meta tag for the charset (since it ought to be first
-    // in the header) or if no charset meta tag we insert it at the top of the head section.
-    if (!$jqueryincluded) {
-        $html = preg_replace("#<script ([^>]*?/jquery[0-9_\.-]*\.(min.js|js)['\"][^>]*?)>\s*</script>#si",
-            "<script $1></script>\n" . $insert, $html, 1);
-    } elseif (preg_match("/<meta http-equiv=['\"]Content-Type/si", $html)) {
-        $html = preg_replace("/<meta http-equiv=(['\"]Content-Type[^>]*?)>/si", "<meta http-equiv=$1>\n" . $insert, $html, 1);
-    } else {
-        $html = preg_replace("/<head([^>]*?)>/si", "<head$1>\n" . $insert, $html, 1);
+        OutputSystem::instance()->addCode(
+            'fancybox-js-mousewheel',
+            OutputSystem::LOC_HEADEND,
+            'script',
+            array('src'=>$path.'jquery.mousewheel-3.0.2.js','_priority'=>OutputSystem::PRI_NORMAL+20)
+        );
     }
 
+    OutputSystem::instance()->addCode(
+        'fancybox-js-src',
+        OutputSystem::LOC_HEADEND,
+        'script',
+        array('src'=>$path.'jquery.fancybox-1.3.1.js','_priority'=>OutputSystem::PRI_NORMAL+21)
+    );
+
+    OutputSystem::instance()->addCode(
+        'fancybox-js',
+        OutputSystem::LOC_HEADEND,
+        'script',
+        array('_priority'=>OutputSystem::PRI_NORMAL+22),
+        $customjs
+    );
 }
 
 

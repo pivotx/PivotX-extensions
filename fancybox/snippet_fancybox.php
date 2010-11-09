@@ -1,13 +1,13 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.11
+// - Version: 0.14
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
 // - Description: Replace boring old Thickbox with a FancyBox!
 // - Date: 2010-09-10
 // - Identifier: fancybox 
-// - Required PivotX version: 2.0.2
+// - Required PivotX version: 2.2
 
 
 // Register 'fancybox' as a smarty tag, and override 'popup'

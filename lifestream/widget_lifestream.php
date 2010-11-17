@@ -1,6 +1,6 @@
 <?php
 // - Extension: Lifestream Widget
-// - Version: 0.8
+// - Version: 0.9
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net

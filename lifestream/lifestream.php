@@ -49,12 +49,12 @@ $count = 0;
  * ordering later on)
  */
 if (!empty($summize)) {
-    $url = "http://summize.com/search.atom?q=". urlencode($summize);
+    $url = "http://search.twitter.com/search.atom?q=". urlencode($summize);
 
     $rss = fetch_rss($url);
 
     if ($magpie_error!="") {
-        debug("Lifestream parser / Summize: " . $magpie_error('', true) . "\nurl: " . $url);   
+        debug("Lifestream parser / Twitter Search: " . $magpie_error('', true) . "\nurl: " . $url);   
     }
 
 
@@ -79,7 +79,7 @@ if (!empty($summize)) {
             if ($count>= $maxperfeed) { break; }
         }
     } else {
-        debug("Summize feed contains no data.");
+        debug("Twitter search feed contains no data.");
         debug("feed url: $url");
     }
 

@@ -1,6 +1,6 @@
 <?php
 // - Extension: Entry Calendar
-// - Version: 0.9
+// - Version: 0.10
 // - Author: PivotX Team/Khevor/Kay Hermann
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
@@ -72,7 +72,7 @@ function smarty_calendar($params) {
 
     $params = cleanParams($params);
 
-    $iWeekStart = getDefault($PIVOTX['config']->get('week_start_day'), $calendar_config['week_start_day']);
+    $iWeekStart = getDefault($PIVOTX['config']->get('week_start_day'), $calendar_config['week_start_day'], true);
     $iTimeZone = $PIVOTX['config']->get('timeoffset');
     $iTimeZoneUnit = $PIVOTX['config']->get('timeoffset_unit');
 
@@ -199,6 +199,7 @@ EOM;
         $j++;
         if ($j==7) { $j = 0; }
     }
+    if ($iWeekStart == 0) $iWeekStart = 7;
 
     /******************************
      *  Build the actual calendar  *

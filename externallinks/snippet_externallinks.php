@@ -1,6 +1,6 @@
 <?php
 // - Extension: External links
-// - Version: 1.1
+// - Version: 1.2
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
@@ -45,7 +45,7 @@ $script = "
 
 if ($externallinks_config['externallinks_addimage']) {
     $script = str_replace("%add%", "this.innerHTML = this.innerHTML+eimage;
-                    %add%", $script);
+                        %add%", $script);
 }
 
 if (!empty($externallinks_config['externallinks_title'])) {
@@ -56,7 +56,7 @@ if (!empty($externallinks_config['externallinks_title'])) {
 
 
 $script = str_replace("%add%", "", $script);
-$script = str_replace("%link%", "", $script);
+$script = str_replace("%link%", '" + this.href + "', $script);
 $script = str_replace("%path%", $PIVOTX['paths']['pivotx_url'], $script);
 
 

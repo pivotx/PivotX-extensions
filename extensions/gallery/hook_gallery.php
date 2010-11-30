@@ -1,13 +1,13 @@
 <?php
 // - Extension: Gallery
-// - Version: 0.10
+// - Version: 0.11
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: Add simple galleries to your Entries or Pages
 // - Date: 2010-05-20
 // - Identifier: gallery
-// - Required PivotX version: 2.0.2
+// - Required PivotX version: 2.2
 
 $this->addHook(
     'in_pivotx_template',

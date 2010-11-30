@@ -1,9 +1,5 @@
 [[ include file="inc_window_header.tpl" ]]
 
-<script type="text/javascript" src="[[$paths.pivotx_url]]includes/uploader/swfupload.js"></script>
-<script type="text/javascript" src="[[$paths.pivotx_url]]includes/uploader/swfupload.queue.js"></script>
-<script type="text/javascript" src="[[$paths.pivotx_url]]includes/uploader/fileprogress.js"></script>
-<script type="text/javascript" src="[[$paths.pivotx_url]]includes/uploader/handlers.js"></script>
 [[ literal ]]
 <script type="text/javascript">
 //<![CDATA[
@@ -35,75 +31,6 @@ function do_submit(){
 
 }
 
-
-
-/**
- * Javascript for dynamic uploader..
- */
-var swfu;
-
-window.onload = function() {
-    var settings = {
-        flash_url : "[[/literal]][[$paths.pivotx_url]][[literal]]includes/uploader/swfupload.swf",
-        upload_url: "[[/literal]][[$paths.pivotx_url]][[literal]]includes/editor/handle_upload.php",	
-        file_post_name: "userfile",
-        file_size_limit : "[[/literal]][[if $config.upload_max_filesize!=""]][[$config.upload_max_filesize]][[else]]2 MB[[/if]][[literal]]",
-        file_types : "*.jpg;*.gif;*.jpeg;*.png",
-        file_types_description : "Images",
-        file_upload_limit : 100,
-        file_queue_limit : 0,
-        custom_settings : {
-            progressTarget : "divFileProgressContainer",
-            cancelButtonId : "btnCancel"
-        },
-        debug: false,
-
-        post_params : {
-            pivotxsession: [[/literal]]"[[$pivotxsession]]"[[literal]]
-        },
-
-        // Button settings
-        button_image_url: "[[/literal]][[$paths.pivotx_url]][[literal]]includes/uploader/button.png",	// Relative to the Flash file
-        button_width: "199",
-        button_height: "31",
-        button_placeholder_id: "spanButtonPlaceHolder",
-        button_text: '<span class="theFont"> </span>',
-        button_text_style: ".theFont { font-size: 14; }",
-        button_text_left_padding: 12,
-        button_text_top_padding: 3,
-        
-        // The event handler functions are defined in handlers.js
-        file_queued_handler : fileQueued,
-        file_queue_error_handler : fileQueueError,
-        file_dialog_complete_handler : fileDialogComplete,
-        upload_start_handler : uploadStart,
-        upload_progress_handler : uploadProgress,
-        upload_error_handler : uploadError,
-        upload_success_handler : pivotUploadSuccess,
-        upload_complete_handler : uploadComplete,
-        queue_complete_handler : queueComplete	// Queue plugin event
-    };
-
-    swfu = new SWFUpload(settings);
- };
-
-
-
-function pivotUploadSuccess(file, serverData) {
-	try {
-		var progress = new FileProgress(file, this.customSettings.progressTarget);
-		progress.setComplete();
-		progress.setStatus("Complete.");
-		progress.toggleCancel(false);
-
-	} catch (ex) {
-		this.debug(ex);
-	}
-
-    filename = trim(serverData);
-    imagearray[ imagearray.length ] = filename; 
-
-}
 
 
 // Submitting and cancelling..
@@ -151,7 +78,7 @@ jQuery(function($) {
         <td class="nowrap">
             <b>[[t]]Upload[[/t]]:</b>
         </td>
-        <td colspan="2">
+        <td colspan="2"><div id="upload-container">
 
 
         <form style="clear:both;">
@@ -160,7 +87,7 @@ jQuery(function($) {
     
 
                 <span id="spanButtonPlaceHolder">
-                    <a href="#">
+                    <a href="#" id="upload-button">
                         <img src="../../pics/page_lightning.png" alt="" />[[t]]Upload an image[[/t]] 
                         <span style="font-size: 7pt;">([[t]]2 MB Max[[/t]])</span>
                     </a>                    
@@ -179,9 +106,11 @@ jQuery(function($) {
         </form>
 		<div id="divFileProgressContainer" style="width:330px; clear:both;"></div>
 
+        [[upload_create_button browse_button='upload-button' container='upload-container' progress_selector='#divFileProgressContainer' input_selector='#f_image' filters='image' upload_type='image']]
+
         <a href="#" id="btnCancel"  onclick="swfu.cancelQueue();"></a> 
 
-        </td>
+        </div></td>
     </tr>
 
     <tr>
@@ -192,7 +121,7 @@ jQuery(function($) {
             <input type='text' name='f_image' id='f_image' size='25' value='[[ $imagename ]]' class='input' style='width: 230px;' />
         </td>
         <td class="buttons_small">
-            <a href="#" onclick="top.openFileSelector('[[t]]Select an image[[/t]]', $('#f_image'), 'gif,jpg,png');">
+            <a href="#" onclick="top.openFileSelector('[[t]]Select an image[[/t]]', $('#f_image'), 'gif,jpg,jpeg,png');">
                 <img src='../../pics/page_lightning.png' alt="" /> [[t]]Select[[/t]]
             </a>
 

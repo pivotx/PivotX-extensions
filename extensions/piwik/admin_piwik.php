@@ -1,11 +1,11 @@
 <?php
 // - Extension: Piwik
-// - Version: 1.0
+// - Version: 1.0.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension to add Piwik tracking code.
-// - Date: 2009-09-15
+// - Date: 2010-12-01
 // - Identifier: piwik
 // - Required PivotX version: 2.0.2
 

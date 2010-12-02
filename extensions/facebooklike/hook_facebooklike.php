@@ -1,6 +1,6 @@
 <?php
 // - Extension: Facebook Like Button
-// - Version: 1.0
+// - Version: 1.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
@@ -29,8 +29,14 @@ function smarty_facebook_like($params, &$smarty) {
 	$urlparams['font'] = "font=" . getDefault($params['font'], 'arial');
 	$urlparams['colorscheme'] = "colorscheme=" . getDefault($params['colorscheme'], 'light');
 
-	if (!empty($params['link'])) {
-		$urlparams['href'] = "href=" . urlencode($host.$params['link']);
+	$linkpara = getDefault($params['link'], $params['href']);
+	
+	if (!empty($linkpara)) {
+		if (strpos($linkpara, "://")>0) {
+			$urlparams['href'] = "href=" . urlencode($linkpara);
+		} else {
+			$urlparams['href'] = "href=" . urlencode($host.$linkpara);
+		}
 	} else if (!empty($entry['link'])) {
 		$urlparams['href'] = "href=" . urlencode($host.$entry['link']);		
 	} else {

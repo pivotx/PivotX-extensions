@@ -80,7 +80,7 @@ if (!function_exists("isTablet")) {
 
         $isTablet = strpos($ua, 'ipad') !== false;
 
-        var_dump($isTablet);
+        // var_dump($isTablet);
 
         return $isTablet;
     }

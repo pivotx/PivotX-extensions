@@ -1,6 +1,6 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.14
+// - Version: 0.15
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
@@ -522,14 +522,14 @@ function fancyboxIncludeCallback(&$html) {
         'fancybox-stylehref',
         OutputSystem::LOC_HEADEND,
         'link',
-        array('href'=>$path.'jquery.fancybox-1.3.1.css','media'=>'screen','_priority'=>OutputSystem::PRI_NORMAL+10)
+        array('href'=>$path.'jquery.fancybox-1.3.4.css','media'=>'screen','_priority'=>OutputSystem::PRI_NORMAL+10)
     );
 
     OutputSystem::instance()->addCode(
         'fancybox-stylehref-ie',
         OutputSystem::LOC_HEADEND,
         'link',
-        array('href'=>$path.'jquery.fancybox_IE_-1.3.1.css','media'=>'screen','_ms-expression'=>'if lt IE 7','_priority'=>OutputSystem::PRI_NORMAL+11)
+        array('href'=>$path.'jquery.fancybox_IE_-1.3.4.css','media'=>'screen','_ms-expression'=>'if lt IE 7','_priority'=>OutputSystem::PRI_NORMAL+11)
     );
 
     // easing only needed for elastic transition
@@ -538,7 +538,7 @@ function fancyboxIncludeCallback(&$html) {
             'fancybox-js-easing',
             OutputSystem::LOC_HEADEND,
             'script',
-            array('src'=>$path.'jquery.easying-1.3.js','_priority'=>OutputSystem::PRI_NORMAL+20)
+            array('src'=>$path.'jquery.easying-1.3.pack.js','_priority'=>OutputSystem::PRI_NORMAL+20)
         );
     }
     // only add mousewheel when fancybox_profile has been set to something
@@ -547,7 +547,7 @@ function fancyboxIncludeCallback(&$html) {
             'fancybox-js-mousewheel',
             OutputSystem::LOC_HEADEND,
             'script',
-            array('src'=>$path.'jquery.mousewheel-3.0.2.js','_priority'=>OutputSystem::PRI_NORMAL+20)
+            array('src'=>$path.'jquery.mousewheel-3.0.4.pack.js','_priority'=>OutputSystem::PRI_NORMAL+20)
         );
     }
 
@@ -555,7 +555,7 @@ function fancyboxIncludeCallback(&$html) {
         'fancybox-js-src',
         OutputSystem::LOC_HEADEND,
         'script',
-        array('src'=>$path.'jquery.fancybox-1.3.1.js','_priority'=>OutputSystem::PRI_NORMAL+21)
+        array('src'=>$path.'jquery.fancybox-1.3.4.js','_priority'=>OutputSystem::PRI_NORMAL+21)
     );
 
     OutputSystem::instance()->addCode(

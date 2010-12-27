@@ -14,6 +14,8 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  */
+/* in this version all specific IE elements are commented out - use jquery.fancybox_IE-1.3.4.css for IE7/8 and jquery.fancybox_IE6-1.3.4.css for IE6  */
+
 
 #fancybox-loading {
 	position: fixed;
@@ -172,9 +174,9 @@
 	background-position: -40px -60px;
 }
 
-#fancybox-left:hover, #fancybox-right:hover {
-	visibility: visible; /* IE6 */
-}
+/* #fancybox-left:hover, #fancybox-right:hover { 
+  	visibility: visible;    IE6 
+} */
 
 #fancybox-left:hover span {
 	left: 20px;
@@ -323,7 +325,7 @@
 }
 
 /* IE6 */
-
+/*
 .fancybox-ie6 #fancybox-close { background: transparent; filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='fancybox/fancy_close.png', sizingMethod='scale'); }
 
 .fancybox-ie6 #fancybox-left-ico { background: transparent; filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='fancybox/fancy_nav_left.png', sizingMethod='scale'); }
@@ -344,9 +346,9 @@
 }
 
 #fancybox-loading.fancybox-ie6 div	{ background: transparent; filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='fancybox/fancy_loading.png', sizingMethod='scale'); }
-
+*/
 /* IE6, IE7, IE8 */
-
+/*
 .fancybox-ie .fancybox-bg { background: transparent !important; }
 
 .fancybox-ie #fancybox-bg-n { filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='fancybox/fancy_shadow_n.png', sizingMethod='scale'); }
@@ -357,3 +359,4 @@
 .fancybox-ie #fancybox-bg-sw { filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='fancybox/fancy_shadow_sw.png', sizingMethod='scale'); }
 .fancybox-ie #fancybox-bg-w { filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='fancybox/fancy_shadow_w.png', sizingMethod='scale'); }
 .fancybox-ie #fancybox-bg-nw { filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='fancybox/fancy_shadow_nw.png', sizingMethod='scale'); }
+*/

@@ -1,11 +1,11 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.15
+// - Version: 0.16
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
 // - Description: Replace boring old Thickbox with a FancyBox!
-// - Date: 2010-09-10
+// - Date: 2010-12-06
 // - Identifier: fancybox 
 // - Required PivotX version: 2.2
 
@@ -66,9 +66,9 @@ function smarty_fancybox($params, &$smarty) {
     // $border = getDefault($params['border'], 0);
     $uplw          = getDefault($PIVOTX['config']->get('upload_thumb_width'), 200);
     $uplh          = getDefault($PIVOTX['config']->get('upload_thumb_height'), 200);
-    $uplpath       = $PIVOTX['config']->get('upload_path');
+    $uplbasepath   = $PIVOTX['paths']['upload_base_path'];
 
-    // debug("fb info: '$filename'-'$thumbname'-'$title'-'$alt'-'$align'");
+    // debug("fb info: '$filename'-'$thumbname'-'$title'-'$alt'-'$align'-'$fb_type'");
 
     if (($align=='center'||($align=='inline'))){
         $fbclass = 'pivotx-popupimage';
@@ -113,7 +113,7 @@ function smarty_fancybox($params, &$smarty) {
                     if (($dirpart != "") && ($dirpart != ".")) {
                     		$folder = $folder . $dirpart . "/";
                     }
-                    if (!auto_thumbnail($basename, $folder, $action)) {
+                    if (!auto_thumbnail($basename, $folder, $action, $maxthumb)) {
                         debug("Failed to create thumbnail for " . $filename);
                     } 
                 } else {
@@ -147,7 +147,7 @@ function smarty_fancybox($params, &$smarty) {
         if ( ($ext=="jpg")||($ext=="jpeg")||($ext=="gif")||($ext=="png") ) {
             if ($maxthumb > 0) {
                // get size of thumbimage and calculate the right values (useful for vertical images)
-               list($thumbw, $thumbh) = getimagesize("../".$uplpath.$thumbname);
+               list($thumbw, $thumbh) = getimagesize($uplbasepath.$thumbname);
                if ($thumbw > $thumbh) {
                   $uplh = round($thumbh * ($maxthumb / $thumbw));
                   $uplw = $maxthumb;
@@ -207,6 +207,10 @@ function smarty_fancybox($params, &$smarty) {
             $code = "<!-- Rendering error: could not popup '$filename'. File does not exist. -->";
         }
     } else if (($fb_type=='youtube')||($fb_type=="vimeo")) {
+        // filename is not mandatory so fix an empty one with dummy string so code gets returned
+        if (empty($filename)) {
+            $filename = '==fbdummy==';
+        }
         // use random number to be fairly sure that constructed href will be unique 
         // if by chance the number is the same then movie shown (when clicked) will be the first one
         // this is because a gallery of movies is not possible yet
@@ -302,6 +306,10 @@ function smarty_fancybox($params, &$smarty) {
             $code = '<p class="pivotx-wrapper">'.$code.'</p>' ;
         }
     }  else if ($fb_type=='text') {
+        // filename is not mandatory so fix an empty one with dummy string so code gets returned
+        if (empty($filename)) {
+            $filename = '==fbdummy==';
+        }
         // use random number to be fairly sure that constructed href will be unique 
         // if by chance the number is the same then text shown (when clicked) will be the first one
         // also use this random number to construct a unique rel because grouping results
@@ -358,6 +366,10 @@ function smarty_fancybox($params, &$smarty) {
             $code = '<p class="pivotx-wrapper">'.$code.'</p>' ;
         }
     } else if ($fb_type=='iframe') {
+        // filename is not mandatory so fix an empty one with dummy string so code gets returned
+        if (empty($filename)) {
+            $filename = '==fbdummy==';
+        }
         // use random number to be fairly sure that constructed rel will be unique 
         // if by chance the number is the same then iframe will open but clicking 
         // in the frame itself will be impossible
@@ -374,6 +386,10 @@ function smarty_fancybox($params, &$smarty) {
             $code = '<p class="pivotx-wrapper">'.$code.'</p>' ;
         }
     } else if ($fb_type=='flash') {
+        // filename is not mandatory so fix an empty one with dummy string so code gets returned
+        if (empty($filename)) {
+            $filename = '==fbdummy==';
+        }
         // use random number to be fairly sure that constructed rel will be unique 
         // if by chance the number is the same then flash will open but clicking 
         // in the window itself will be impossible
@@ -393,7 +409,8 @@ function smarty_fancybox($params, &$smarty) {
 
     $PIVOTX['extensions']->addHook('after_parse', 'callback', 'fancyboxIncludeCallback');
 
-    if (!empty($params['file']) ) {
+    // not every type uses parm file so var filename gets a dummy value in those types
+    if (!empty($filename) ) {
         return $code;
     } else {
         return "";
@@ -526,19 +543,32 @@ function fancyboxIncludeCallback(&$html) {
     );
 
     OutputSystem::instance()->addCode(
-        'fancybox-stylehref-ie',
+        'fancybox-stylehref-ie6',
         OutputSystem::LOC_HEADEND,
         'link',
-        array('href'=>$path.'jquery.fancybox_IE_-1.3.4.css','media'=>'screen','_ms-expression'=>'if lt IE 7','_priority'=>OutputSystem::PRI_NORMAL+11)
+        array('href'=>$path.'jquery.fancybox_IE6_-1.3.4.css','media'=>'screen','_ms-expression'=>'if lt IE 7','_priority'=>OutputSystem::PRI_NORMAL+11)
+    );
+	
+    OutputSystem::instance()->addCode(
+        'fancybox-stylehref-ie7',
+        OutputSystem::LOC_HEADEND,
+        'link',
+        array('href'=>$path.'jquery.fancybox_IE_-1.3.4.css','media'=>'screen','_ms-expression'=>'if IE 7','_priority'=>OutputSystem::PRI_NORMAL+11)
     );
 
+    OutputSystem::instance()->addCode(
+        'fancybox-stylehref-ie8',
+        OutputSystem::LOC_HEADEND,
+        'link',
+        array('href'=>$path.'jquery.fancybox_IE_-1.3.4.css','media'=>'screen','_ms-expression'=>'if IE 8','_priority'=>OutputSystem::PRI_NORMAL+11)
+    );
     // easing only needed for elastic transition
     if ($fbprof == 2){
         OutputSystem::instance()->addCode(
             'fancybox-js-easing',
             OutputSystem::LOC_HEADEND,
             'script',
-            array('src'=>$path.'jquery.easying-1.3.pack.js','_priority'=>OutputSystem::PRI_NORMAL+20)
+            array('src'=>$path.'jquery.easing-1.3.js','_priority'=>OutputSystem::PRI_NORMAL+20)
         );
     }
     // only add mousewheel when fancybox_profile has been set to something
@@ -547,7 +577,7 @@ function fancyboxIncludeCallback(&$html) {
             'fancybox-js-mousewheel',
             OutputSystem::LOC_HEADEND,
             'script',
-            array('src'=>$path.'jquery.mousewheel-3.0.4.pack.js','_priority'=>OutputSystem::PRI_NORMAL+20)
+            array('src'=>$path.'jquery.mousewheel-3.0.4.js','_priority'=>OutputSystem::PRI_NORMAL+20)
         );
     }
 

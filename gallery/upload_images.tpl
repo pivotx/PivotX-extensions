@@ -13,11 +13,21 @@ function do_submit(){
     var f_image_alt = trim($('#f_image_alt').val());
     var f_image_title = trim($('#f_image_title').val());
 
-    if (f_image) {
-        imagearray[ imagearray.length ] = f_image + "###" + f_image_title + "###" + f_image_alt;
-    } else {
-        f_image = imagearray[ imagearray.length-1 ];
-        imagearray[ imagearray.length-1 ] = f_image + "###" + f_image_title + "###" + f_image_alt;
+    var found = false;
+    for(var i=0; i < imagearray.length; i++) {
+        if (imagearray[i] == f_image) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        if (f_image) {
+            imagearray[ imagearray.length ] = f_image + "###" + f_image_title + "###" + f_image_alt;
+        } else {
+            f_image = imagearray[ imagearray.length-1 ];
+            imagearray[ imagearray.length-1 ] = f_image + "###" + f_image_title + "###" + f_image_alt;
+        }
     }
 
     // If window.opener is unknown, we've opened the image inserter as a Dialog. then 
@@ -106,7 +116,7 @@ jQuery(function($) {
         </form>
 		<div id="divFileProgressContainer" style="width:330px; clear:both;"></div>
 
-        [[upload_create_button browse_button='upload-button' container='upload-container' progress_selector='#divFileProgressContainer' input_selector='#f_image' filters='image' upload_type='image']]
+        [[upload_create_button browse_button='upload-button' container='upload-container' progress_selector='#divFileProgressContainer' input_selector='#f_image' filters='image' upload_type='images']]
 
         <a href="#" id="btnCancel"  onclick="swfu.cancelQueue();"></a> 
 

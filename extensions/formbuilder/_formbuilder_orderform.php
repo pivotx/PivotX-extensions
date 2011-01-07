@@ -77,7 +77,7 @@ function smarty_orderform($params, &$smarty) {
 		if(!empty($params['subject'])) {
 			$mail_config['subject'] = $params['subject'];
 		} else {
-			$mail_config['subject'] = 'Orderform - '.$PIVOTX['config']->data['sitename'];
+			$mail_config['subject'] = sprintf(ft('Order form - %s'), $PIVOTX['config']->data['sitename']);
 		}
 		if(!empty($params['mailtemplate'])) {
 			$mailtemplate = $params['mailtemplate'];

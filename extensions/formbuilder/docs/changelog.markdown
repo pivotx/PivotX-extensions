@@ -3,7 +3,8 @@
 *   ## Version 0.26
 	2011-01-07
 
-	*   translation function improvement
+	*   translation function for formbuilder messages
+	*   autoloader for custom tags
 *   ## Version 0.25
 	2010-10-27
 

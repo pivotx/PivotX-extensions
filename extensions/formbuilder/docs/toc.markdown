@@ -8,5 +8,6 @@
 	*   [Template options](confirmation_templates.markdown)
 	*   [Advanced](advanced_options.markdown)
 	*   [Database logging](logging_options.markdown)
+	*   [Translations](translations.markdown)
 *   [FAQ](faq.markdown)
 *   [Changelog](changelog.markdown)

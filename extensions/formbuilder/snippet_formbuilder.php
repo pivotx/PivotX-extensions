@@ -9,7 +9,7 @@
 // - Required PivotX version: 2.2.0
 
 
-$PIVOTX['formbuilder']['lang'] = $PIVOTX['config']->get('formbuilder_language');
+$PIVOTX['formbuilder']['lang'] = get_default($PIVOTX['config']->get('formbuilder_language'), 'default');
 
 if(!class_exists('FormBuilder')) {
 	$formbuilderbasedir = dirname(__FILE__);
@@ -26,24 +26,31 @@ if(!class_exists('FormBuilder')) {
 		}
 	}
 	
-	if(file_exists($formbuilderbasedir.'/translations/'.$PIVOTX['formbuilder']['lang'].'.php')) {
-		include_once($formbuilderbasedir.'/translations/'.$PIVOTX['formbuilder']['lang'].'.php');
-		$PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']] = $translations;
+	if($PIVOTX['formbuilder']['lang']!='default') {
+		if(file_exists($formbuilderbasedir.'/translations/'.$PIVOTX['formbuilder']['lang'].'.php')) {
+			include_once($formbuilderbasedir.'/translations/'.$PIVOTX['formbuilder']['lang'].'.php');
+			//debug_printr($translations);
+			$PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']] = $translations;
+		} else {
+			$PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']] = array();
+		}
+		if(file_exists($formbuilderbasedir.'/overrides/translations/'.$PIVOTX['formbuilder']['lang'].'.php')) {
+			include_once($formbuilderbasedir.'/overrides/translations/'.$PIVOTX['formbuilder']['lang'].'.php');
+			$PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']] = array_merge(
+				$PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']],
+				$translations
+			);
+		}
 	}
-	if(file_exists($formbuilderbasedir.'/overrides/translations/'.$PIVOTX['formbuilder']['lang'].'php')) {
-		include_once($formbuilderbasedir.'/overrides/translations/'.$PIVOTX['formbuilder']['lang'].'.php');
-		$PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']] = $translations;
+	
+	$dir = scandir($formbuilderbasedir);
+	foreach($dir as $filename) {
+		if(strstr($filename, '_formbuilder_')) {
+			include_once($formbuilderbasedir.'/'.$filename);
+		}
+		
 	}
 
-
-	// add the [[contactform]]
-	include_once($formbuilderbasedir.'/_formbuilder_contactform.php');
-	// add the [[orderform]]
-	include_once($formbuilderbasedir.'/_formbuilder_orderform.php');
-	// add the [[sendtofriend]]
-	include_once($formbuilderbasedir.'/_formbuilder_sendtofriend.php');
-	// add the [[formbuilder]]
-	include_once($formbuilderbasedir.'/_formbuilder_tags.php');
 }
 
 /**
@@ -52,12 +59,21 @@ if(!class_exists('FormBuilder')) {
 function ft($unstranslatedstring) {
 	global $PIVOTX;
 	
-	$translatedstring = __($unstranslatedstring);
-	
-	if(isset($PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']][$unstranslatedstring])) {
+	// If a language is set, see if the string is translated
+	if(
+	   $PIVOTX['formbuilder']['lang']
+	   && is_array($PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']])
+	   && isset($PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']][$unstranslatedstring])
+	) {
+		// return the translated string
 		return $PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']][$unstranslatedstring];
-	} elseif($translatedstring!=$unstranslatedstring) {
+	}
+	
+	// fallback to default pivotx translation
+	$translatedstring = __($unstranslatedstring);
+	if($translatedstring!=$unstranslatedstring) {
 		return $translatedstring;
 	}
+	// big failure, return the untranslated string
 	return $unstranslatedstring;
 }

@@ -80,7 +80,7 @@ function smarty_contactform($params, &$smarty) {
 		if(!empty($params['subject'])) {
 			$mail_config['subject'] = $params['subject'];
 		} else {
-			$mail_config['subject'] = 'Contact form - '.$PIVOTX['config']->data['sitename'];
+			$mail_config['subject'] = sprintf(ft('Contact form - %s'), $PIVOTX['config']->data['sitename']);
 		}
 		if(!empty($params['mailtemplate'])) {
 			$mailtemplate = $params['mailtemplate'];

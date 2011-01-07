@@ -57,7 +57,7 @@ function smarty_sendtofriend($params, &$smarty) {
 		$user = $PIVOTX['users']->getUser($username);
 
 		$mail_config = array(
-		  'subject' => 'Send to friend - '.$PIVOTX['config']->data['sitename'],
+		  'subject' => sprintf(ft('Send to friend - %s'), $PIVOTX['config']->data['sitename']),
 		  'recipient' => array(
 		    'formfield_email' => 'email',
 		    'formfield_name' => 'name',

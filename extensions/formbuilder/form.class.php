@@ -7,12 +7,12 @@
  * Two Kings Form Class and all its parts are licensed under the GPL version 2.
  * see: http://www.twokings.eu/tools/license for more information.
  *
- * @version 0.22
+ * @version 0.26
  * @author Lodewijk evers, lodewijk@twokings.nl
  * @copyright GPL, version 2
  * @link http://twokings.eu/tools/
  *
- * Date: 2010-08-03
+ * Date: 2011-01-07
  *
  */
 
@@ -144,7 +144,7 @@ class FormBuilder
 
 			//Create a message
 			if(empty($mail_config['subject'])) {
-				$subject = 'formulier inzending van: '.$this->config['name'];
+				$subject = sprintf(ft('Form submission by: %s'), $this->config['name']);
 			} else {
 				$subject = $mail_config['subject'];
 			}
@@ -256,7 +256,7 @@ class FormBuilder
 		if($this->send_email_success == true) {
 			$textmessage = $display_template;
 		} else {
-			$textmessage = '<p class="warning">Let op: Uw inzending is nog niet verstuurd. Er is een fout in het emailscript.</p>';
+			$textmessage = '<p class="warning">'.ft('Please note: Your message has not been sent. There is an error in the script configuration.').'</p>';
 		}
 		// debug($textmessage);
 		$this->mailconfirmation = $textmessage;
@@ -334,7 +334,7 @@ class FormBuilder
 					$this->form->add(array('type' => 'custom', 'text' => '</div>'));
 					// remove from form
 				} else {
-					print '<p class="error">Error in fieldset definition for: <em>'. $field ."</em></p>\n";
+					print '<p class="error">'.sprintf(ft('Error in field definition for: %s'), '<em>'. $field .'</em>')."</p>\n";
 				}
 				$this->config['fields'][$field]['isadded']=true;
 			}
@@ -368,7 +368,7 @@ class FormBuilder
 		);
 		$this->config['fields']['refererscript'] = array(
 			'type' => 'custom',
-			'text' => '<script type="text/javascript">jQuery(function($){$("#'.$this->config['id'].' input[name=check_referrer]").val("'.$this->formsubmissionkey.'");});</script>'. "\n" .'<noscript>This form will not work if you have not enabled javascript in your browser.</noscript>'
+			'text' => '<script type="text/javascript">jQuery(function($){$("#'.$this->config['id'].' input[name=check_referrer]").val("'.$this->formsubmissionkey.'");});</script>'. "\n" .'<noscript>'.ft('This form will not work if you have not enabled javascript in your browser.').'</noscript>'
 		);
 
 
@@ -397,7 +397,7 @@ class FormBuilder
 						$this->form->add($field_value);
 						$this->config['fields'][$field]['isadded']=true;
 					} else {
-						print '<p class="error">Error in field definition for: <em>'. $field ."</em></p>\n";
+						print '<p class="error">'.sprintf(ft('Error in field definition for: %s'), '<em>'. $field .'</em>')."</p>\n";
 					}
 				}
 			}
@@ -420,7 +420,7 @@ class FormBuilder
 		
 		if(isset($_POST['check_referrer']) && ($_POST['check_referrer'] != $this->formsubmissionkey)) {
 			debug('spam referrer is not right: '. $_POST['check_referrer'] .' should be '. $this->formsubmissionkey." - javascript must be disabled or someone is a spammer.");
-			$this->form->add(array('type' => 'custom', 'text' => '<noscript><p>'. __('To prevent spam JavaScript must be enabled for submitting this form.') .'</p></noscript>'));
+			$this->form->add(array('type' => 'custom', 'text' => '<noscript><p>'. ft('To prevent spam JavaScript must be enabled for submitting this form.') .'</p></noscript>'));
 			$this->validationvalue = 0;
 		} elseif(isset($_POST['hidden_formid']) && ($_POST['hidden_formid'] != $this->formsessionkey)) {
 			debug('form hidden_formid identifier is not right: '. $_POST['hidden_formid'] ." != ".$this->formsessionkey  ."\nYou were probably submitting another form.");

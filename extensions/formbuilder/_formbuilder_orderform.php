@@ -43,11 +43,11 @@ function smarty_orderform($params, &$smarty) {
 			'subject' => 'Order form -'.$PIVOTX['config']->data['sitename'],
 			'recipient' => array(
 				'email' => 'contactform@example.com',
-				'name' => __('Order form')
+				'name' => ft('Order form')
 			),
 			'sender' => array(
 				'email' => 'contactform@example.com',
-				'name' => __('Order form')
+				'name' => ft('Order form')
 			),
 			'method' => 'mail' // mail | smtp
 		);
@@ -122,67 +122,67 @@ function smarty_orderform($params, &$smarty) {
 					'label' => $label,
 					'required' => $required,
 					'validation' => $rule,
-					'requiredmessage' => sprintf(__("\"%s\" is a required field."), $label) . sprintf(__("Please enter a \"%s\""), $label),
-					'error' => sprintf(__("Please enter a \"%s\""), $label)
+					'requiredmessage' => sprintf(ft("\"%s\" is a required field."), $label) . sprintf(ft("Please enter a \"%s\""), $label),
+					'error' => sprintf(ft("Please enter a \"%s\""), $label)
 				);
 			}
 		} else {
 			$fields = array(
 				'name' => array(
 					'name' => 'name',
-					'label' => __('Name'),
+					'label' => ft('Name'),
 					'type' => 'text',
 					'validation' => 'string',
-					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Name')) . sprintf(__("Please enter a \"%s\""), __('Name')),
-					'error' => sprintf(__("Please enter a \"%s\""), __('Name'))
+					'requiredmessage' => sprintf(ft("\"%s\" is a required field."), ft('Name')) . sprintf(ft("Please enter a \"%s\""), ft('Name')),
+					'error' => sprintf(ft("Please enter a \"%s\""), ft('Name'))
 				),
 				'email' => array(
 					'name' => 'email',
-					'label' => __('E-mail address'),
+					'label' => ft('E-mail address'),
 					'type' => 'text',
 					'validation' => 'email',
-					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('E-mail address')) . sprintf(__("Please enter a \"%s\""), __('E-mail address')),
-					'error' => sprintf(__("Please enter a \"%s\""), __('E-mail address'))
+					'requiredmessage' => sprintf(ft("\"%s\" is a required field."), ft('E-mail address')) . sprintf(ft("Please enter a \"%s\""), ft('E-mail address')),
+					'error' => sprintf(ft("Please enter a \"%s\""), ft('E-mail address'))
 				),
 				'phone' => array(
 					'name' => 'phone',
-					'label' => __('Phone number'),
+					'label' => ft('Phone number'),
 					'type' => 'text',
 					'validation' => 'phonenumber',
-					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Phone number')) . sprintf(__("Please enter a \"%s\""), __('Phone number')),
-					'error' => sprintf(__("Please enter a \"%s\""), __('Phone number'))
+					'requiredmessage' => sprintf(ft("\"%s\" is a required field."), ft('Phone number')) . sprintf(ft("Please enter a \"%s\""), ft('Phone number')),
+					'error' => sprintf(ft("Please enter a \"%s\""), ft('Phone number'))
 				),
 				'address' => array(
 					'name' => 'address',
-					'label' => __('Street address'),
+					'label' => ft('Street address'),
 					'type' => 'text',
 					'validation' => 'string',
-					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Street address')) . sprintf(__("Please enter a \"%s\""), __('Street address')),
-					'error' => sprintf(__("Please enter a \"%s\""), __('Street address'))
+					'requiredmessage' => sprintf(ft("\"%s\" is a required field."), ft('Street address')) . sprintf(ft("Please enter a \"%s\""), ft('Street address')),
+					'error' => sprintf(ft("Please enter a \"%s\""), ft('Street address'))
 				),
 				'postcode' => array(
 					'name' => 'postcode',
-					'label' => __('Postal code'),
+					'label' => ft('Postal code'),
 					'type' => 'text',
 					'validation' => 'string',
-					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Postal code')) . sprintf(__("Please enter a \"%s\""), __('Postal code')),
-					'error' => sprintf(__("Please enter a \"%s\""), __('Postal code'))
+					'requiredmessage' => sprintf(ft("\"%s\" is a required field."), ft('Postal code')) . sprintf(ft("Please enter a \"%s\""), ft('Postal code')),
+					'error' => sprintf(ft("Please enter a \"%s\""), ft('Postal code'))
 				),
 				'city' => array(
 					'name' => 'city',
-					'label' => __('City'),
+					'label' => ft('City'),
 					'type' => 'text',
 					'validation' => 'string',
-					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('City')) . sprintf(__("Please enter a \"%s\""), __('City')),
-					'error' => sprintf(__("Please enter a \"%s\""), __('City'))
+					'requiredmessage' => sprintf(ft("\"%s\" is a required field."), ft('City')) . sprintf(ft("Please enter a \"%s\""), ft('City')),
+					'error' => sprintf(ft("Please enter a \"%s\""), ft('City'))
 				),
 				'message' => array(
 					'name' => 'message',
-					'label' => __('Message'),
+					'label' => ft('Message'),
 					'type' => 'textarea',
 					'validation' => 'string',
-					'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Message')) . sprintf(__("Please enter a \"%s\""), __('Message')),
-					'error' => sprintf(__("Please enter a \"%s\""), __('Message'))
+					'requiredmessage' => sprintf(ft("\"%s\" is a required field."), ft('Message')) . sprintf(ft("Please enter a \"%s\""), ft('Message')),
+					'error' => sprintf(ft("Please enter a \"%s\""), ft('Message'))
 				)
 			);
 		}
@@ -204,7 +204,7 @@ function smarty_orderform($params, &$smarty) {
 				'verzenden' => array(
 					'type' => 'submit',
 					'label' => '',
-					'value' => __('Send message')
+					'value' => ft('Send message')
 				)
 			);
 		}
@@ -223,12 +223,12 @@ function smarty_orderform($params, &$smarty) {
 			'fieldsets' => array(
 				'sender-info' => array(
 					'id' => 'personal',
-					'label' => __('Personal info'),
+					'label' => ft('Personal info'),
 					'fields' => array('name', 'email', 'phone')
 				),
 				'sender-address' => array(
 					'id' => 'address',
-					'label' => __('Address'),
+					'label' => ft('Address'),
 					'fields' => array('address', 'postcode', 'city'),
 				),
 			),

@@ -1,12 +1,15 @@
 <?php
 // - Extension: Formbuilder and contactforms
-// - Version: 0.25
+// - Version: 0.26
 // - Author: Two Kings // Lodewijk Evers
 // - E-mail: lodewijk@twokings.nl
 // - Description: Add form templates and [[contactform]] snippets to your entries and pages
-// - Date: 2010-10-27
+// - Date: 2011-01-07
 // - Identifier: formbuilder
 // - Required PivotX version: 2.2.0
+
+
+$PIVOTX['formbuilder']['lang'] = $PIVOTX['config']->get('formbuilder_language');
 
 if(!class_exists('FormBuilder')) {
 	$formbuilderbasedir = dirname(__FILE__);
@@ -22,6 +25,16 @@ if(!class_exists('FormBuilder')) {
 			include_once($formbuilderbasedir.'/form.sql.php');
 		}
 	}
+	
+	if(file_exists($formbuilderbasedir.'/translations/'.$PIVOTX['formbuilder']['lang'].'.php')) {
+		include_once($formbuilderbasedir.'/translations/'.$PIVOTX['formbuilder']['lang'].'.php');
+		$PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']] = $translations;
+	}
+	if(file_exists($formbuilderbasedir.'/overrides/translations/'.$PIVOTX['formbuilder']['lang'].'php')) {
+		include_once($formbuilderbasedir.'/overrides/translations/'.$PIVOTX['formbuilder']['lang'].'.php');
+		$PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']] = $translations;
+	}
+
 
 	// add the [[contactform]]
 	include_once($formbuilderbasedir.'/_formbuilder_contactform.php');
@@ -31,4 +44,20 @@ if(!class_exists('FormBuilder')) {
 	include_once($formbuilderbasedir.'/_formbuilder_sendtofriend.php');
 	// add the [[formbuilder]]
 	include_once($formbuilderbasedir.'/_formbuilder_tags.php');
+}
+
+/**
+ * This ugly function will translate your (error)messages
+ */
+function ft($unstranslatedstring) {
+	global $PIVOTX;
+	
+	$translatedstring = __($unstranslatedstring);
+	
+	if(isset($PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']][$unstranslatedstring])) {
+		return $PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']][$unstranslatedstring];
+	} elseif($translatedstring!=$unstranslatedstring) {
+		return $translatedstring;
+	}
+	return $unstranslatedstring;
 }

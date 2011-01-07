@@ -1,5 +1,9 @@
 # Changelog
 
+*   ## Version 0.26
+	2011-01-07
+
+	*   translation function improvement
 *   ## Version 0.25
 	2010-10-27
 

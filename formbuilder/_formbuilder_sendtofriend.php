@@ -112,53 +112,53 @@ function smarty_sendtofriend($params, &$smarty) {
 
 			'name' => array(
 				'name' => 'name',
-				'label' => __('Name'),
+				'label' => ft('Name'),
 				'type' => 'text',
 				'isrequired' => true,
 				'validation' => 'string',
 				'class' => 'default-value',
-				'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Name')) . sprintf(__("Please enter a \"%s\""), __('Name')),
-				'error' => sprintf(__("Please enter a \"%s\""), __('Name'))
+				'requiredmessage' => sprintf(ft("\"%s\" is a required field."), ft('Name')) . sprintf(ft("Please enter a \"%s\""), ft('Name')),
+				'error' => sprintf(ft("Please enter a \"%s\""), ft('Name'))
 			),
 			'email' => array(
 				'name' => 'email',
-				'label' => __('E-mail address'),
+				'label' => ft('E-mail address'),
 				'type' => 'text',
 				'isrequired' => true,
 				'validation' => 'email',
 				'class' => 'default-value',
-				'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('E-mail address')) . sprintf(__("Please enter a \"%s\""), __('E-mail address')),
-				'error' => sprintf(__("Please enter a \"%s\""), __('E-mail address'))
+				'requiredmessage' => sprintf(ft("\"%s\" is a required field."), ft('E-mail address')) . sprintf(ft("Please enter a \"%s\""), ft('E-mail address')),
+				'error' => sprintf(ft("Please enter a \"%s\""), ft('E-mail address'))
 			),
 			'namesender' => array(
 				'name' => 'namesender',
-				'label' => __('Name'),
+				'label' => ft('Name'),
 				'type' => 'text',
 				'isrequired' => true,
 				'validation' => 'string',
 				'class' => 'default-value',
-				'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Name')) . sprintf(__("Please enter a \"%s\""), __('Name')),
-				'error' => sprintf(__("Please enter a \"%s\""), __('Name'))
+				'requiredmessage' => sprintf(ft("\"%s\" is a required field."), ft('Name')) . sprintf(ft("Please enter a \"%s\""), ft('Name')),
+				'error' => sprintf(ft("Please enter a \"%s\""), ft('Name'))
 			),
 			'emailsender' => array(
 				'name' => 'emailsender',
-				'label' => __('E-mail address'),
+				'label' => ft('E-mail address'),
 				'type' => 'text',
 				'isrequired' => true,
 				'validation' => 'email',
 				'class' => 'default-value',
-				'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('E-mail address')) . sprintf(__("Please enter a \"%s\""), __('E-mail address')),
-				'error' => sprintf(__("Please enter a \"%s\""), __('E-mail address'))
+				'requiredmessage' => sprintf(ft("\"%s\" is a required field."), ft('E-mail address')) . sprintf(ft("Please enter a \"%s\""), ft('E-mail address')),
+				'error' => sprintf(ft("Please enter a \"%s\""), ft('E-mail address'))
 			),
 			'message' => array(
 				'name' => 'message',
-				'label' => __('Message'),
+				'label' => ft('Message'),
 				'value' => 'Ik kwam deze pagina tegen, misschien is dit wel iets voor jou.'."\n\n".$sendtofriendlink,
 				'type' => 'hidden',
 				'isrequired' => true,
 				'validation' => 'string',
-				'requiredmessage' => sprintf(__("\"%s\" is a required field."), __('Message')) . sprintf(__("Please enter a \"%s\""), __('Message')),
-				'error' => sprintf(__("Please enter a \"%s\""), __('Message'))
+				'requiredmessage' => sprintf(ft("\"%s\" is a required field."), ft('Message')) . sprintf(ft("Please enter a \"%s\""), ft('Message')),
+				'error' => sprintf(ft("Please enter a \"%s\""), ft('Message'))
 			),
 		);
 		
@@ -181,7 +181,7 @@ function smarty_sendtofriend($params, &$smarty) {
 					'type' => 'submit',
 					'class' => 'button',
 					'label' => '',
-					'value' => __('Send message')
+					'value' => ft('Send message')
 				)
 			);
 		}
@@ -198,11 +198,11 @@ function smarty_sendtofriend($params, &$smarty) {
 
 			'fieldsets' => array(
 				'sender-info' => array(
-					'label' => __('Sender'),
+					'label' => ft('Sender'),
 					'fields' => array('namesender', 'emailsender')
 				),
 				'recipient-info' => array(
-					'label' => __('Recipient'),
+					'label' => ft('Recipient'),
 					'fields' => array('name', 'email'),
 				),
 			),

@@ -258,7 +258,7 @@ __email__
 :   check if the input is a valid e-mail address
 
 _/regexppattern/_
-:   you can use a regular expression if you want to test the input directly __(not implemented, will be added later)__
+:   you can use a regular expression if you want to test the input directly ft(not implemented, will be added later)__
 
 __phonenumber__
 :   at the moment this just checks if the string contains a valid numeric string with spaces, dashes or + signs

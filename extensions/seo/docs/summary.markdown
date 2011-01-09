@@ -20,7 +20,8 @@ The following meta-tags are added by this extension:
 - `<meta name="keywords">` - The keywords for the page/entry. If not set manually
   this will be filled with the tags used in the entry/page.
 - `<meta name="description">` - The description of the page/entry. If not set
-  manually, the first part of the introduction will be used.
+  manually, the first part of the introduction will be used. On the homepage of 
+  the site, the "site description" that was set in Configuration will be used.
 - `<title>` - By default the `<title>` tag is not altered by this extension, so
   it will be as defined in the theme. If you set this manually, the <title>-tag
   in the HTML will be changed by the extension.

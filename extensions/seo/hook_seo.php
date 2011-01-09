@@ -1,6 +1,6 @@
 <?php
 // - Extension: SEO - Search Engine Optimization
-// - Version: 0.1
+// - Version: 0.2
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
@@ -147,6 +147,8 @@ function seoCallback(&$html) {
             if(empty($value)) { unset($title[$key]); }
         }
         $content['title'] = implode(" - ", $title);
+
+        $content['introduction'] = $PIVOTX['config']->get('sitedescription');
 
         $tags = getTagCosmos(30);
         if (!empty($tags['tags'])) {

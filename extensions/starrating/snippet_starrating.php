@@ -1,6 +1,6 @@
 <?php
 // - Extension: Star rating
-// - Version: 0.5
+// - Version: 0.7
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
@@ -44,6 +44,16 @@ $this->addHook(
     "smarty_starrating"
 );
 
+
+/** 
+ * Add a hook, so we can add hidden fields to entries, so the ratings don't 
+ * get lost when editing an entry.
+ */
+$this->addHook(
+    'in_pivotx_template',
+    'entry-bottom',
+    array('callback' => 'starratingTemplateHook' )
+    );
 
 
 
@@ -302,5 +312,33 @@ function starratingAdmin(&$form_html) {
 
 }
 
+
+
+/**
+ * Callback function for our hook..
+ */
+function starratingTemplateHook($content) {
+    global $PIVOTX;
+
+    $output = <<< EOM
+<input id="extrafield-ratingaverage" name="extrafields[ratingaverage]" value='%ratingaverage%' type="hidden" />   
+<input id="extrafield-ratingcount" name="extrafields[ratingcount]" value='%ratingcount%' type="hidden" />    
+<input id="extrafield-ratings" name="extrafields[ratings]" value='%ratings%' type="hidden" />    
+EOM;
+
+    // For ease of use, just try to replace everything in $entry here:
+    foreach($content as $key=>$value) {
+        $output = str_replace("%".$key."%", $value, $output);
+    }
+    foreach($content['extrafields'] as $key=>$value) {
+        if (is_array($value)) { $value = serialize($value); }
+        $output = str_replace("%".$key."%", $value, $output);
+    }
+    // Don't keep any %whatever%'s hanging around..
+    $output = preg_replace("/%([a-z0-9_-]+)%/i", "", $output);
+
+    return $output;
+
+}
 
 ?>

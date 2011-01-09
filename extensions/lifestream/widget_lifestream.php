@@ -1,6 +1,6 @@
 <?php
 // - Extension: Lifestream Widget
-// - Version: 0.9
+// - Version: 1.0
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
@@ -26,7 +26,7 @@ $lifestream_config = array(
     'lifestream_style' => 'widget-lg',
     'lifestream_header' => "<p><strong>What I'm doing:</strong></p>\n<ul class='iconlist'>",
     'lifestream_footer' => "</ul>",
-    'lifestream_format' => "<li style=\"background-image: url(%icon%);\">\n%title% - \n<span class='date'><a href=\"%link%\">%date%</a></span>\n</li>",
+    'lifestream_format' => "<li style=\"background-image: url(%icon%);\">\n%title% - \n<span class='date'><a href=\"%link%\" rel=\"nofollow\" target=\"_blank\">%date%</a></span>\n</li>",
 );
 
 

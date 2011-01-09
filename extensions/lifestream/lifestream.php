@@ -288,11 +288,11 @@ foreach($items2 as $item) {
 
     // Convert links to a clickable '[link]'..
     $item['title'] = preg_replace("/([ \t]|^)www\./mi", "\\1http://www.", $item['title']);
-    $item['title'] = preg_replace("#([ \t\(]|^)(http://[^ :)\r\n]+)#mi","\\1<a href=\"\\2\">[link]</a>", $item['title']);
+    $item['title'] = preg_replace("#([ \t\(]|^)(http://[^ :)\r\n]+)#mi","\\1<a href=\"\\2\" rel=\"nofollow\" target=\"_blank\">[link]</a>", $item['title']);
 
     // Make the '@name' in twitter into links..
     if ($item['source']=="twitter" || $item['source']=="summize") {
-        $item['title'] = preg_replace("/@(\w+)/i", "@<a href='http://twitter.com/$1'>$1</a>", $item['title']);
+        $item['title'] = preg_replace("/@(\w+)/i", "@<a href='http://twitter.com/$1' rel=\"nofollow\" target=\"_blank\">$1</a>", $item['title']);
     }
 
     $temp_output = $format;

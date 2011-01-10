@@ -40,7 +40,7 @@ function galleryFieldExtension($content) {
             width: 106px;
         }
         
-        #galleryrow2, #galleryrow4 {
+        #galleryrow2, #galleryrow4, #galleryrow5 {
             display: none;
         }
     
@@ -91,12 +91,8 @@ function galleryFieldExtension($content) {
     </style>
     <table class="formclass" border="0" cellspacing="0" width="650">
         <tbody>
-            
-            <tr>
-                <td colspan="3"><hr noshade="noshade" size="1" /></td>
-            </tr>
-            
-            
+
+
             <tr>
                 <td width="150">
                     <label><strong>%title%:</strong></label>
@@ -131,6 +127,11 @@ function galleryFieldExtension($content) {
                     
                 </td>
             </tr>
+
+            <tr id='galleryrow5'>
+                <td colspan="3"><hr noshade="noshade" size="1" /></td>
+            </tr>
+
         </tbody>
     </table>
 EOM;

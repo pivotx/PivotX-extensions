@@ -163,10 +163,8 @@ function explode( delimiter, string, limit ) {
 }
 
 function showGallery() {
-    
-    $('#galleryrow1').slideUp();
-    $('#galleryrow2').slideDown();
-    $('#galleryrow3').slideUp();
-    $('#galleryrow4').slideDown();
+
+    $('#galleryrow1, #galleryrow3').slideUp();
+    $('#galleryrow2, #galleryrow4, #galleryrow5').slideDown();
 
 }

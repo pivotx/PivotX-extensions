@@ -52,7 +52,7 @@ EOM;
  * The submit button
  */
 $this->html['submit'] = <<< EOM
-<input type="submit" tabindex="%tabindex%" value="%submit%" name="%submit%" class="button" />
+<input type="submit" tabindex="%tabindex%" class="%class% %haserror%" value="%submit%" name="%submit%" class="button" />
 EOM;
 
 /**
@@ -85,7 +85,7 @@ EOM;
  * Basic text input
  */
 $this->html['text'] = <<< EOM
-<label for="%name%">%label% %isrequired%</label><br />
+<label for="%name%">%label% %isrequired%</label>
 <input name="%name%" id="%name%" class="%class% %haserror%" type="text" value="%value%" size="%size%" style="%style%" tabindex="%tabindex%" %extra% />
 %error%
 %text%
@@ -96,8 +96,8 @@ EOM;
  * Insert a text input that's readonly
  */
 $this->html['text_readonly'] = <<< EOM
-<label for="%name%">%label% %isrequired%</label><br />
-<input name="%name%" id="%name%" class="%haserror%" type="text" value="%value%" size="%size%" style="%style%" readonly="readonly" tabindex="%tabindex%" />
+<label for="%name%">%label% %isrequired%</label>
+<input name="%name%" id="%name%" class="%class% %haserror%" type="text" value="%value%" size="%size%" style="%style%" readonly="readonly" tabindex="%tabindex%" />
 %error%
 %text%
 EOM;
@@ -133,7 +133,7 @@ EOM;
 $this->html['date_select'] = <<< EOM
 <label for="%name%">%label% %isrequired%</label>
 <div>
-<input name="%name%" id="%name%" class="%haserror%" type="text" value="%value%" size="%size%"  tabindex="%tabindex%" />
+<input name="%name%" id="%name%" class="%class% %haserror%" type="text" value="%value%" size="%size%"  tabindex="%tabindex%" />
 <button type="reset" id="trigger[%tabindex%]">...</button>
 <script type="text/javascript">
     Calendar.setup({
@@ -155,7 +155,7 @@ EOM;
 $this->html['datetime_select'] = <<< EOM
 <label for="%name%">%label% %isrequired%</label>
 <div>
-<input name="%name%" id="%name%" class="%haserror%"  type="text" value="%value%" size="%size%" tabindex="%tabindex%" />
+<input name="%name%" id="%name%" class="%class% %haserror%" type="text" value="%value%" size="%size%" tabindex="%tabindex%" />
 <button type="reset" id="trigger[%tabindex%]">...</button>
 <script type="text/javascript">
     Calendar.setup({
@@ -172,8 +172,8 @@ EOM;
  * Insert a basic textarea field
  */
 $this->html['textarea'] = <<< EOM
-<label for="%name%" class="wide">%label% %isrequired%</label><br />
-<textarea name="%name%" id="%name%" cols="%cols%" class="resizable %haserror%"  rows="%rows%" style="%style%" tabindex="%tabindex%" >%value%</textarea>
+<label for="%name%" class="wide">%label% %isrequired%</label>
+<textarea name="%name%" id="%name%" cols="%cols%" class="resizable %class% %haserror%"  rows="%rows%" style="%style%" tabindex="%tabindex%" >%value%</textarea>
 %error%
 %text%
 EOM;
@@ -182,8 +182,8 @@ EOM;
  * Insert a password field
  */
 $this->html['password'] = <<< EOM
-<label for="%name%">%label% %isrequired%</label><br />
-<input name="%name%" id="%name%" type="password" class="%haserror%" value="%value%" size="%size%"  style="%style%" tabindex="%tabindex%" />
+<label for="%name%">%label% %isrequired%</label>
+<input name="%name%" id="%name%" type="password" class="%class% %haserror%" value="%value%" size="%size%"  style="%style%" tabindex="%tabindex%" />
 %error%
 %text%
 EOM;
@@ -193,7 +193,7 @@ EOM;
  * using 'view source', so don't pass security related info this way.
  */
 $this->html['hidden'] = <<< EOM
-<input name="%name%" id="%name%" type="hidden" value="%value%" />
+<input name="%name%" id="%name%" class="%class% %haserror%" type="hidden" value="%value%" />
 EOM;
 
 
@@ -336,7 +336,7 @@ EOM;
 
 $this->html['checkbox'] = <<< EOM
 <label for="%formname%_%name%">%label% %isrequired%</label>
-<input type="checkbox" name="%name%" value="1" %checked% id="%formname%_%name%" class="checkboxinput noborder" tabindex="%tabindex%" />
+<input type="checkbox" name="%name%" value="%value%" %checked% id="%formname%_%name%" class="checkboxinput noborder" tabindex="%tabindex%" />
 %error%
 %text%
 EOM;
@@ -355,7 +355,7 @@ $this->html['checkboxgrid'] = <<< EOM
 EOM;
 
 $this->html['checkboxgrid_element'] = <<< EOM
-<input type="checkbox" name="%name%" value="%value%" %checked% id="%formname%_%name%" class="checkboxinput noborder" tabindex="%tabindex%" />
+<input type="checkbox" name="%name%" value="%value%" %checked% id="%formname%_%name%" class="checkboxinput noborder %class%" tabindex="%tabindex%" />
 EOM;
 
 $this->html['file'] = <<< EOM

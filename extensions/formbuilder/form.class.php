@@ -232,6 +232,24 @@ class FormBuilder
 				} elseif($value['type']!='custom' && $value['post_value']) {
 					$mail_template = str_replace('%'.$value['name'].'%', $value['post_value'], $mail_template);
 					$display_template = str_replace('%'.$value['name'].'%', $value['post_value'], $display_template);
+				} elseif(in_array($value['type'], array('file', 'upload', 'uploadselectbox'))) {
+					// debug_printr(array('this file'=> $_FILES[$value['name']], 'value'=> $value, 'get' => $_GET, 'post' => $_POST, 'files' => $_FILES));
+					$filename = $_POST[$value['name']];
+
+					$path = $value['upload_dir'];
+					if(file_exists($path.$filename)) {
+						//debug('file exists, attempting to attach');
+						$mail_template = str_replace('%'.$value['name'].'%', $filename .' '. ft('(attached file)'), $mail_template);
+						$display_template = str_replace('%'.$value['name'].'%', $filename, $display_template);
+						
+						$attachment = Swift_Attachment::fromPath($path.$filename);  					
+						//Attach it to the message
+						$message->attach($attachment);
+					} else {
+						//debug('file attachment is not found');
+					}
+					
+
 				} else {
 					$mail_template = str_replace('%'.$value['name'].'%', '', $mail_template);
 					$display_template = str_replace('%'.$value['name'].'%', '', $display_template);
@@ -294,7 +312,7 @@ class FormBuilder
 		// load the unique formsessionkey
 		// or request a new one
 		if(!isset($this->formsessionkey)) {
-			if(function_exists('formbuilderlogRequestToken')) {
+			if(function_exists('formbuilderlogRequestToken') && ($this->config['enable_logging']==true)) {
 				$this->formsessionkey = formbuilderlogRequestToken($this->config['id'], $this->form->spamkey);
 			} else {
 				$this->formsessionkey = md5($_SERVER['REMOTE_ADDR'].$_SERVER["HTTP_USER_AGENT"].$this->form->spamkey);
@@ -308,12 +326,19 @@ class FormBuilder
 		}
 		// prepare all fieldsets
 		foreach($this->config['fieldsets'] as $fieldset => $fieldset_values) {
-			if(!$fieldset_values['id']) {
+			if($fieldset && !$fieldset_values['id']) {
+				$safeid = preg_replace('/[^a-z0-9\-]/i','',trim(strtolower(strip_tags($fieldset))));
+			} elseif(!$fieldset_values['id']) {
 				$safeid = 'fieldset-'. preg_replace('/[^a-z0-9]/i','',trim(strtolower(strip_tags($fieldset_values['label']))));
 			} else {
 				$safeid = preg_replace('/[^a-z0-9]/i','',trim(strtolower(strip_tags($fieldset_values['id']))));
 			}
-			$this->form->add(array('type' => 'custom', 'text' => '<fieldset id="'.$safeid.'" class="formfieldset">'));
+			if($this->config['fieldsets']['class']) {
+				$this->config['fieldsets']['class'] = preg_replace('/[^a-z0-9]/i','',trim(strtolower(strip_tags($this->config['fieldsets']['class']))));
+				$this->form->add(array('type' => 'custom', 'text' => str_replace('%class%', $this->config['fieldsets']['class'], '<fieldset id="'.$safeid.'" class="formfieldset %class%">')));
+			} else {
+				$this->form->add(array('type' => 'custom', 'text' => '<fieldset id="'.$safeid.'" class="formfieldset">'));
+			}
 			if(!empty($fieldset_values['label'])) {
 				$this->form->add(array('type' => 'custom', 'text' => '<legend>'.$fieldset_values['label'].'</legend>'));
 			}
@@ -322,7 +347,13 @@ class FormBuilder
 			}
 			foreach($fieldset_values['fields'] as $field) {
 				if(is_array($this->config['fields'][$field])) {
-					$this->form->add(array('type' => 'custom', 'text' => '<div class="formrow fieldsetformrow">'));
+					if($this->config['fields'][$field]['class']) {
+						
+						$this->config['fields'][$field]['class'] = preg_replace('/[^a-z0-9]/i','',trim(strtolower(strip_tags($this->config['fields'][$field]['class']))));
+						$this->form->add(array('type' => 'custom', 'text' => str_replace('%class%', $this->config['fields'][$field]['class'],'<div class="formrow fieldsetformrow %class%">')));	
+					} else {
+						$this->form->add(array('type' => 'custom', 'text' => '<div class="formrow fieldsetformrow">'));
+					}
 					if(isset($this->config['fields'][$field]['pre_html'])) {
 						$this->form->add(array('type' => 'custom', 'text' => $this->config['fields'][$field]['pre_html']));
 					}
@@ -382,7 +413,12 @@ class FormBuilder
 						$this->form->add(array('type' => 'custom', 'text' => '<div class="formrow extraformrow" id="'.$field_value['name'].'">'.$field_value['label'].'</div>'));
 						$this->config['fields'][$field]['isadded']=true;
 					} elseif(is_array($field_value) && $field_value['type']!='hidden') {
-						$this->form->add(array('type' => 'custom', 'text' => '<div class="formrow extraformrow">'));
+						if($field_value['class']) {
+							$field_value['class'] = preg_replace('/[^a-z0-9]/i','',trim(strtolower(strip_tags($field_value['class']))));
+							$this->form->add(array('type' => 'custom', 'text' => str_replace('%class%', $field_value['class'], '<div class="formrow extraformrow %class%">')));	
+						} else {
+							$this->form->add(array('type' => 'custom', 'text' => '<div class="formrow extraformrow">'));
+						}
 						if(isset($field_value['pre_html'])) {
 							$this->form->add(array('type' => 'custom', 'text' => $field_value['pre_html']));
 						}

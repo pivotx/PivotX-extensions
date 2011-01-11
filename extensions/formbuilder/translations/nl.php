@@ -29,6 +29,7 @@ $translations = array(
     'City' => 'Plaats',
     'Sender' => 'Afzender',
     'Recipient' => 'Ontvanger',
+    'Fields marked %s are required' => 'Met %s gemarkeerde velden moeten worden ingevuld.',
     'Please note: Your message has not been sent. There is an error in the script configuration.' => 'Let op: Uw inzending is nog niet verstuurd. Er is een fout in het emailscript.',
     'Error in field definition for: %s' => 'Fout in field definition van: %s',
     'This form will not work if you have not enabled javascript in your browser.' => 'This form will not work if you have not enabled javascript in your browser.',

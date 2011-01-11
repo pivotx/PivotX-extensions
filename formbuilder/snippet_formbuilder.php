@@ -31,8 +31,6 @@ if(!class_exists('FormBuilder')) {
 			include_once($formbuilderbasedir.'/translations/'.$PIVOTX['formbuilder']['lang'].'.php');
 			//debug_printr($translations);
 			$PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']] = $translations;
-		} else {
-			$PIVOTX['formbuilder'][$PIVOTX['formbuilder']['lang']] = array();
 		}
 		if(file_exists($formbuilderbasedir.'/overrides/translations/'.$PIVOTX['formbuilder']['lang'].'.php')) {
 			include_once($formbuilderbasedir.'/overrides/translations/'.$PIVOTX['formbuilder']['lang'].'.php');
@@ -44,8 +42,9 @@ if(!class_exists('FormBuilder')) {
 	}
 	
 	$dir = scandir($formbuilderbasedir);
+	//debug_printr($dir);
 	foreach($dir as $filename) {
-		if(strstr($filename, '_formbuilder_')) {
+		if(strstr($filename, '_formbuilder_') && !strstr($filename, '.__')) {
 			include_once($formbuilderbasedir.'/'.$filename);
 		}
 		

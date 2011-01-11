@@ -123,10 +123,18 @@ class FormOverride {
         $this->fields[] = $temp_field;
 
         // File uploads
-        if ( ($temp_field['type'] == 'file') || ($temp_field['type'] == 'uploadselectbox') ) {
+        if ( in_array($temp_field['type'], array('file', 'upload', 'uploadselectbox'))) {
 
             // Get array keys of $_FILES
             $array_keys   = array_keys($_FILES);
+
+            $temp_field['upload_dir'] = ($temp_field['upload_dir'])?$temp_field['upload_dir']:'/uploads/';
+            $temp_field['maxfilesize'] = ($temp_field['maxfilesize'])?$temp_field['maxfilesize']:(3*1024*1024);
+            $temp_field['allowed_types'] = ($temp_field['allowed_types'])?$temp_field['allowed_types']:'doc,docx,pdf,odt,txt,odf,gif,jpg,jpeg,png,ppt,pptx,xls,xlsx';
+
+            //debug_printr(array('this file'=>$_FILES[$temp_field['name']], 'temp_field'=>$temp_field, 'array_keys'=>$array_keys, 'get'=>$_GET, 'post'=>$_POST, 'files'=>$_FILES));
+            //debug_printr(array('this file'=>$_FILES[$temp_field['name']], 'get'=>$_GET, 'post'=>$_POST));
+
             $count_arrays = count($array_keys);
 
             for($i=0; $i<$count_arrays; $i++) {
@@ -142,9 +150,12 @@ class FormOverride {
 
                 if ($this->handleUpload($name, $temp_field['upload_dir'], $temp_field['maxfilesize'], $temp_field['allowed_types'], $array_keys[$i])) {
                     $this->upload_success = TRUE;
+                    $_POST[$array_keys[$i]] = $this->lastuploadfile;
                 }
 
             }
+            
+            //debug_printr(array('this file'=>$_FILES[$temp_field['name']], 'get'=>$_GET, 'post'=>$_POST));
 
 
 
@@ -1019,7 +1030,12 @@ class FormOverride {
                 return preg_match('/^([0-9]{4}\s?[a-z]{2})$/i', $value);
 
             case "upload":
-                return $this->upload_success;
+                $success = $this->upload_success;
+                return $success;
+                
+            case 'file':                
+                $success = $this->upload_success;
+                return $success;
 
             case "safestring":
                 return ($value == safe_string($value, true));
@@ -1027,6 +1043,8 @@ class FormOverride {
             case 'datetime':
                  return preg_match('/([0-9]{4}-[0-9]{2}-[0-9]{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2})/', $value);
 
+            case 'date':
+                 return preg_match('/([0-9]{4}-[0-9]{2}-[0-9]{2})/', $value);
 
             case "options":
                 //debug('new set of options', $value, $options);

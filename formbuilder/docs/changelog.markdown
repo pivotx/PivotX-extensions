@@ -1,6 +1,11 @@
 # Changelog
 
 *   ## Version 0.26
+	2011-01-11
+	*   added support for file uploads as attachment for the mail
+	    - still needs a lot of documentation
+	*   improved logging
+	*   modified default templates (you will need to use css to style labels now)
 	2011-01-07
 
 	*   translation function for formbuilder messages

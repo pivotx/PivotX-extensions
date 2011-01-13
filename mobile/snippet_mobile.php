@@ -1,13 +1,13 @@
 <?php
 // - Extension: Mobile Browser Extension
-// - Version: 0.5
+// - Version: 0.6
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A snippet extension to detect mobile browsers, and redirect them to a specific page.
-// - Date: 2009-02-22
+// - Date: 2011-01-13
 // - Identifier: mobile
-// - Required PivotX version: 2.1.0
+// - Required PivotX version: 2.2.3
 
 global $PIVOTX, $mobiledetect_config;
 
@@ -19,6 +19,7 @@ $mobiledetect_config = array(
     'mobile_frontpage' => "mobile/frontpage_template.html",
     'mobile_entrypage' => "mobile/entrypage_template.html",
     'mobile_page' => "mobile/page_template.html",
+    'mobile_extrapage' => "mobile/search_template.html",
     'mobile_treat_tablet_as_mobile' => 0
 );
 
@@ -153,7 +154,10 @@ function mobileHook(&$params) {
         case "page":
             $params['template'] = $PIVOTX['config']->get('mobile_page');
             break;
-        
+
+        case "search":
+            $params['template'] = $PIVOTX['config']->get('mobile_extrapage');
+            break;
 
     }
 
@@ -347,6 +351,20 @@ function mobileAdmin(&$form_html) {
         'isrequired' => 1,
         'validation' => 'ifany|string|minlen=5|maxlen=80'
     ));
+
+
+    $form->add( array(
+        'type' => 'text',
+        'name' => 'mobile_extrapage',
+        'label' => "Extra (search) template",
+        'value' => '',
+        'error' => 'That\'s not a proper filename!',
+        'text' => "",
+        'size' => 40,
+        'isrequired' => 1,
+        'validation' => 'ifany|string|minlen=5|maxlen=80'
+    ));
+
 
     $form->add( array(
         'type' => 'checkbox',

@@ -20,7 +20,7 @@ $googlecalendar_config = array(
     'googlecalendar_style' => 'widget-lg',
     'googlecalendar_header' => "<p><strong>" . __('My Calendar') . "</strong></p>\n<ul>",
     'googlecalendar_footer' => "<ul>",
-    'googlecalendar_format' => "<li><a href=\"%link%\">%title%</a> - <span class='date'>%date_start%=%date_end%</span></li>",
+    'googlecalendar_format' => "<li><a href=\"%link%\">%title%</a> - <span class='date'>%date_start%-%date_end%</span></li>",
     'googlecalendar_format_date_start' => "%day%-%month%-'%ye% %hour24%:%minute%",
     'googlecalendar_format_date_end' => "%hour24%:%minute%",
     'googlecalendar_only_snippet' => 0,

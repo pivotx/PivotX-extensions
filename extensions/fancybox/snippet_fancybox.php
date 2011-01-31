@@ -1,6 +1,6 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.16
+// - Version: 0.17
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net

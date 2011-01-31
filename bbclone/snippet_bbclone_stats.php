@@ -1,6 +1,6 @@
 <?php
 // - Extension: BBclone
-// - Version: 1.1
+// - Version: 1.2
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
@@ -41,7 +41,7 @@ function smarty_bbclone_stats($params, &$smarty) {
             return bbclone_stats_hits();
             break;
         case 'hits_entry':
-            return bbclone_stats_hits_entry($params['format']);
+            return bbclone_stats_hits_entry($params['format'], $params['title']);
             break;
         case 'keywords':
             return bbclone_stats_keywords();
@@ -55,7 +55,7 @@ function smarty_bbclone_stats($params, &$smarty) {
             
 }
 
-function bbclone_stats_hits_entry($format) {
+function bbclone_stats_hits_entry($format, $owntitle="") {
     global $PIVOTX;
 
     require($PIVOTX['paths']['bbclone_path']."var/access.php");
@@ -67,6 +67,10 @@ function bbclone_stats_hits_entry($format) {
         $title = smarty_title(array(), $PIVOTX['template']);
     } else {
         $title = smarty_sitename(array(), $PIVOTX['template']);
+    }
+    // parm title supplied?
+    if (!empty($owntitle)) {
+        $title = $owntitle;
     }
 
     // bbclone cuts some characters if title is too long (>60) and adds "..."

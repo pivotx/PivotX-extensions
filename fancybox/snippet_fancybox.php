@@ -449,8 +449,9 @@ function fancyboxIncludeCallback(&$html) {
     } elseif ($fbprof == 2) {       
         $fbparms = "\t\tjQuery(\"a.fancybox\").fancybox({ ";
         // title outside / elastic transition / diff.speed / cyclic
+		// -- although FB specifies to use titlePosition outside their js only uses float for outside title build-up
         $fbparms .= "padding: 2, ";
-        $fbparms .= "'titlePosition': 'outside', ";
+        $fbparms .= "'titlePosition': 'float', ";
         $fbparms .= "'transitionIn': 'elastic', 'transitionOut': 'elastic', ";
         $fbparms .= "'easingIn': 'easeOutBack', 'easingOut': 'easeInBack', "; 
         $fbparms .= "'overlayShow': true, 'overlayOpacity': 0.3, ";
@@ -472,9 +473,9 @@ function fancyboxIncludeCallback(&$html) {
         $fbparms .= "});\n";
     } elseif ($fbprof == 4) {
         $fbparms = "\t\tjQuery(\"a.fancybox\").fancybox({ ";
-        // default profile according to fancybox.net
+        // default profile according to fancybox.net (changed titlePosition outside to float)
         $fbparms .= "padding: 10, margin: 20,";
-        $fbparms .= "'titlePosition': 'outside', ";
+        $fbparms .= "'titlePosition': 'float', ";
         $fbparms .= "'transitionIn': 'fade', 'transitionOut': 'fade', ";
         $fbparms .= "'overlayShow': true, 'overlayOpacity': 0.3, ";
         $fbparms .= "'opacity': false, 'speedIn': 300, 'speedOut': 300, 'changeSpeed': 300, ";

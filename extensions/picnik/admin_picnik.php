@@ -1,11 +1,11 @@
 <?php
 // - Extension: Picnik
-// - Version: 1.1
+// - Version: 1.1.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension to allow editing images through picnik.com.
-// - Date: 2010-09-05
+// - Date: 2011-02-09
 // - Identifier: picnik
 // - Required PivotX version: 2.0.2
 

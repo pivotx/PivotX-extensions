@@ -36,9 +36,9 @@ if ( (!$PIVOTX['session']->isLoggedIn()) || ($postedsession != $_SESSION['pivotx
 
 $postedurl = parse_url($_POST['file']);
 
-if ( ($postedurl['host']!="www.picnik.com") || (strpos($postedurl['path'], 'file/')!==1)  ) {
+if ( ($postedurl['host']!="www.picnikr.com") || (strpos($postedurl['path'], 'file/')!==1)  ) {
     echo "<h1>Error: Image not posted!</h1>";
-    echo "<p>The picnik extension will only fetch images from www.picnik.com.</p>";
+    echo "<p>The picnik extension will only fetch images from www.picnikr.com.</p>";
     die();
 }
 

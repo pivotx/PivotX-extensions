@@ -55,7 +55,7 @@ function piwikAdmin(&$form_html) {
         'size' => 4,
         'name' => 'piwik_site_id',
         'label' => __('Piwik Website ID '),
-        'validation' => 'integer',
+        'validation' => 'integer|min=1',
         'isrequired' => 1,
         'text' => makeJtip(__('Piwik Website ID '), __('The id for the website as found in the Piwik website overview.')),
     ));
@@ -67,6 +67,8 @@ function piwikAdmin(&$form_html) {
         'label' => __('Ignore IP'),
         'text' => makeJtip(__('Ignore IP'), __('A comma separated list of IP that shouldn\'t be registered in Piwik.')),
     ));
+
+    $form->use_javascript(true);
 
     /**
      * Add the form to our (referenced) $form_html. Make sure you use the same key

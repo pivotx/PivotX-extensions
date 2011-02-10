@@ -237,6 +237,7 @@ function googlecalendarAdmin(&$form_html) {
         'text' => sprintf(__("Yes, I don't want %s to appear among the widgets."), "Google Calender")
     ));
 
+    $form->use_javascript(true);
 
     /**
      * Add the form to our (referenced) $form_html. Make sure you use the same key

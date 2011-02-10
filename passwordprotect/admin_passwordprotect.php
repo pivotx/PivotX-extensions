@@ -131,6 +131,8 @@ function passwordprotectAdmin(&$form_html) {
         'validation' => 'string|minlen=5'        
     ));
 
+    $form->use_javascript(true);
+
     /**
      * Add the form to our (referenced) $form_html. Make sure you use the same key
      * as the first parameter to $PIVOTX['extensions']->getAdminForm

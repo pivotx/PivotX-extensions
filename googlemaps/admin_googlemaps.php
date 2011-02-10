@@ -56,7 +56,7 @@ function googleMapsAdmin(&$form_html) {
         'size' => 4,
         'name' => 'googlemaps_width',
         'label' => __('Default width of map'),
-        'validation' => 'integer',
+        'validation' => 'integer|min=1',
     ));
 
     $form->add( array(
@@ -64,7 +64,7 @@ function googleMapsAdmin(&$form_html) {
         'size' => 4,
         'name' => 'googlemaps_height',
         'label' => __('Default height of map'),
-        'validation' => 'integer',
+        'validation' => 'integer|min=1',
     ));
 
     $form->add( array(
@@ -72,7 +72,7 @@ function googleMapsAdmin(&$form_html) {
         'size' => 4,
         'name' => 'googlemaps_zoom',
         'label' => __('Default zoom for map'),
-        'validation' => 'integer',
+        'validation' => 'integer|min=1',
     ));
 
     $form->add( array(
@@ -80,7 +80,7 @@ function googleMapsAdmin(&$form_html) {
         'size' => 10,
         'name' => 'googlemaps_lat',
         'label' => __('Default latitude for map'),
-        'validation' => 'integer',
+        'validation' => 'float',
     ));
 
     $form->add( array(
@@ -88,8 +88,10 @@ function googleMapsAdmin(&$form_html) {
         'size' => 10,
         'name' => 'googlemaps_long',
         'label' => __('Default longitude for map'),
-        'validation' => 'integer',
+        'validation' => 'float',
     ));
+
+    $form->use_javascript(true);
 
     /**
      * Add the form to our (referenced) $form_html. Make sure you use the same key

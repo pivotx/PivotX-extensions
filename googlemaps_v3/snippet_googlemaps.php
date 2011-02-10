@@ -66,7 +66,7 @@ function googleMapsV3Admin(&$form_html) {
         'size' => 4,
         'name' => 'googlemaps_v3_width',
         'label' => __('Default width of map'),
-        'validation' => 'integer',
+        'validation' => 'integer|min=1',
     ));
 
     $form->add( array(
@@ -74,7 +74,7 @@ function googleMapsV3Admin(&$form_html) {
         'size' => 4,
         'name' => 'googlemaps_v3_height',
         'label' => __('Default height of map'),
-        'validation' => 'integer',
+        'validation' => 'integer|min=1',
     ));
 
     $form->add( array(
@@ -82,7 +82,7 @@ function googleMapsV3Admin(&$form_html) {
         'size' => 4,
         'name' => 'googlemaps_v3_zoom',
         'label' => __('Default zoom for map'),
-        'validation' => 'integer',
+        'validation' => 'integer|min=1',
     ));
 
     $form->add( array(
@@ -90,7 +90,7 @@ function googleMapsV3Admin(&$form_html) {
         'size' => 10,
         'name' => 'googlemaps_v3_lat',
         'label' => __('Default latitude for map'),
-        'validation' => 'integer',
+        'validation' => 'float',
     ));
 
     $form->add( array(
@@ -98,7 +98,7 @@ function googleMapsV3Admin(&$form_html) {
         'size' => 10,
         'name' => 'googlemaps_v3_long',
         'label' => __('Default longitude for map'),
-        'validation' => 'integer',
+        'validation' => 'float',
     ));
 
     $form->add( array(
@@ -106,6 +106,8 @@ function googleMapsV3Admin(&$form_html) {
         'name' => 'googlemaps_v3_kml_preserveviewport',
         'label' => __('Preserve viewport when inserting KML files'),
     ));
+
+    $form->use_javascript(true);
 
     /**
      * Add the form to our (referenced) $form_html. Make sure you use the same key

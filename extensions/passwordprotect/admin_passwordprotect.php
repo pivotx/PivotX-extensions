@@ -1,17 +1,17 @@
 <?php
 // - Extension: Password Protect
-// - Version: 1.0.2
+// - Version: 1.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
-// - Description: An extension that makes it possible to protect entries and pages with a password. 
-// - Date: 2010-04-07
+// - Description: An extension that makes it possible to protect entries, pages or the complete site with a password. 
+// - Date: 2011-02-11
 // - Identifier: passwordprotect
 
 global $passwordprotect_config;
 
 $passwordprotect_config = array(
-    'passwordprotect' => false,
+    'passwordprotect' => 0,
     'passwordprotect_loggedin_access' => false,
     'passwordprotect_default' => "password",
     'passwordprotect_text' => __("This page requires a password to view. Please give the password."),
@@ -56,12 +56,17 @@ function passwordprotectAdmin(&$form_html) {
 
     $form = $PIVOTX['extensions']->getAdminForm('passwordprotect');
 
+    $choices = array(
+        __('No'), 
+        __('Yes, but only pages and entries'),
+        __('Yes, for the complete site')
+    );
+
     $form->add( array(
-        'type' => 'checkbox',
         'name' => 'passwordprotect',
+        'type' => 'select',
+        'options' => $choices,
         'label' => __("Enable password protection"),
-        'text' => makeJtip(__("Enable password protection"),
-            __("Yes, allow for entries to be password protected."))
     ));
 
     $form->add( array(
@@ -158,8 +163,7 @@ function passwordprotectHook() {
     $modifier = $PIVOTX['parser']->modifier;
 
     // Check if we need to test..
-    if ( defined('PIVOTX_INWEBLOG') && ($PIVOTX['config']->get('passwordprotect') == 1) &&
-            ($modifier['pagetype'] == "entry" || $modifier['pagetype'] == "page") ) {
+    if (defined('PIVOTX_INWEBLOG') && $PIVOTX['config']->get('passwordprotect')) {
 
         // Abort here if the user is logged in and access should be given.
         if ($PIVOTX['config']->get('passwordprotect_loggedin_access') == 1) {
@@ -168,18 +172,33 @@ function passwordprotectHook() {
             }
         }
 
-        // fetch the proper page..
-        if ($modifier['pagetype'] == "entry") {
-            $page = $PIVOTX['db']->read_entry($modifier['uri'], $modifier['date']);
-        } else {
-            $page = $PIVOTX['pages']->getPageByUri($modifier['uri']);
+        // Abort here if we only password protect pages/entries and we aren't viewing one 
+        if (($PIVOTX['config']->get('passwordprotect') == 1) && 
+                ($modifier['pagetype'] != "entry") && ($modifier['pagetype'] != "page")) {
+            return;
+        }
+
+        $password_protected = false;
+
+        if ($PIVOTX['config']->get('passwordprotect') == 2) {
+            $password_protected = true;
+            $page = array();
+        } else if ($modifier['pagetype'] == "entry" || $modifier['pagetype'] == "page") {
+            if ($modifier['pagetype'] == "entry") {
+                $page = $PIVOTX['db']->read_entry($modifier['uri'], $modifier['date']);
+            } else {
+                $page = $PIVOTX['pages']->getPageByUri($modifier['uri']);
+            }
+            if ($page['extrafields']['passwordprotect'] == 1) {
+                $password_protected = true;
+            }
         }
         
         // If the page/entry has passwordprotect enabled..
-        if ($page['extrafields']['passwordprotect']==1) {
+        if ($password_protected) {
             
             // Display an errorpage if we're not allowed to view the page/entry..
-            if ( passwordcheck_login($page) == false) {
+            if (passwordcheck_login($page) == false) {
                 Header("WWW-Authenticate: Basic realm=\"PivotX Protected Page\"");
                 Header("HTTP/1.0 401 Unauthorized");
         
@@ -227,8 +246,6 @@ function passwordcheck_login($page) {
     $passed_password = $_SERVER['PHP_AUTH_PW'];
 
     $password = getDefault($page['extrafields']['password'], $PIVOTX['config']->get('passwordprotect_default'));
-  
-    // debug('check for pass: ' . $passed_password . " = ". $password);
   
     if ($passed_password == $password) {
         return true;

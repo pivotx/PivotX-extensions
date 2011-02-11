@@ -2,7 +2,7 @@
 Password Protect Extension
 ==========================
 
-This is an extension that adds Password Protection to certain pages or entries.
+This is an extension that adds Password Protection to certain pages or entries, or the complete site.
 If enabled for a certain page or entry, the visitor will have to give the
 password, otherwise he/she will not see the page. Passwords are case-sensitive,
 but the *used username is irrelevant*. You can also select to allow access

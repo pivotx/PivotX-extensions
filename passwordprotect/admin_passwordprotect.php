@@ -1,23 +1,24 @@
 <?php
 // - Extension: Password Protect
-// - Version: 1.1
+// - Version: 1.1.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension that makes it possible to protect entries, pages or the complete site with a password. 
-// - Date: 2011-02-11
+// - Date: 2011-03-10
 // - Identifier: passwordprotect
 
 global $passwordprotect_config;
 
 $passwordprotect_config = array(
-    'passwordprotect' => 0,
+    'passwordprotect' => false,
     'passwordprotect_loggedin_access' => false,
     'passwordprotect_default' => "password",
     'passwordprotect_text' => __("This page requires a password to view. Please give the password."),
     'passwordprotect_noaccesstemplate' => "skinny/page_template.html",
     'passwordprotect_noaccesstitle' => __("You don't have access to this page"),
-    'passwordprotect_noaccesstext' => __("You didn't provide the correct password to access the requested entry. If you've made a typo, go back, and try again. <br /><br />If you don't know the password, you could ask the owner of the website to get access to the entry.")
+    'passwordprotect_noaccesstext' => __("You didn't provide the correct password to access the requested entry. If you've made a typo, go back, and try again. <br /><br />If you don't know the password, you could ask the owner of the website to get access to the entry."),
+    'passwordprotect_userlist' => __("# Enter each user with password on a new line.\n# Use a hash to add comments or disable a user\n# Example: password|username\n"),
 );
 
 
@@ -136,6 +137,26 @@ function passwordprotectAdmin(&$form_html) {
         'validation' => 'string|minlen=5'        
     ));
 
+    $form->add( array(
+        'type' => 'text',
+        'size' => 80,
+        'name' => 'passwordprotect_allaccessip',
+        'label' => __("All access ipnumbers"),
+        'text' => __("These ipnumbers can access everything without password."),
+        'isrequired' => 0,
+        'validation' => 'string'        
+    ));
+
+    $form->add( array(
+        'type' => 'textarea',
+        'size' => 80,
+        'name' => 'passwordprotect_userlist',
+        'label' => __("Users"),
+        'text' => '',
+        'isrequired' => 0,
+        'validation' => 'string'        
+    ));
+
     $form->use_javascript(true);
 
     /**
@@ -163,7 +184,7 @@ function passwordprotectHook() {
     $modifier = $PIVOTX['parser']->modifier;
 
     // Check if we need to test..
-    if (defined('PIVOTX_INWEBLOG') && $PIVOTX['config']->get('passwordprotect')) {
+    if ( defined('PIVOTX_INWEBLOG') && ($PIVOTX['config']->get('passwordprotect') > 0) ) {
 
         // Abort here if the user is logged in and access should be given.
         if ($PIVOTX['config']->get('passwordprotect_loggedin_access') == 1) {
@@ -196,7 +217,6 @@ function passwordprotectHook() {
         
         // If the page/entry has passwordprotect enabled..
         if ($password_protected) {
-            
             // Display an errorpage if we're not allowed to view the page/entry..
             if (passwordcheck_login($page) == false) {
                 Header("WWW-Authenticate: Basic realm=\"PivotX Protected Page\"");
@@ -242,10 +262,66 @@ function passwordprotectHook() {
 function passwordcheck_login($page) {
     global $PIVOTX;
 
+    if (trim($PIVOTX['config']->get('passwordprotect_allaccessip')) != '') {
+        $allaccessip = trim($PIVOTX['config']->get('passwordprotect_allaccessip'));
+        $ipnumbers = explode(',',$allaccessip);
+
+        $granted = false;
+        foreach($ipnumbers as $ipnumber) {
+            $ipnumber = trim($ipnumber);
+
+            if (substr($ipnumber,-1) == '.') {
+                // simple pattern
+                if (strpos($_SERVER['REMOTE_ADDR'],$ipnumber) !== false) {
+                    $granted = true;
+                }
+            }
+            else if ($ipnumber == $_SERVER['REMOTE_ADDR']) {
+                $granted = true;
+            }
+        }
+
+        if ($granted === true) {
+            return true;
+        }
+    }
+
     $user = $_SERVER['PHP_AUTH_USER'];
     $passed_password = $_SERVER['PHP_AUTH_PW'];
 
-    $password = getDefault($page['extrafields']['password'], $PIVOTX['config']->get('passwordprotect_default'));
+    $default_password = $PIVOTX['config']->get('passwordprotect_default');
+
+    if (trim($PIVOTX['config']->get('passwordprotect_userlist')) != '') {
+        $lines = explode("\n",trim($PIVOTX['config']->get('passwordprotect_userlist')));
+        foreach($lines as $line) {
+            $line = trim($line);
+
+            if ((substr($line,0,1) != '#') && (strpos($line,'|') !== false)) {
+                list($pwd,$usr) = explode('|',$line,2);
+                $pwd = trim($pwd);
+                $usr = trim($usr);
+
+                if ($user == $usr) {
+                    $default_password = $pwd;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (is_array($page) && (isset($page['extrafields'])) && (isset($page['extrafields']['password']))) {
+        $password = getDefault($page['extrafields']['password'], $default_password);
+    }
+    else {
+        $password = $default_password;
+    }
+
+    if (($password == '') || ($password == 'password')) {
+        // it's not possible to leave the password blank or use the password 'password'
+        return false;
+    }
+
+    // debug('check for pass: ' . $passed_password . " = ". $password);
   
     if ($passed_password == $password) {
         return true;

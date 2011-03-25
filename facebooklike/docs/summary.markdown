@@ -19,10 +19,15 @@ a simpler button, use:
 
 	[[ facebook_like layout="button_count" width="90" height="20" ]]
 
+The URL paramaters are (use only of these):
+
+ - canonical - set to 'true' to set the URL to the current page (PivotX 2.3+).
+ - uri - the entry or page uri to like (produces same link as [[ link ]]).
+ - link - the URL to like. 
+ - (none of the above) - either the URL to the current page or the URL to the currently loaded $entry or $page.
+
 The available parameters are:
 
- - href - the URL to like. Usually you can leave this blank, because PivotX will
-   insert the correct link to the current entry or page. 
  - layout - there are two options.
    - standard - displays social text to the right of the button and friends'
      profile photos below. Minimum width: 225 pixels. Default width: 450 pixels. 
@@ -40,5 +45,3 @@ The available parameters are:
  
 For more information about the Facebook 'Like' button, see the Facebook developers page
 [here](http://developers.facebook.com/docs/reference/plugins/like).
- 
- 

@@ -1,11 +1,11 @@
 <?php
 // - Extension: Facebook Like Button
-// - Version: 1.1
+// - Version: 1.11
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension to place a Facebook 'Like' button on your entries and pages.
-// - Date: 2010-08-13
+// - Date: 2011-03-25
 // - Identifier: facebooklikebutton
 
 // Register 'facebook_like' as a smarty tag.
@@ -29,14 +29,24 @@ function smarty_facebook_like($params, &$smarty) {
 	$urlparams['font'] = "font=" . getDefault($params['font'], 'arial');
 	$urlparams['colorscheme'] = "colorscheme=" . getDefault($params['colorscheme'], 'light');
 
-	$linkpara = getDefault($params['link'], $params['href']);
-	
-	if (!empty($linkpara)) {
-		if (strpos($linkpara, "://")>0) {
-			$urlparams['href'] = "href=" . urlencode($linkpara);
-		} else {
-			$urlparams['href'] = "href=" . urlencode($host.$linkpara);
-		}
+    if ((!isset($params['link'])) && (isset($params['href']))) {
+        $params['link'] = $params['href'];
+    }
+
+    if (isset($params['canonical']) && ($params['canonical'] == true) && (method_exists($PIVOTX['parser'],'getCanonicalUrl'))) {
+        $params['link'] = $PIVOTX['parser']->getCanonicalUrl();
+    }
+    if ((isset($params['uri'])) && ($params['uri'] != '')) {
+        $params['link'] = smarty_link(array('uri'=>$params['uri'],'hrefonly'=>1),$PIVOTX['template']);
+    }
+
+	if (isset($params['link']) && !empty($params['link'])) {
+        if (preg_match('|^https?://|',$params['link'],$match)) {
+            $urlparams['href'] = "href=" . urlencode($params['link']);
+        }
+        else {
+            $urlparams['href'] = "href=" . urlencode($host.$params['link']);
+        }
 	} else if (!empty($entry['link'])) {
 		$urlparams['href'] = "href=" . urlencode($host.$entry['link']);		
 	} else {

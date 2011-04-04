@@ -59,25 +59,33 @@ function xml_sitemapAdmin(&$form_html) {
         'label' => __('Include weblog frontpages'),
     ));
 
+    $weblogs = $PIVOTX['weblogs']->getWeblogs();
+    foreach($weblogs as $key => $weblog) {
+        $weblogoptions[ $key ] = $weblog['name'];
+    }
+
+
     $form->add( array(
-        'type' => 'textarea',
+        'type' => 'select',
         'name' => 'xml_sitemap_onlyweblog',
         'label' => __('Only weblog'),
-        'text' => makeJtip(__('Only weblog'), __('List weblog or weblogs that should only be added to the sitemap. Separate them with a comma. You can only use the name.')),
+        'text' => makeJtip(__('Only weblog'), __('Select a weblog or weblogs that should only be added to the sitemap.')),
         'value' => '',
-        'rows' => 2,
-        'cols' => 60,
+        'options' => $weblogoptions,
+        'multiple' => true,
+        'size' => 5,
         'isrequired' => 0
     ));
 
     $form->add( array(
-        'type' => 'textarea',
+        'type' => 'select',
         'name' => 'xml_sitemap_excludeweblog',
         'label' => __('Exclude weblog'),
-        'text' => makeJtip(__('Exclude weblog'), __('List weblog or weblogs that should not be added to the sitemap. Separate them with a comma. You can only use the name.')),
+        'text' => makeJtip(__('Exclude weblog'), __('Select a weblog or weblogs that should not be added to the sitemap.')),
         'value' => '',
-        'rows' => 2,
-        'cols' => 60,
+        'options' => $weblogoptions,
+        'multiple' => true,
+        'size' => 5,
         'isrequired' => 0
     ));
 
@@ -87,25 +95,34 @@ function xml_sitemapAdmin(&$form_html) {
         'label' => __('Include entries'),
     ));
 
+    $allcats = $PIVOTX['categories']->getCategories();
+    foreach($allcats as $cat) {
+        $catoptions[$cat['name']] = $cat['display'];
+    }
+
     $form->add( array(
-        'type' => 'textarea',
+        'type' => 'select',
         'name' => 'xml_sitemap_onlycategory',
         'label' => __('Only category'),
-        'text' => makeJtip(__('Only category'), __('List category or categories that should only be added to the sitemap. Separate them with a comma. You can only use the name.')),
+        'text' => makeJtip(__('Only category'), 
+            __('Select a category or categories that should only be added to the sitemap.')),
         'value' => '',
-        'rows' => 2,
-        'cols' => 60,
+        'options' => $catoptions,
+        'multiple' => true,
+        'size' => 5,
         'isrequired' => 0
     ));
 
     $form->add( array(
-        'type' => 'textarea',
+        'type' => 'select',
         'name' => 'xml_sitemap_excludecategory',
         'label' => __('Exclude category'),
-        'text' => makeJtip(__('Exclude category'), __('List category or categories that should not be added to the sitemap. Separate them with a comma. You can only use the name.')),
+        'text' => makeJtip(__('Exclude category'), 
+            __('Select a category or categories that should not be added to the sitemap.')),
         'value' => '',
-        'rows' => 2,
-        'cols' => 60,
+        'options' => $catoptions,
+        'multiple' => true,
+        'size' => 5,
         'isrequired' => 0
     ));
 
@@ -115,25 +132,34 @@ function xml_sitemapAdmin(&$form_html) {
         'label' => __('Include pages'),
     ));
 
+    $chapters = $PIVOTX['pages']->getIndex();
+    foreach ($chapters as $key => $chapter) {
+        $chapoptions[$chapter['chaptername']] = $chapter['chaptername'];
+    }
+
     $form->add( array(
-        'type' => 'textarea',
+        'type' => 'select',
         'name' => 'xml_sitemap_onlychapter',
         'label' => __('Only chapter'),
-        'text' => makeJtip(__('Only chapter'), __('List chapter or chapters that should only be added to the sitemap. Separate them with a comma. You can use either the name or the uid.')),
+        'text' => makeJtip(__('Only chapter'),
+            __('Select a chapter or chapters that should only be added to the sitemap.')),
         'value' => '',
-        'rows' => 2,
-        'cols' => 60,
+        'options' => $chapoptions,
+        'multiple' => true,
+        'size' => 5,
         'isrequired' => 0
     ));
 
     $form->add( array(
-        'type' => 'textarea',
+        'type' => 'select',
         'name' => 'xml_sitemap_excludechapter',
         'label' => __('Exclude chapter'),
-        'text' => makeJtip(__('Exclude chapter'), __('List chapter or chapters that should not be added to the sitemap. Separate them with a comma. You can use either the name or the uid.')),
+        'text' => makeJtip(__('Exclude chapter'), 
+            __('Select a chapter or chapters that should not be added to the sitemap.')),
         'value' => '',
-        'rows' => 2,
-        'cols' => 60,
+        'options' => $chapoptions,
+        'multiple' => true,
+        'size' => 5,
         'isrequired' => 0
     ));
 
@@ -255,15 +281,12 @@ EOM;
     }
 
     // Handle the frontpages (site_root and weblog frontpages)
-    if (isset($xml_sitemap_onlyweblog) && 
-        (($xml_sitemap_onlyweblog != '') || is_numeric($xml_sitemap_onlyweblog))) {
-        $onlyweblog_bool = true;
+    if (!empty($xml_sitemap_onlyweblog)) {
         $onlyweblog_arr = explode(',', $xml_sitemap_onlyweblog);
         $onlyweblog_arr = array_map('trim', $onlyweblog_arr);
         $onlyweblog_arr = array_map('strtolower', $onlyweblog_arr);
     }    
-    if (isset($xml_sitemap_excludeweblog) &&
-        (($xml_sitemap_excludeweblog != '') || is_numeric($xml_sitemap_excludeweblog))) {
+    if (!empty($xml_sitemap_excludeweblog)) {
         $excludeweblog_bool = true;
         $excludeweblog_arr = explode(',', $xml_sitemap_excludeweblog);
         $excludeweblog_arr = array_map('trim', $excludeweblog_arr);
@@ -290,8 +313,7 @@ EOM;
                 if (!$continue) {
                     continue; // skip it!
                 }
-            }
-            if ($excludeweblog_bool) {
+            } elseif ($excludeweblog_bool) {
                 $continue = true;
                 foreach ($excludeweblog_arr as $excludeweblog) { 
                     if (strtolower($weblog)==$excludeweblog) {
@@ -316,15 +338,13 @@ EOM;
 
     // Iterate through the entries in batches. Doing all entries at once can
     // consume too much memory on big sites (3000+ entries).
-    if (isset($xml_sitemap_onlycategory) && 
-        (($xml_sitemap_onlycategory != '') || is_numeric($xml_sitemap_onlycategory))) {
+    if (!empty($xml_sitemap_onlycategory)) {
         $onlycategory_bool = true;
         $onlycategory_arr = explode(',', $xml_sitemap_onlycategory);
         $onlycategory_arr = array_map('trim', $onlycategory_arr);
         $onlycategory_arr = array_map('strtolower', $onlycategory_arr);
     }    
-    if (isset($xml_sitemap_excludecategory) &&
-        (($xml_sitemap_excludecategory != '') || is_numeric($xml_sitemap_excludecategory))) {
+    if (!empty($xml_sitemap_excludecategory)) {
         $excludecategory_bool = true;
         $excludecategory_arr = explode(',', $xml_sitemap_excludecategory);
         $excludecategory_arr = array_map('trim', $excludecategory_arr);
@@ -350,32 +370,34 @@ EOM;
             // You can only use the name in both.
             $thiscats = $entry['category'];
             if ($onlycategory_bool) {
-                $continue = false;
-                foreach ($onlycategory_arr as $onlycategory) { 
-                    if ($onlycategory==$thiscats[0]) {
-                        $continue = true;
-                        break;
-                    }
+                if (count(array_intersect($onlycategory_arr,$thiscats)) > 0) {
+                    $continue = true;
+                } else {
+                    $continue = false;
+                }
+                if (!$continue) {
+                    continue; // skip it!
+                }
+            } else if ($excludecategory_bool) {
+                if (count(array_intersect($excludecategory_arr,$thiscats)) > 0) {
+                    $continue = false;
+                } else {
+                    $continue = true;
                 }
                 if (!$continue) {
                     continue; // skip it!
                 }
             }
-            if ($excludecategory_bool) {
-                $continue = true;
-                foreach ($excludecategory_arr as $excludecategory) { 
-                    if ($excludecategory==$thiscats[0]) {
-                        $continue = false;
-                        break;
-                    }
-                }
-                if (!$continue) {
-                    continue; // skip it!
+            // if the entry belongs to a hidden category, it shouldn't be in sitemap
+            $continue = true;
+            foreach ($thiscats as $thiscat) {
+                $catinfo = $PIVOTX['categories']->getCategory($thiscat);
+                if ($catinfo['hidden']==1) {
+                    $continue = false;
+                    break;
                 }
             }
-            // if category is hidden then entry belonging to it shouldn't be in sitemap
-            $catinfo = $PIVOTX['categories']->getCategory($thiscats[0]);
-            if ($catinfo['hidden']==1) {
+            if (!$continue) {
                 continue; // skip it!
             }
             $link = $entry['link'];
@@ -400,15 +422,13 @@ EOM;
     }
 
     // Iterate through the chapters and pages
-    if (isset($xml_sitemap_onlychapter) && 
-        (($xml_sitemap_onlychapter != '') || is_numeric($xml_sitemap_onlychapter))) {
+    if (!empty($xml_sitemap_onlychapter)) {
         $onlychapter_bool = true;
         $onlychapter_arr = explode(',', $xml_sitemap_onlychapter);
         $onlychapter_arr = array_map('trim', $onlychapter_arr);
         $onlychapter_arr = array_map('strtolower', $onlychapter_arr);
     }    
-    if (isset($xml_sitemap_excludechapter) &&
-        (($xml_sitemap_excludechapter != '') || is_numeric($xml_sitemap_excludechapter))) {
+    if (!empty($xml_sitemap_excludechapter)) {
         $excludechapter_bool = true;
         $excludechapter_arr = explode(',', $xml_sitemap_excludechapter);
         $excludechapter_arr = array_map('trim', $excludechapter_arr);
@@ -427,8 +447,7 @@ EOM;
         if ($onlychapter_bool) {
             $continue = false;
             foreach ($onlychapter_arr as $onlychapter) { 
-                if ((strtolower($chapter['chaptername'])==$onlychapter) || 
-                    (is_numeric($onlychapter) && ($key==$onlychapter))) {
+                if (strtolower($chapter['chaptername'])==$onlychapter) {
                     $continue = true;
                     break;
                 }
@@ -436,12 +455,10 @@ EOM;
             if (!$continue) {
                 continue; // skip it!
             }
-        }
-        if ($excludechapter_bool) {
+        } else if ($excludechapter_bool) {
             $continue = true;
             foreach ($excludechapter_arr as $excludechapter) { 
-                if ((strtolower($chapter['chaptername'])==$excludechapter) || 
-                    (is_numeric($excludechapter) && ($key==$excludechapter))) {
+                if (strtolower($chapter['chaptername'])==$excludechapter) {
                     $continue = false;
                     break;
                 }

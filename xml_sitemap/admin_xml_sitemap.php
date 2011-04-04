@@ -12,14 +12,14 @@ global $xml_sitemap_config;
 
 $xml_sitemap_config = array(
     'xml_sitemap_include_weblogs' => 0,
-	'xml_sitemap_onlyweblog' => '',
-	'xml_sitemap_excludeweblog' => '',
+    'xml_sitemap_onlyweblog' => '',
+    'xml_sitemap_excludeweblog' => '',
     'xml_sitemap_include_entries' => 1,
-	'xml_sitemap_onlycategory' => '',
-	'xml_sitemap_excludecategory' => '',
+    'xml_sitemap_onlycategory' => '',
+    'xml_sitemap_excludecategory' => '',
     'xml_sitemap_include_pages' => 1,
-	'xml_sitemap_onlychapter' => '',
-	'xml_sitemap_excludechapter' => '',
+    'xml_sitemap_onlychapter' => '',
+    'xml_sitemap_excludechapter' => '',
     'xml_sitemap_content_type' => 'text/xml',
     'xml_sitemap_filter_as_any_robot' => 0,
     'xml_sitemap_additional_uris' => '',
@@ -59,7 +59,7 @@ function xml_sitemapAdmin(&$form_html) {
         'label' => __('Include weblog frontpages'),
     ));
 
-	$form->add( array(
+    $form->add( array(
         'type' => 'textarea',
         'name' => 'xml_sitemap_onlyweblog',
         'label' => __('Only weblog'),
@@ -70,7 +70,7 @@ function xml_sitemapAdmin(&$form_html) {
         'isrequired' => 0
     ));
 
-	$form->add( array(
+    $form->add( array(
         'type' => 'textarea',
         'name' => 'xml_sitemap_excludeweblog',
         'label' => __('Exclude weblog'),
@@ -87,7 +87,7 @@ function xml_sitemapAdmin(&$form_html) {
         'label' => __('Include entries'),
     ));
 
-	$form->add( array(
+    $form->add( array(
         'type' => 'textarea',
         'name' => 'xml_sitemap_onlycategory',
         'label' => __('Only category'),
@@ -98,7 +98,7 @@ function xml_sitemapAdmin(&$form_html) {
         'isrequired' => 0
     ));
 
-	$form->add( array(
+    $form->add( array(
         'type' => 'textarea',
         'name' => 'xml_sitemap_excludecategory',
         'label' => __('Exclude category'),
@@ -115,7 +115,7 @@ function xml_sitemapAdmin(&$form_html) {
         'label' => __('Include pages'),
     ));
 
-	$form->add( array(
+    $form->add( array(
         'type' => 'textarea',
         'name' => 'xml_sitemap_onlychapter',
         'label' => __('Only chapter'),
@@ -126,7 +126,7 @@ function xml_sitemapAdmin(&$form_html) {
         'isrequired' => 0
     ));
 
-	$form->add( array(
+    $form->add( array(
         'type' => 'textarea',
         'name' => 'xml_sitemap_excludechapter',
         'label' => __('Exclude chapter'),
@@ -255,54 +255,54 @@ EOM;
     }
 
     // Handle the frontpages (site_root and weblog frontpages)
-	if (isset($xml_sitemap_onlyweblog) && 
-		(($xml_sitemap_onlyweblog != '') || is_numeric($xml_sitemap_onlyweblog))) {
-		$onlyweblog_bool = true;
-		$onlyweblog_arr = explode(',', $xml_sitemap_onlyweblog);
-		$onlyweblog_arr = array_map('trim', $onlyweblog_arr);
-		$onlyweblog_arr = array_map('strtolower', $onlyweblog_arr);
-	}	
-	if (isset($xml_sitemap_excludeweblog) &&
-		(($xml_sitemap_excludeweblog != '') || is_numeric($xml_sitemap_excludeweblog))) {
-		$excludeweblog_bool = true;
-		$excludeweblog_arr = explode(',', $xml_sitemap_excludeweblog);
-		$excludeweblog_arr = array_map('trim', $excludeweblog_arr);
-		$excludeweblog_arr = array_map('strtolower', $excludeweblog_arr);
-	}
+    if (isset($xml_sitemap_onlyweblog) && 
+        (($xml_sitemap_onlyweblog != '') || is_numeric($xml_sitemap_onlyweblog))) {
+        $onlyweblog_bool = true;
+        $onlyweblog_arr = explode(',', $xml_sitemap_onlyweblog);
+        $onlyweblog_arr = array_map('trim', $onlyweblog_arr);
+        $onlyweblog_arr = array_map('strtolower', $onlyweblog_arr);
+    }    
+    if (isset($xml_sitemap_excludeweblog) &&
+        (($xml_sitemap_excludeweblog != '') || is_numeric($xml_sitemap_excludeweblog))) {
+        $excludeweblog_bool = true;
+        $excludeweblog_arr = explode(',', $xml_sitemap_excludeweblog);
+        $excludeweblog_arr = array_map('trim', $excludeweblog_arr);
+        $excludeweblog_arr = array_map('strtolower', $excludeweblog_arr);
+    }
     $frontpage = $output_frontpage;
     $frontpage = str_replace('%loc%', $PIVOTX['paths']['site_url'], $frontpage);
     $frontpages[] = $frontpage;
     if ($xml_sitemap_include_weblogs) {
         $weblogs = $PIVOTX['weblogs']->getWeblogNames();
         foreach ($weblogs as $weblog) {
-			// If 'onlyweblog' is set, we should display only those weblogs,
-			// and skip all the others. 
-			// If 'excludeweblog' is set, we should exclude all those weblogs. 
-			// You can only use the name in both.
-			if ($onlyweblog_bool) {
-				$continue = false;
-				foreach ($onlyweblog_arr as $onlyweblog) { 
-					if (strtolower($weblog)==$onlyweblog) {
-						$continue = true;
-						break;
-					}
-				}
-				if (!$continue) {
-					continue; // skip it!
-				}
-			}
-			if ($excludeweblog_bool) {
-				$continue = true;
-				foreach ($excludeweblog_arr as $excludeweblog) { 
-					if (strtolower($weblog)==$excludeweblog) {
-						$continue = false;
-						break;
-					}
-				}
-				if (!$continue) {
-					continue; // skip it!
-				}
-			}
+            // If 'onlyweblog' is set, we should display only those weblogs,
+            // and skip all the others. 
+            // If 'excludeweblog' is set, we should exclude all those weblogs. 
+            // You can only use the name in both.
+            if ($onlyweblog_bool) {
+                $continue = false;
+                foreach ($onlyweblog_arr as $onlyweblog) { 
+                    if (strtolower($weblog)==$onlyweblog) {
+                        $continue = true;
+                        break;
+                    }
+                }
+                if (!$continue) {
+                    continue; // skip it!
+                }
+            }
+            if ($excludeweblog_bool) {
+                $continue = true;
+                foreach ($excludeweblog_arr as $excludeweblog) { 
+                    if (strtolower($weblog)==$excludeweblog) {
+                        $continue = false;
+                        break;
+                    }
+                }
+                if (!$continue) {
+                    continue; // skip it!
+                }
+            }
             $frontpage = $output_frontpage;
             $link = $PIVOTX['weblogs']->get($weblog,'link');
             if (xml_sitemapIsUriAllowed($disallows, $link)) {
@@ -316,20 +316,20 @@ EOM;
 
     // Iterate through the entries in batches. Doing all entries at once can
     // consume too much memory on big sites (3000+ entries).
-	if (isset($xml_sitemap_onlycategory) && 
-		(($xml_sitemap_onlycategory != '') || is_numeric($xml_sitemap_onlycategory))) {
-		$onlycategory_bool = true;
-		$onlycategory_arr = explode(',', $xml_sitemap_onlycategory);
-		$onlycategory_arr = array_map('trim', $onlycategory_arr);
-		$onlycategory_arr = array_map('strtolower', $onlycategory_arr);
-	}	
-	if (isset($xml_sitemap_excludecategory) &&
-		(($xml_sitemap_excludecategory != '') || is_numeric($xml_sitemap_excludecategory))) {
-		$excludecategory_bool = true;
-		$excludecategory_arr = explode(',', $xml_sitemap_excludecategory);
-		$excludecategory_arr = array_map('trim', $excludecategory_arr);
-		$excludecategory_arr = array_map('strtolower', $excludecategory_arr);
-	}
+    if (isset($xml_sitemap_onlycategory) && 
+        (($xml_sitemap_onlycategory != '') || is_numeric($xml_sitemap_onlycategory))) {
+        $onlycategory_bool = true;
+        $onlycategory_arr = explode(',', $xml_sitemap_onlycategory);
+        $onlycategory_arr = array_map('trim', $onlycategory_arr);
+        $onlycategory_arr = array_map('strtolower', $onlycategory_arr);
+    }    
+    if (isset($xml_sitemap_excludecategory) &&
+        (($xml_sitemap_excludecategory != '') || is_numeric($xml_sitemap_excludecategory))) {
+        $excludecategory_bool = true;
+        $excludecategory_arr = explode(',', $xml_sitemap_excludecategory);
+        $excludecategory_arr = array_map('trim', $excludecategory_arr);
+        $excludecategory_arr = array_map('strtolower', $excludecategory_arr);
+    }
     $batch_size = 100;
     $entries_count = $PIVOTX['db']->get_entries_count();
     $batches = ceil($entries_count/$batch_size);
@@ -344,40 +344,40 @@ EOM;
             'full' => false, 'status'=>'publish'));
         $offset += $batch_size;
         foreach ($entries as $entry) {
-			// If 'onlycategory' is set, we should display only the entries in one of those categories,
-			// and skip all the others. 
-			// If 'excludecategory' is set, we should exclude all those categories. 
-			// You can only use the name in both.
-			$thiscats = $entry['category'];
-			if ($onlycategory_bool) {
-				$continue = false;
-				foreach ($onlycategory_arr as $onlycategory) { 
-					if ($onlycategory==$thiscats[0]) {
-						$continue = true;
-						break;
-					}
-				}
-				if (!$continue) {
-					continue; // skip it!
-				}
-			}
-			if ($excludecategory_bool) {
-				$continue = true;
-				foreach ($excludecategory_arr as $excludecategory) { 
-					if ($excludecategory==$thiscats[0]) {
-						$continue = false;
-						break;
-					}
-				}
-				if (!$continue) {
-					continue; // skip it!
-				}
-			}
-			// if category is hidden then entry belonging to it shouldn't be in sitemap
-			$catinfo = $PIVOTX['categories']->getCategory($thiscats[0]);
-			if ($catinfo['hidden']==1) {
-				continue; // skip it!
-			}
+            // If 'onlycategory' is set, we should display only the entries in one of those categories,
+            // and skip all the others. 
+            // If 'excludecategory' is set, we should exclude all those categories. 
+            // You can only use the name in both.
+            $thiscats = $entry['category'];
+            if ($onlycategory_bool) {
+                $continue = false;
+                foreach ($onlycategory_arr as $onlycategory) { 
+                    if ($onlycategory==$thiscats[0]) {
+                        $continue = true;
+                        break;
+                    }
+                }
+                if (!$continue) {
+                    continue; // skip it!
+                }
+            }
+            if ($excludecategory_bool) {
+                $continue = true;
+                foreach ($excludecategory_arr as $excludecategory) { 
+                    if ($excludecategory==$thiscats[0]) {
+                        $continue = false;
+                        break;
+                    }
+                }
+                if (!$continue) {
+                    continue; // skip it!
+                }
+            }
+            // if category is hidden then entry belonging to it shouldn't be in sitemap
+            $catinfo = $PIVOTX['categories']->getCategory($thiscats[0]);
+            if ($catinfo['hidden']==1) {
+                continue; // skip it!
+            }
             $link = $entry['link'];
             if (isset($links[$link])) {
                 debug("Duplicate link found for entry " . $entry['uid'] . " and " . $links[$link]);
@@ -400,30 +400,30 @@ EOM;
     }
 
     // Iterate through the chapters and pages
-	if (isset($xml_sitemap_onlychapter) && 
-		(($xml_sitemap_onlychapter != '') || is_numeric($xml_sitemap_onlychapter))) {
-		$onlychapter_bool = true;
-		$onlychapter_arr = explode(',', $xml_sitemap_onlychapter);
-		$onlychapter_arr = array_map('trim', $onlychapter_arr);
-		$onlychapter_arr = array_map('strtolower', $onlychapter_arr);
-	}	
-	if (isset($xml_sitemap_excludechapter) &&
-		(($xml_sitemap_excludechapter != '') || is_numeric($xml_sitemap_excludechapter))) {
-		$excludechapter_bool = true;
-		$excludechapter_arr = explode(',', $xml_sitemap_excludechapter);
-		$excludechapter_arr = array_map('trim', $excludechapter_arr);
-		$excludechapter_arr = array_map('strtolower', $excludechapter_arr);
-	}
+    if (isset($xml_sitemap_onlychapter) && 
+        (($xml_sitemap_onlychapter != '') || is_numeric($xml_sitemap_onlychapter))) {
+        $onlychapter_bool = true;
+        $onlychapter_arr = explode(',', $xml_sitemap_onlychapter);
+        $onlychapter_arr = array_map('trim', $onlychapter_arr);
+        $onlychapter_arr = array_map('strtolower', $onlychapter_arr);
+    }    
+    if (isset($xml_sitemap_excludechapter) &&
+        (($xml_sitemap_excludechapter != '') || is_numeric($xml_sitemap_excludechapter))) {
+        $excludechapter_bool = true;
+        $excludechapter_arr = explode(',', $xml_sitemap_excludechapter);
+        $excludechapter_arr = array_map('trim', $excludechapter_arr);
+        $excludechapter_arr = array_map('strtolower', $excludechapter_arr);
+    }
     $chapters = $PIVOTX['pages']->getIndex();
     foreach ($chapters as $key => $chapter) {
-		// If we selected to exclude pages from the XML Sitemap, break immediately.
+        // If we selected to exclude pages from the XML Sitemap, break immediately.
         if (!$xml_sitemap_include_pages) {
             break;
         }
-		// If 'onlychapter' is set, we should display only the pages in one of those chapters,
+        // If 'onlychapter' is set, we should display only the pages in one of those chapters,
         // and skip all the others. 
-		// If 'excludechapter' is set, we should exclude all those chapters. 
-		// You can use either the name or the uid in both.
+        // If 'excludechapter' is set, we should exclude all those chapters. 
+        // You can use either the name or the uid in both.
         if ($onlychapter_bool) {
             $continue = false;
             foreach ($onlychapter_arr as $onlychapter) { 
@@ -436,8 +436,8 @@ EOM;
             if (!$continue) {
                 continue; // skip it!
             }
-		}
-		if ($excludechapter_bool) {
+        }
+        if ($excludechapter_bool) {
             $continue = true;
             foreach ($excludechapter_arr as $excludechapter) { 
                 if ((strtolower($chapter['chaptername'])==$excludechapter) || 
@@ -460,8 +460,8 @@ EOM;
         if (strcmp($key,"orphaned") == 0) {
             continue;
         }
-		
-		// Iterate through the pages
+        
+        // Iterate through the pages
         foreach ($chapter['pages'] as $page) {
 
             if ($page['status'] != 'publish') {

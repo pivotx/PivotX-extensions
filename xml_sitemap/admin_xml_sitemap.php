@@ -282,6 +282,7 @@ EOM;
 
     // Handle the frontpages (site_root and weblog frontpages)
     if (!empty($xml_sitemap_onlyweblog)) {
+        $onlyweblog_bool = true;
         $onlyweblog_arr = explode(',', $xml_sitemap_onlyweblog);
         $onlyweblog_arr = array_map('trim', $onlyweblog_arr);
         $onlyweblog_arr = array_map('strtolower', $onlyweblog_arr);

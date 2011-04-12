@@ -1,6 +1,6 @@
 <?php
 // - Extension: Last.fm
-// - Version: 0.2 - development
+// - Version: 0.2
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net

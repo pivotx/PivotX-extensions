@@ -26,7 +26,8 @@ cd ..
 
 FNAME=archives/$EXTENSION-latest.zip
 EXTDIR=$EXTENSION/
-VERSION=`head -10 $EXTDIR/*_$EXTENSION.php | grep 'Version: ' | uniq | sed -e 's/[^:]*: //'`
+VERSION=`head -3 $EXTDIR/{admin,snippet,widget}_*.php 2> /dev/null \
+	| grep 'Version: ' | uniq | sed -e 's/[^:]*: //'`
 VERSION_FNAME=""
 
 

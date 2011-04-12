@@ -26,15 +26,18 @@ cd ..
 
 FNAME=archives/$EXTENSION-latest.zip
 EXTDIR=$EXTENSION/
-VERSION=`head -3 $EXTDIR/{admin,snippet,widget}_*.php 2> /dev/null \
-	| grep 'Version: ' | uniq | sed -e 's/[^:]*: //'`
+VERSION=`head -3 $EXTDIR/{admin,hook,snippet,widget}_*.php 2> /dev/null \
+	| tr -d ' ' | grep 'Version:' | uniq | sed -e 's/[^:]*://'`
 VERSION_FNAME=""
 
-
 if [ "$VERSION" != "" ]; then
-	VERSION_FNAME=archives/$EXTENSION-$VERSION.zip
+	if [ `echo "$VERSION" | wc -l` -gt 1 ]; then
+		echo "Multiple version numbers found."
+	else
+		VERSION_FNAME=archives/$EXTENSION-$VERSION.zip
+	fi
 else
-	echo No version found.
+	echo "No version number found."
 fi
 
 if [ -f files.lst ]; then

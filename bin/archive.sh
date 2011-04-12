@@ -26,7 +26,7 @@ cd ..
 
 FNAME=archives/$EXTENSION-latest.zip
 EXTDIR=$EXTENSION/
-VERSION=`grep 'Version' $EXTDIR/*_$EXTENSION.php | perl -p -e 's/.+Version: (.+)/\1/'`
+VERSION=`head -10 $EXTDIR/*_$EXTENSION.php | grep 'Version: ' | uniq | sed -e 's/[^:]*: //'`
 VERSION_FNAME=""
 
 

@@ -1,6 +1,6 @@
 <?php
 // - Extension: Google Maps admin page
-// - Version: 1.0 Alpha 1
+// - Version: 1.0
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net

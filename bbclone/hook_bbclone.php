@@ -1,11 +1,11 @@
 <?php
 // - Extension: BBclone
-// - Version: 1.1
+// - Version: 1.2
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A small hook extension that allows tracking your pages in BBclone.
-// - Date: 2008-05-12
+// - Date: 2008-09-09
 // - Identifier: bbclone-hook
 // - Required PivotX version: 2.0.2
 

@@ -1,13 +1,23 @@
 <?php
 // - Extension: SEO - Search Engine Optimization
-// - Version: 0.2
+// - Version: 0.4
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: This extension allows you to easily add meta-tags to your entries/pages, to optimize your site for search engines.
-// - Date: 2011-01-09
+// - Date: 2011-04-14
 // - Identifier: seo
-// - Required PivotX version: 2.2.0
+// - Required PivotX version: 2.2.4
+
+
+global $seo_config;
+
+$seo_config = array(
+    'seo_description_length' => 250,
+    'seo_keywords_length' => 500,
+    'seo_default_keywords' => "",
+    'seo_extra_keywords' => ""
+);
 
 $this->addHook(
     'in_pivotx_template',
@@ -21,6 +31,13 @@ $this->addHook(
     array('callback' => 'seoExtrafieldsHook' )
     );
 
+$this->addHook(
+    'configuration_add',
+    'seo',
+    array("seoAdmin", "SEO options")
+);
+
+
 
 $this->addHook('after_parse', 'callback', 'seoCallback');
 
@@ -28,7 +45,8 @@ $this->addHook('after_parse', 'callback', 'seoCallback');
  * Callback function for our hook..
  */
 function seoExtrafieldsHook($content) {
-    global $PIVOTX;
+    global $PIVOTX, $seo_config;
+
 
     $output = <<< EOM
     <table class="formclass" border="0" cellspacing="0" width="650">
@@ -123,7 +141,17 @@ EOM;
  */
 
 function seoCallback(&$html) {
-    global $PIVOTX;
+    global $PIVOTX, $seo_config;
+
+    // Sets the variables from the default $seo_config and/or the PivotX Configuration
+    $configdata = $PIVOTX['config']->getConfigArray();
+    foreach ($seo_config as $key => $value) {
+        if (isset($configdata[$key])) {
+            $$key = $configdata[$key];
+        } else {
+            $$key = $value;
+        }
+    }
 
     $modifier = $PIVOTX['parser']->modifier;
 
@@ -150,11 +178,17 @@ function seoCallback(&$html) {
 
         $content['introduction'] = $PIVOTX['config']->get('sitedescription');
 
-        $tags = getTagCosmos(30);
-        if (!empty($tags['tags'])) {
-            $content['keywords'] = implode(" ", array_keys($tags['tags']));
+        // Get keywords from the default seo keywords in config, or from the global tags/keywords
+        if (!empty($seo_default_keywords)) {
+            $seo_default_keywords = preg_split("/[ ,\n]+/i", $seo_default_keywords);
+            $seo_default_keywords = array_map("trim", $seo_default_keywords);    
+            $content['keywords'] = implode(" ", $seo_default_keywords);
+        } else {
+            $tags = getTagCosmos(30);
+            if (!empty($tags['tags'])) {
+                $content['keywords'] = implode(" ", array_keys($tags['tags']));
+            }            
         }
-
     }
 
     // Use the specific values from the extrafields, or the default values..
@@ -165,11 +199,17 @@ function seoCallback(&$html) {
     $author = getDefault($content['user'], $users[0]['username']);
 
 
+    // Perhaps add extra keywords, from config.
+    if (!empty($seo_extra_keywords)) {
+        $seo_extra_keywords = preg_split("/[ ,\n]+/i", $seo_extra_keywords);
+        $seo_extra_keywords = array_map("trim", $seo_extra_keywords);    
+        $keywords .= " " . implode(" ", $seo_extra_keywords);
+    }
 
     // cleaning up.
     $title = preg_replace("/[\r\n]+/i", " ", strip_tags($title));
-    $description = preg_replace("/[\r\n]+/i", " ", trimText($description, 250, false, ".."));
-    $keywords = trimtext($keywords, 500, false, "");
+    $description = preg_replace("/[\r\n]+/i", " ", trimText(parse_intro_or_body($description), $seo_description_length, false, ".."));
+    $keywords = trimtext($keywords, $seo_keywords_length, false, "");
     $author = $PIVOTX['users']->getUser($author);
 
     // Add description meta tag to output
@@ -209,6 +249,56 @@ function seoCallback(&$html) {
 }
 
 
+
+/**
+ * The configuration screen for SEO Extension
+ *
+ * @param unknown_type $form_html
+ */
+function seoAdmin(&$form_html) {
+    global $PIVOTX, $seo_config;
+
+    $form = $PIVOTX['extensions']->getAdminForm('seo');
+
+    $form->add( array(
+        'type' => 'text',
+        'name' => 'seo_description_length',
+        'size' => 10,
+        'isrequired' => 1,
+        'validation' => 'integer|min=1|max=2000',
+        'label' => "Maximum description length",
+    ));
+
+    $form->add( array(
+        'type' => 'text',
+        'name' => 'seo_keywords_length',
+        'size' => 10,
+        'isrequired' => 1,
+        'validation' => 'integer|min=1|max=2000',
+        'label' => "Maximum keywords length",
+    ));
+
+    $form->add( array(
+        'type' => 'textarea',
+        'name' => 'seo_default_keywords',
+        'label' => "Default keywords",
+        'text' => makeJtip("Default keywords", "Optional default keywords, that will be used on pages, that are not single Entries or Pages. Use a comma or space to separate keywords.")
+    ));
+
+    $form->add( array(
+        'type' => 'textarea',
+        'name' => 'seo_extra_keywords',
+        'label' => "Extra keywords",
+        'text' => makeJtip("Extra keywords", "Optional extra keywords, that will be added to every page after the page-specific keywords. Use a comma or space to separate keywords.")
+    ));
+
+    /**
+     * Add the form to our (referenced) $form_html. Make sure you use the same key
+     * as the first parameter to $PIVOTX['extensions']->getAdminForm
+     */
+    $form_html['seo'] = $PIVOTX['extensions']->getAdminFormHtml($form, $seo_config);
+
+}
 
 
 

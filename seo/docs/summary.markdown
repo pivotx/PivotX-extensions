@@ -11,6 +11,9 @@ but when you're editing an Entry or Page, you can set the 'keywords' and 'descri
 and 'title' manually. You can find the fields below the 'body', when editing an
 Entry or Page.
 
+Defaults and options can be set in the Administration &raquo; Configure Extensions
+ &raquo; SEO Options screen. 
+
 <img src="extensions/seo/docs/seo.png" alt="screenshot" style='border: 1px solid #CCC;'/>
 
 The following meta-tags are added by this extension:

@@ -1,13 +1,13 @@
 <?php
 // - Extension: Image Tools
-// - Version: 0.5
+// - Version: 0.6
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A collection of small tools to simplify handling images in your content.
-// - Date: 2010-03-19
+// - Date: 2011-04-14
 // - Identifier: imagetools
-// - Required PivotX version: 2.0.2
+// - Required PivotX version: 2.2.4
 
 // Register 'findimages' as a smarty tag.
 $PIVOTX['template']->register_function('findimages', 'smarty_findimages');
@@ -69,6 +69,7 @@ function smarty_thumbnail($params, &$smarty) {
     $url = $url . implode("&amp;", $imgparams);
 
     $title = getDefault($params['alt'], $params['title']);
+    $target = getDefault($params['target'], "_blank");
 
     if (empty($title)) {
         $title = basename($url);
@@ -93,7 +94,7 @@ function smarty_thumbnail($params, &$smarty) {
         
         $linkmaxsize = getDefault($params['linkmaxsize'], 1000);
         
-        if (empty($params['htmlwrap'])) {
+        if (empty($params['htmlwrap']) && empty($params['htmlwrapper'])) {
         	$link = $PIVOTX['paths']['pivotx_url'] . "includes/timthumb.php?"; 
         } else {
         	$link = $PIVOTX['paths']['pivotx_url'] . "includes/timwrapper.php?";
@@ -120,7 +121,7 @@ function smarty_thumbnail($params, &$smarty) {
 
 		$link = $link . implode("&amp;", $linkparams);
         	
-        $link = sprintf("<a href=\"%s\"%s%s>%s</a>", $link, $rel, $class, $img);
+        $link = sprintf("<a href=\"%s\"%s%s target='%s'>%s</a>", $link, $rel, $class, $target, $img);
         
         return $link;
         

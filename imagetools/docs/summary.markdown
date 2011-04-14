@@ -29,10 +29,10 @@ Examples:
 
     [[ thumbnail src=$entry.extrafields.image link=1 w=120 h=120  ]]
 
-This tag makes a 120x120 thumbnail image of $entry.extrafields.image, and links
+This tag makes a 120x120 thumbnail image of `$entry.extrafields.image`, and links
 to the full size image.
 
-    [[ thumbnail src=$imagelist.0 link=1 linkmaxsize=480 w=120 h=120 htmlwrapper=1 ]]
+    [[ thumbnail src=$imagelist.0 link=1 linkmaxsize=480 w=120 h=120 htmlwrap=1 ]]
 
 This produces the same thumbnail image, but links to an image that's constrained
 within 480x480 pixels. The htmlwrapper attribute makes the link go to a small
@@ -49,7 +49,8 @@ The available parameters are:
   - htmlwrapper - Whether or not to wrap the linked image in a small HTML page.
   - class - The CSS class given to the image.
   - linkclass - The CSS class given to the link, wrapping the image. 
-  - rel - Add a 'rel' attribute to the thumbnail link, so it can be grouped if using Thickbox or Fancybox.
+  - rel - Add a `rel`-attribute to the thumbnail link, so it can be grouped if using Thickbox or Fancybox.
+  - target - Sets the target of the link. Defaults to `_blank`.
 
 The Stripimages modifier
 ------------------------

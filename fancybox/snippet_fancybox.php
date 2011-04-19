@@ -1,11 +1,11 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.17
+// - Version: 0.17.1
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
 // - Description: Replace boring old Thickbox with a FancyBox!
-// - Date: 2010-12-06
+// - Date: 2011-02-13
 // - Identifier: fancybox 
 // - Required PivotX version: 2.2
 

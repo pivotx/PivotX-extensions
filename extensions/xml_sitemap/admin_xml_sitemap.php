@@ -1,11 +1,11 @@
 <?php
 // - Extension: XML Sitemap
-// - Version: 1.0.6
+// - Version: 1.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension to provide a XML sitemap (for search engines).
-// - Date: 2011-03-09
+// - Date: 2011-04-01
 // - Identifier: xml_sitemap
 
 global $xml_sitemap_config;

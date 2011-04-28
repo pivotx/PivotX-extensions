@@ -53,6 +53,9 @@
     <li><tt>zoom</tt> - the zoom level of the map, overriding the default value.</li>
     <li><tt>lat</tt> - the latitude of the (centre of the) map, overriding the default value.</li>
     <li><tt>long</tt> - the longitude of the (centre of the) map, overriding the default value.</li>
+    <li><tt>address</tt> - An address for the (centre of) the map. It must be an address that Google
+        recognizes (e.g. &quot;Prins Hendrikstraat 91, Den Haag, NL&quot;) like you would see on the
+        Google Maps website. This will override the default values for latitude and longitude.</li>
     </ul>
     <h3>Tips</h3>
     <ul>
@@ -62,6 +65,7 @@
     list of allowed file types in the PivotX configuration.</li>
     <li>This extension uses jQuery for the onload handling. If you have set <tt>never_jquery</tt> 
     in the Advanced Configuration, the maps won't load.</li>
+    <li>If you use the <tt>address</tt> parameter you won't have to use the <tt>lat</tt> and <tt>long</tt> parameters.</li>
     </ul>
     <h3>Limitations</h3>
     <ul>

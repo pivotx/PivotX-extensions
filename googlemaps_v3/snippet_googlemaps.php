@@ -1,17 +1,17 @@
 <?php
 // - Extension: Google Maps (Version 3)
-// - Version: 1.1
+// - Version: 1.2
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: Insert a Google Maps with an optional KML overlay using version 3 of the API.
-// - Date: 2010-08-17
+// - Date: 2011-04-28
 // - Identifier: googlemaps_v3
 
 global $googlemaps_v3_config;
 
 $googlemaps_v3_config = array(
-    // Default location is Molde, Norway - the home town of the extension 
+    // Default location is Molde, Norway - the home town of the extension
     // author ...
     'googlemaps_v3_lat' => 62.73754,
     'googlemaps_v3_long' => 7.158816,
@@ -148,13 +148,14 @@ EOF;
     $js_gmap_insert = <<<EOF
 <script type="text/javascript">
     function googlemaps_v3_initialize_%n%() {
-        var latlng = new google.maps.LatLng(%lat%,%long%);
+        var latlng =  new google.maps.LatLng(%lat%,%long%);
         var options = {
             zoom: %zoom%,
             center: latlng,
             mapTypeId: google.maps.MapTypeId.%maptype%
         };
-        var map = new google.maps.Map(document.getElementById("googlemap_v3_%n%"), options); 
+        var map = new google.maps.Map(document.getElementById("googlemap_v3_%n%"), options);
+%address%
 %overlay%
     }
     jQuery(document).ready(googlemaps_v3_initialize_%n%);
@@ -188,11 +189,29 @@ EOF;
     } else {
         $long = getDefault($PIVOTX['config']->get('googlemaps_v3_long'), $googlemaps_v3_config['googlemaps_v3_long']);
     }
+    if (isset($params['address'])) {
+        $addressstring = $params['address'];
+        $address =  <<<EOF
+        var geocoder = new google.maps.Geocoder();
+        geocoder.geocode( { 'address': "$addressstring"}, function(results, status) {
+          if (status == google.maps.GeocoderStatus.OK) {
+            map.setCenter(results[0].geometry.location);
+            var marker = new google.maps.Marker({
+                map: map,
+                position: results[0].geometry.location
+            });
+          }
+        });
+EOF;
+    } else {
+        $address = '';
+    }
     if (isset($params['maptype'])) {
         $maptype = strtoupper($params['maptype']);
     } else {
         $maptype = getDefault($PIVOTX['config']->get('googlemaps_v3_maptype'), $googlemaps_v3_config['googlemaps_v3_maptype']);
     }
+
     $mapcount++;
 
     if (isset($params['overlay'])) {
@@ -200,7 +219,7 @@ EOF;
         if (isset($params['kml_preserveviewport'])) {
             $kml_preserveviewport = $params['kml_preserveviewport'];
         } else {
-            $kml_preserveviewport = getDefault($PIVOTX['config']->get('googlemaps_v3_kml_preserveviewport'), 
+            $kml_preserveviewport = getDefault($PIVOTX['config']->get('googlemaps_v3_kml_preserveviewport'),
                 $googlemaps_v3_config['googlemaps_v3_kml_preserveviewport'], true);
         }
         if ($kml_preserveviewport) {
@@ -227,6 +246,7 @@ EOF;
         $overlay = '';
     }
     $js_gmap_insert = str_replace('%overlay%',$overlay,$js_gmap_insert);
+    $js_gmap_insert = str_replace('%address%',$address,$js_gmap_insert);
     $js_gmap_insert = str_replace('%n%',$mapcount,$js_gmap_insert);
     $js_gmap_insert = str_replace('%lat%',$lat,$js_gmap_insert);
     $js_gmap_insert = str_replace('%long%',$long,$js_gmap_insert);

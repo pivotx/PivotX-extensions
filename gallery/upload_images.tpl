@@ -29,6 +29,14 @@ function do_submit(){
             imagearray[ imagearray.length-1 ] = f_image + "###" + f_image_title + "###" + f_image_alt;
         }
     }
+    
+    for(var i=0; i < imagearray.length; i++) {
+        values = imagearray[i].split(/###/);
+        if (values.length < 3) {
+            imagearray[i] = imagearray[i] + '###' + f_image_title + '###' + f_image_alt;
+        }
+    }
+
 
     // If window.opener is unknown, we've opened the image inserter as a Dialog. then 
     /// we can use top.frames[0]

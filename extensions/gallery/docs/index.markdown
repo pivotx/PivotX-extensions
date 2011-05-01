@@ -61,7 +61,7 @@ There is also a gallery_image template tag so you can use just one of the images
 
     <img src="[[pivotx_dir]]includes/timthumb.php?src=[[gallery_image]]&w=106&h=80&zc=1" />
 
-Parameters for gallery_image is "number" - the position in the gallery starting from 0 (default) - and "attr" - the wanted attribute from the selected image; "src" (default), "title" or "alttext". In other words,
+Parameters for gallery_image are "number" - the position in the gallery starting from 0 (default) - and "attr" - the wanted attribute from the selected image; "src" (default), "title" or "alttext". In other words,
 
     [[gallery_image]]
 

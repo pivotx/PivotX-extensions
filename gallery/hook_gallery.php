@@ -1,11 +1,11 @@
 <?php
 // - Extension: Gallery
-// - Version: 0.11
+// - Version: 0.12
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: Add simple galleries to your Entries or Pages
-// - Date: 2010-05-20
+// - Date: 2011-05-01
 // - Identifier: gallery
 // - Required PivotX version: 2.2
 
@@ -215,23 +215,23 @@ function smarty_gallery($params, $text, &$smarty) {
             
             if (!empty($image)) {
             
-            	$counter++; 
-            	if ($maxthumb > 0) {
-            	   list($thumbw, $thumbh) = getimagesize("../".$uplpath.$image);
-            	   if ($thumbw > $thumbh) {
-            	      $thumbh = round($thumbh * ($maxthumb / $thumbw));
-            	      $thumbw = $maxthumb;
-            	   }   
-            	   else {
-            	      $thumbw = round($thumbw * ($maxthumb / $thumbh));
-            	      $thumbh = $maxthumb;   
-            	   }
-              	}
-            	$imgtag = '<img';
-            	if ( ($counter < $imgbeg)||($counter > $imgend) ) {
-            	   $imgtag = '<img style="display:none"';
-            	}      	
-            	$even = ($counter%2) ? 1 : 0;
+                $counter++; 
+                if ($maxthumb > 0) {
+                   list($thumbw, $thumbh) = getimagesize("../".$uplpath.$image);
+                   if ($thumbw > $thumbh) {
+                      $thumbh = round($thumbh * ($maxthumb / $thumbw));
+                      $thumbw = $maxthumb;
+                   }   
+                   else {
+                      $thumbw = round($thumbw * ($maxthumb / $thumbh));
+                      $thumbh = $maxthumb;   
+                   }
+                }
+                $imgtag = '<img';
+                if ( ($counter < $imgbeg)||($counter > $imgend) ) {
+                   $imgtag = '<img style="display:none"';
+                }       
+                $even = ($counter%2) ? 1 : 0;
             
                 $this_output = $text;
                 $this_output = str_replace('<img', $imgtag, $this_output);

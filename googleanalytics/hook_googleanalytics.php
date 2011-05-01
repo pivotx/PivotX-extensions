@@ -1,11 +1,11 @@
 <?php
 // - Extension: Google Analytics
-// - Version: 0.5 
+// - Version: 0.5.1 
 // - Author: Wim Bekkers / Bob den Otter
 // - Email: wim@tellertest.com / Bob@pivotx.net
 // - Site: http://tellertest.com/pivotextensions/
 // - Description: Add the Google Analytics code to your PivotX pages with full control over tracking code customization. Display an overview of stats on the Dashboard screen
-// - Date: 2010-06-14
+// - Date: 2011-05-01
 // - Identifier: googleanalytics
 
 
@@ -204,7 +204,7 @@ function googleanalyticsAdmin(&$form_html) {
         'text' => __('The (secret) Profile ID number, that will be used to display the reports. See above, on how to get this number.'),
         'size' => 15,
         'isrequired' => 0,
-        'validation' => 'integer|minlen=1|maxlen=12'
+        'validation' => 'integer|min=1|max=999999999999'
     ));
         
     $form->add( array(
@@ -340,6 +340,7 @@ function googleanalyticsAdmin(&$form_html) {
         'text' => 'Generate code for AdSense for Analytics reporting. <a href="http://www.google.com/support/googleanalytics/bin/answer.py?hl=en&answer=94743">See description.</a>',
     ));
 
+    $form->use_javascript(true);
 
     /**
      * Add the form to our (referenced) $form_html. Make sure you use the same key

@@ -1,11 +1,11 @@
 <?php
 // - Extension: SEO - Search Engine Optimization
-// - Version: 0.4
+// - Version: 0.5
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: This extension allows you to easily add meta-tags to your entries/pages, to optimize your site for search engines.
-// - Date: 2011-04-14
+// - Date: 2011-05-13
 // - Identifier: seo
 // - Required PivotX version: 2.2.4
 
@@ -16,7 +16,11 @@ $seo_config = array(
     'seo_description_length' => 250,
     'seo_keywords_length' => 500,
     'seo_default_keywords' => "",
-    'seo_extra_keywords' => ""
+    'seo_extra_keywords' => "",
+    'seo_fixed_author' => "",
+    'seo_copyright' => "",
+    'seo_use_dc_tags' => 0,
+    'seo_extra_tags' => ""
 );
 
 $this->addHook(
@@ -34,7 +38,7 @@ $this->addHook(
 $this->addHook(
     'configuration_add',
     'seo',
-    array("seoAdmin", "SEO options")
+    array("seoAdmin", "SEO")
 );
 
 
@@ -193,6 +197,7 @@ function seoCallback(&$html) {
 
     // Use the specific values from the extrafields, or the default values..
     $title = getDefault($content['extrafields']['seotitle'], "");
+    $conttitle = getDefault($content['title'], "");
     $description = getDefault($content['extrafields']['seodescription'], $content['introduction']);
     $keywords = getDefault($content['extrafields']['seokeywords'], $content['keywords']);
     $revised = getDefault($content['edit_date'], "");
@@ -211,24 +216,40 @@ function seoCallback(&$html) {
     $description = preg_replace("/[\r\n]+/i", " ", trimText(parse_intro_or_body($description), $seo_description_length, false, ".."));
     $keywords = trimtext($keywords, $seo_keywords_length, false, "");
     $author = $PIVOTX['users']->getUser($author);
+    if (!empty($seo_fixed_author)) {
+        $authortag = $seo_fixed_author;
+    } else {
+        $authortag = $author['nickname'];
+    }
 
     // Add description meta tag to output
     if (!empty($description)) {
         OutputSystem::instance()->addCode('seo-description', OutputSystem::LOC_HEADSTART, 'meta',
-           array('name'=>"description", 'content'=>$description, '_priority'=>OutputSystem::PRI_HIGH)
+            array('name'=>"description", 'content'=>$description, '_priority'=>OutputSystem::PRI_HIGH)
         );
+        if ($seo_use_dc_tags == 1) {
+            OutputSystem::instance()->addCode('seo-dcdescription', OutputSystem::LOC_HEADSTART, 'meta',
+                array('name'=>"dc.description", 'content'=>$description, '_priority'=>OutputSystem::PRI_HIGH)
+            );
+        }
     }
 
     // Add author meta tag to output
-    if (!empty($author)) {
+    if (!empty($authortag)) {
         OutputSystem::instance()->addCode('seo-author', OutputSystem::LOC_HEADSTART, 'meta',
-           array('name'=>"author", 'content'=> $author['nickname'] , '_priority'=>OutputSystem::PRI_HIGH)
+           array('name'=>"author", 'content'=> $authortag, '_priority'=>OutputSystem::PRI_HIGH)
+        );
+    }
+    // Add copyright meta tag to output
+    if (!empty($seo_copyright)) {
+        OutputSystem::instance()->addCode('seo-copyright', OutputSystem::LOC_HEADSTART, 'meta',
+           array('name'=>"copyright", 'content'=>$seo_copyright, '_priority'=>OutputSystem::PRI_HIGH)
         );
     }
 
     // Add revised meta tag to output
-    if (!empty($author) && !empty($revised)) {
-        $revised = sprintf("%s on %s", $author['nickname'], formatDate($revised, "%year%-%month%-%day%") );
+    if (!empty($revised)) {
+        $revised = formatDate($revised, "%year%-%month%-%day%");
         OutputSystem::instance()->addCode('seo-revised', OutputSystem::LOC_HEADSTART, 'meta',
            array('name'=>"revised", 'content'=> $revised , '_priority'=>OutputSystem::PRI_HIGH)
         );
@@ -239,11 +260,74 @@ function seoCallback(&$html) {
         OutputSystem::instance()->addCode('seo-keywords', OutputSystem::LOC_HEADSTART, 'meta',
            array('name'=>"keywords", 'content'=>$keywords, '_priority'=>OutputSystem::PRI_HIGH)
         );
+        if ($seo_use_dc_tags == 1) {
+            OutputSystem::instance()->addCode('seo-dckeywords', OutputSystem::LOC_HEADSTART, 'meta',
+                array('name'=>"dc.keywords", 'content'=>$keywords, '_priority'=>OutputSystem::PRI_HIGH)
+            );
+        }
+    }
+    // Add extra tags to output
+    if (!empty($seo_extra_tags)) {
+        // $html = preg_replace("/<head([^>]*?)>/si", "<head$1>\n" . $seo_extra_tags, $html);
+        $extratags = explode('/>', $seo_extra_tags);  
+        foreach ($extratags as $key => $extratag) {
+            $extratag = str_replace("<","",$extratag);
+            $extratag = str_replace("meta","",$extratag);
+            $extratyp = "";
+            $extratyp = str_replace("http-equiv=","",$extratag);
+            if ($extratyp != $extratag) {
+                $extratag = $extratyp;
+                $extratyp = 'http-equiv';
+            } else {
+                $extratyp = str_replace("name=","",$extratag);
+                if ($extratyp != $extratag) {
+                    $extratag = $extratyp;
+                    $extratyp = 'name';
+                } else {
+                    continue;
+                }
+            }
+            $extratag = str_replace("content=","",$extratag);
+            $extratag = trim($extratag);
+            $extraparts = explode('" "', $extratag);
+            $extrapart1 = ""; $extrapart2 = "";
+            foreach ($extraparts as $keypart => $extrapart) {
+                if ($keypart == 0) { 
+                    $extrapart1 = trim($extrapart); 
+                    $extrapart1 = str_replace('"',"",$extrapart1);
+                }
+                if ($keypart == 1) { 
+                    $extrapart2 = trim($extrapart); 
+                    $extrapart2 = str_replace('"',"",$extrapart2);
+                }
+            }
+            if ($extratyp == 'name') {
+                OutputSystem::instance()->addCode('seo-extratags-' . $key, OutputSystem::LOC_HEADSTART, 'meta',
+                    array('name'=>$extrapart1, 'content'=>$extrapart2, '_priority'=>OutputSystem::PRI_HIGH)
+                );
+            }
+            if ($extratyp == 'http-equiv') {
+                OutputSystem::instance()->addCode('seo-extratags-' . $key, OutputSystem::LOC_HEADSTART, 'meta',
+                    array('http-equiv'=>$extrapart1, 'content'=>$extrapart2, '_priority'=>OutputSystem::PRI_HIGH)
+                );
+            }
+        }
     }
 
     // replace title tag in output
     if (!empty($title)) {
         $html = preg_replace("/<title>(.*)<\/title>/msi", "<title>$title</title>", $html);
+        if ($seo_use_dc_tags == 1) {
+            OutputSystem::instance()->addCode('seo-dctitle', OutputSystem::LOC_HEADSTART, 'meta',
+                array('name'=>"dc.title", 'content'=>$title, '_priority'=>OutputSystem::PRI_HIGH)
+            );
+        }
+    } else {
+        if ($seo_use_dc_tags == 1) {
+            OutputSystem::instance()->addCode('seo-dctitle', OutputSystem::LOC_HEADSTART, 'meta',
+                array('name'=>"dc.title", 'content'=>$conttitle, '_priority'=>OutputSystem::PRI_HIGH)
+            );
+        }
     }
 
 }
@@ -292,6 +376,43 @@ function seoAdmin(&$form_html) {
         'text' => makeJtip("Extra keywords", "Optional extra keywords, that will be added to every page after the page-specific keywords. Use a comma or space to separate keywords.")
     ));
 
+    $form->add( array(
+        'type' => 'text',
+        'name' => 'seo_fixed_author',
+        'label' => "Fixed author",
+        'text' => makeJtip("Fixed author", "Specify a fixed string to be used as author.")
+    ));
+    
+    $form->add( array(
+        'type' => 'text',
+        'name' => 'seo_copyright',
+        'label' => "Copyright",
+        'text' => makeJtip("Copyright", "Specify the copyright string.")
+    ));
+
+    $form->add( array(
+        'type' => 'select',
+        'name' => 'seo_use_dc_tags',
+        'label' => "Use DC tags",
+        'text' => makeJtip("Use DC tags", 
+        "Generate DC tags as well (currently title, description and keywords are supported)."),
+        'options' => array(
+               0 => "No",
+               1 => "Yes"
+               )
+    ));
+    
+    $form->add( array(
+        'type' => 'textarea',
+        'name' => 'seo_extra_tags',
+        'label' => "Extra tags",
+        'text' => makeJtip("Extra tags", 
+        "Enter all other tags (in full syntax) that should be added to each page 
+        (e.g. google-site-verification).")
+    ));
+
+    $form->use_javascript(true);
+
     /**
      * Add the form to our (referenced) $form_html. Make sure you use the same key
      * as the first parameter to $PIVOTX['extensions']->getAdminForm
@@ -299,7 +420,4 @@ function seoAdmin(&$form_html) {
     $form_html['seo'] = $PIVOTX['extensions']->getAdminFormHtml($form, $seo_config);
 
 }
-
-
-
 ?>

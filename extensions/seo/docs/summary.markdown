@@ -12,22 +12,31 @@ and 'title' manually. You can find the fields below the 'body', when editing an
 Entry or Page.
 
 Defaults and options can be set in the Administration &raquo; Configure Extensions
- &raquo; SEO Options screen. 
+ &raquo; SEO screen.  
+You can define default keywords (shown on non-entries and non-pages), extra keywords
+(always added), fixed author, copyright text, extra full metatags and whether you
+want to have DC "[Dublin Core](http://dublincore.org/)" tags defined as well.
+ 
+Screenshot of added fields in editor:
 
 <img src="extensions/seo/docs/seo.png" alt="screenshot" style='border: 1px solid #CCC;'/>
 
 The following meta-tags are added by this extension:
 
-- `<meta name="author">` - The author of the page/entry.
+- `<meta name="author">` - The author of the page/entry (or fixed author when defined).
+- `<meta name="copyright">` - Your own copyright text (when set in options).
 - `<meta name="revised">` - The date on which the entry/page was last revised.
 - `<meta name="keywords">` - The keywords for the page/entry. If not set manually
-  this will be filled with the tags used in the entry/page.
+  this will be filled with the tags used in the entry/page. Extra keywords are added 
+  (when defined) and default keywords will be used when not on a page/entry. 
 - `<meta name="description">` - The description of the page/entry. If not set
   manually, the first part of the introduction will be used. On the homepage of 
   the site, the "site description" that was set in Configuration will be used.
 - `<title>` - By default the `<title>` tag is not altered by this extension, so
-  it will be as defined in the theme. If you set this manually, the <title>-tag
+  it will be as defined in the theme. If you set this manually, the `<title>` tag
   in the HTML will be changed by the extension.
+- all tags added through extratags in the options. Remember that those have to have the correct
+  syntax to be processed correctly e.g. `<meta name="web_author" content="You!" />`
 
 Note that this extension will _not_ magically make your site be the first result
 on Google, whenever someone is searching for a term that is used on your site.

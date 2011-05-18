@@ -1,11 +1,11 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.17.1
+// - Version: 0.18
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
 // - Description: Replace boring old Thickbox with a FancyBox!
-// - Date: 2011-02-13
+// - Date: 2011-05-18
 // - Identifier: fancybox 
 // - Required PivotX version: 2.2
 
@@ -15,7 +15,23 @@ $PIVOTX['template']->register_function('fancybox', 'smarty_fancybox');
 $PIVOTX['template']->unregister_function('popup');
 $PIVOTX['template']->register_function('popup', 'smarty_fancybox');
 
+// Register 'fancybox_setup' as a smarty tag
+$PIVOTX['template']->register_function('fancybox_setup', 'smarty_fancybox_setup');
 
+/**
+ * Insert the includes for Fancybox in the <head> section of the HTML.
+ * Very useful if you don't use PivotX's popup template tag, but want to use 
+ * Fancybox manually.
+ *
+ * @param array $params
+ * @return void
+ */
+function smarty_fancybox_setup($params) {
+    global $PIVOTX;
+    
+    $PIVOTX['extensions']->addHook('after_parse', 'callback', 'fancyboxIncludeCallback');
+}
+ 
 /**
  * Outputs the Fancybox popup code.
  *

@@ -34,6 +34,6 @@ Show a list of entries with the highest ratings. You can modify the output, and 
       ]]
     <ul>
 
-Note: `[[ratingscore]]` works only on PivotX with MySQL as database.
+Note: `[[toprating]]` works only on PivotX with MySQL as database.
 
 [1]: http://fyneworks.com

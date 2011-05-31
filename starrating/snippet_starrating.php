@@ -1,11 +1,11 @@
 <?php
 // - Extension: Star rating
-// - Version: 0.7
+// - Version: 0.8
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A snippet extension to add easy rating to your entries/pages.
-// - Date: 2010-05-14
+// - Date: 2011-05-31
 // - Identifier: starrating
 
 
@@ -223,8 +223,8 @@ function smarty_toprating($params, &$smarty) {
     $extratable = safeString($PIVOTX['config']->get('db_prefix')."extrafields", true);
 
     $query = "SELECT e.uid
-        FROM `pivot_entries` AS e
-        LEFT JOIN pivot_extrafields AS ef ON ( ef.target_uid = e.uid )
+        FROM `$entriestable` AS e
+        LEFT JOIN $extratable AS ef ON ( ef.target_uid = e.uid )
         WHERE ef.contenttype = 'entry'
         AND ef.fieldkey = 'ratingaverage'
         ORDER BY value DESC

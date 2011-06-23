@@ -1,7 +1,11 @@
 # Changelog
 
 *   ## Version 0.26
+	2011-04-27
+
+	*   general cleanup of code
 	2011-01-11
+
 	*   added support for file uploads as attachment for the mail
 	    - still needs a lot of documentation
 	*   improved logging

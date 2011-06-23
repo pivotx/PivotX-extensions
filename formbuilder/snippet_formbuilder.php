@@ -4,7 +4,7 @@
 // - Author: Two Kings // Lodewijk Evers
 // - E-mail: lodewijk@twokings.nl
 // - Description: Add form templates and [[contactform]] snippets to your entries and pages
-// - Date: 2011-01-07
+// - Date: 2011-04-27
 // - Identifier: formbuilder
 // - Required PivotX version: 2.2.0
 
@@ -21,7 +21,6 @@ if(!class_exists('FormBuilder')) {
 	if($PIVOTX['config']->get('db_model')=='mysql') {
 		// only load the sql for the extension if it is needed
 		if(file_exists($formbuilderbasedir.'/form.sql.php')) {
-			include_once($formbuilderbasedir.'/form.admin.php');
 			include_once($formbuilderbasedir.'/form.sql.php');
 		}
 	}

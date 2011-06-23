@@ -99,7 +99,7 @@ function smarty_contactform($params, &$smarty) {
 		}
 		
 		if(!empty($params['logging'])&&$params['logging']!='false') {
-				debug('logging on');
+			debug('logging on');
 			$enable_logging = true;
 		} else {
 			$enable_logging = false;

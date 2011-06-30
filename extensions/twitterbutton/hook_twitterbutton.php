@@ -1,11 +1,11 @@
 <?php
 // - Extension: Twitter Button
-// - Version: 1.0
+// - Version: 1.0.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension to place a Twitter button on your entries and pages.
-// - Date: 2010-08-13
+// - Date: 2011-06-30
 // - Identifier: twitterbutton
 
 // Register 'twitterbutton' as a smarty tag.
@@ -20,7 +20,7 @@ function smarty_twitterbutton($params, &$smarty) {
 
 	$host = stripTrailingSlash($PIVOTX['config']->get('canonical_host'));
 
-	// Setting variables for the facebook widget..
+	// Setting variables for the Twitter button..
 	$label = "Tweet";
 	$button = getDefault($params['button'], 'horizontal');
 	$username = getDefault($params['username'], '');

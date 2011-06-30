@@ -31,5 +31,5 @@ The available parameters are:
    - none - Just the button. No Tweet-count is displayed
  - username - The twitter user, that's credited with "via @username" in the tweet.
  
- For more information about the Tweetbutton, see the Twitter goodies page
- [here](http://twitter.com/goodies/tweetbutton).
+For more information about the Tweetbutton, see the Twitter goodies page
+[here](http://twitter.com/goodies/tweetbutton).

@@ -1,11 +1,11 @@
 <?php
 // - Extension: Google 'Plus 1' Button
-// - Version: 1.0
+// - Version: 1.0.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
-// - Description: An extension to place a Twitter button on your entries and pages.
-// - Date: 2011-06-30
+// - Description: An extension to place a Google 'Plus 1' button on your entries and pages.
+// - Date: 2011-07-01
 // - Identifier: plusonebutton
 
 // Register 'plusonebutton' as a smarty tag.

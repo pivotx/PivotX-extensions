@@ -1,11 +1,11 @@
 <?php
 // - Extension: Google 'Plus 1' Button
-// - Version: 1.0.1
+// - Version: 1.0.2
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension to place a Google 'Plus 1' button on your entries and pages.
-// - Date: 2011-07-01
+// - Date: 2011-07-02
 // - Identifier: plusonebutton
 
 // Register 'plusonebutton' as a smarty tag.
@@ -18,11 +18,11 @@ function smarty_plusonebutton($params, &$smarty) {
     $entry = $vars['entry'];
     $page = $vars['page'];
 
-	$host = stripTrailingSlash($PIVOTX['config']->get('canonical_host'));
+    $host = stripTrailingSlash($PIVOTX['config']->get('canonical_host'));
 
-	// Setting variables for the plus one button..
-	$button = getDefault($params['button'], 'horizontal');
-	$username = getDefault($params['username'], '');
+    // Setting variables for the plus one button..
+    // not used -- $button = getDefault($params['button'], 'horizontal');
+    // not used -- $username = getDefault($params['username'], '');
 
     if (!empty($params['count'])) {
         $showcount = "true";
@@ -36,28 +36,25 @@ function smarty_plusonebutton($params, &$smarty) {
         $size = safe_string($params['size']);    
     }    
 
-	if (!empty($params['link'])) {
-		$link = addslashes($params['link']);
-	} else if (!empty($entry['link'])) {
-		$link = addslashes($host.$entry['link']);		
-	} else {
-		$link = addslashes($host.$page['link']);
-	}
-	
-		
-	// <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
-	// <div class="g-plusone" data-size="standard" data-count="true"></div>	
-		
-	$html = "<a href=\"http://twitter.com/share\" class=\"twitter-share-button\" " .
-		"data-url=\"{$link}\" data-text=\"{$text}\" data-count=\"{$button}\" data-via=\"{$username}\">" .
-		"{$label}</a><script type=\"text/javascript\" src=\"http://platform.twitter.com/widgets.js\"></script>";
-	
-	$html = "<script type=\"text/javascript\" src=\"https://apis.google.com/js/plusone.js\"></script>" .
-	    "<div class=\"g-plusone\" data-link=\"{$link}\" data-count=\"{$showcount}\" data-size=\"{$size}\"></div>";
-		
-		
-	return $html;
+    if (empty($params['lang'])) {
+        $lang = $PIVOTX['config']->get('language');
+    } else {
+        $size = safe_string($params['lang']);    
+    }    
 
+    if (!empty($params['link'])) {
+        $link = addslashes($params['link']);
+    } else if (!empty($entry['link'])) {
+        $link = addslashes($host.$entry['link']);       
+    } else {
+        $link = addslashes($host.$page['link']);
+    }
+
+    $html = "<script type=\"text/javascript\" src=\"https://apis.google.com/js/plusone.js\">
+            {\"lang\": \"{$lang}\"}
+            </script>" .
+        "<div class=\"g-plusone\" data-link=\"{$link}\" data-count=\"{$showcount}\" data-size=\"{$size}\"></div>";
+        
+    return $html;
 }
-    
 ?>

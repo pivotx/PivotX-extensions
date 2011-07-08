@@ -1,11 +1,11 @@
 <?php
 // - Extension: oEmbed
-// - Version: 0.10
+// - Version: 0.11
 // - Author: Two Kings // Lodewijk Evers
 // - Email: lodewijk@twokings.nl
 // - Site: http://extensions.pivotx.net/entry/5/oembed
 // - Description: Add [[embed]] snippets to your entries and pages
-// - Date: 2010-09-02
+// - Date: 2011-07-08
 // - Identifier: oembed
 // - Required PivotX version: 2.1
 

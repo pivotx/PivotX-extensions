@@ -178,7 +178,9 @@ function oembedLoadContent($url, $mode='embed', $maxwidth=false, $maxheight=fals
 
                 break;
             case 'photo':
-                $image = '<img src="'.$outputresource->url.'" alt="'.$outputresource->title.'" width="'.$outputresource->width.'" height="'.$outputresource->height.'" />';
+                $image = '<img src="'.$outputresource->url.'" alt="'.
+                    htmlspecialchars($outputresource->title). '" width="'. 
+                    $outputresource->width .'" height="'. $outputresource->height .'" />';
                 if($outputresource->author_url) {
                     $image = '<a href="'. $outputresource->author_url . '">'.$image."</a>";
                 }

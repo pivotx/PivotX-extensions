@@ -1,11 +1,11 @@
 <?php
 // - Extension: Image Tools
-// - Version: 0.6
+// - Version: 0.6.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A collection of small tools to simplify handling images in your content.
-// - Date: 2011-04-14
+// - Date: 2011-07-09
 // - Identifier: imagetools
 // - Required PivotX version: 2.2.4
 
@@ -36,7 +36,7 @@ function smarty_findimages($params, &$smarty) {
 
 }
     
-	
+    
 // Register 'thumbnail' as a smarty tag.
 $PIVOTX['template']->register_function('thumbnail', 'smarty_thumbnail');
 
@@ -57,11 +57,11 @@ function smarty_thumbnail($params, &$smarty) {
     if (!empty($params['h'])) {
         $imgparams[] = "h=".$params['h'];
     }
-
+    // if not specified timthumb default will be used (or when it is overriden by timthumb_zc setting)
     if (!empty($params['zc'])) {
         $imgparams[] = "zc=".$params['zc'];
-    }	
-
+    }   
+    // does this parm do anything? timthumb doesn't use it.........
     if (!empty($params['fit'])) {
         $imgparams[] = "fit=".$params['fit'];
     }
@@ -75,11 +75,11 @@ function smarty_thumbnail($params, &$smarty) {
         $title = basename($url);
     }
 
-	if (!empty($params['class'])) {
-		$class = " class='".$params['class'] ."'";
-	} else {
-		$class = "";
-	}
+    if (!empty($params['class'])) {
+        $class = " class='".$params['class'] ."'";
+    } else {
+        $class = "";
+    }
 
     $img = sprintf("<img src=\"%s\" alt=\"%s\" width=\"%s\" height=\"%s\"%s />",
         $url,
@@ -95,32 +95,32 @@ function smarty_thumbnail($params, &$smarty) {
         $linkmaxsize = getDefault($params['linkmaxsize'], 1000);
         
         if (empty($params['htmlwrap']) && empty($params['htmlwrapper'])) {
-        	$link = $PIVOTX['paths']['pivotx_url'] . "includes/timthumb.php?"; 
+            $link = $PIVOTX['paths']['pivotx_url'] . "includes/timthumb.php?"; 
         } else {
-        	$link = $PIVOTX['paths']['pivotx_url'] . "includes/timwrapper.php?";
+            $link = $PIVOTX['paths']['pivotx_url'] . "includes/timwrapper.php?";
         }
         
-		if (!empty($params['linkclass'])) {
-			$class = " class='".$params['linkclass'] ."'";
-		} else {
-			$class = "";
-		}
-		
-		if (!empty($params['rel'])) {
-			$rel = " rel='" . htmlentities($params['rel'], ENT_QUOTES) . "'";
-		} else {
-			$rel = "";
-		}	
-		
-		$linkparams = array();
-		$linkparams[] = "src=" . base64_encode($params['src']);
-		$linkparams[] = "w=" . $linkmaxsize;
-		$linkparams[] = "h=" . $linkmaxsize;
-		$linkparams[] = "fit=1";
-		$linkparams[] = "type=." . getExtension($params['src']);
+        if (!empty($params['linkclass'])) {
+            $class = " class='".$params['linkclass'] ."'";
+        } else {
+            $class = "";
+        }
+        
+        if (!empty($params['rel'])) {
+            $rel = " rel='" . htmlentities($params['rel'], ENT_QUOTES) . "'";
+        } else {
+            $rel = "";
+        }   
+        
+        $linkparams = array();
+        $linkparams[] = "src=" . base64_encode($params['src']);
+        $linkparams[] = "w=" . $linkmaxsize;
+        $linkparams[] = "h=" . $linkmaxsize;
+        $linkparams[] = "fit=1";
+        $linkparams[] = "type=." . getExtension($params['src']);
 
-		$link = $link . implode("&amp;", $linkparams);
-        	
+        $link = $link . implode("&amp;", $linkparams);
+            
         $link = sprintf("<a href=\"%s\"%s%s target='%s'>%s</a>", $link, $rel, $class, $target, $img);
         
         return $link;
@@ -134,7 +134,7 @@ function smarty_thumbnail($params, &$smarty) {
 }
 
 
-// Register 'thumbnail' as a smarty modifier.
+// Register 'stripimages' as a smarty modifier.
 $PIVOTX['template']->register_modifier('stripimages', 'smarty_stripimages');
 
 function smarty_stripimages($html) {

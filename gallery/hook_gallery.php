@@ -1,11 +1,11 @@
 <?php
 // - Extension: Gallery
-// - Version: 0.12
+// - Version: 0.12.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: Add simple galleries to your Entries or Pages
-// - Date: 2011-05-01
+// - Date: 2011-07-09
 // - Identifier: gallery
 // - Required PivotX version: 2.2
 

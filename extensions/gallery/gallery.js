@@ -64,7 +64,7 @@ function previewGalleryThumbnails() {
             title += " | " + String(dummy[2]);
         }
         if (filename.length > 3) {
-            html += "<img src='./includes/timthumb.php?src=" + filename + "&w=70&h=70&zx=1' width='70' height='70' alt='" + 
+            html += "<img src='./includes/timthumb.php?src=" + filename + "&w=70&h=70&zc=1' width='70' height='70' alt='" + 
                 filename + "' title='" + title + "' /></li>"
         }
     }

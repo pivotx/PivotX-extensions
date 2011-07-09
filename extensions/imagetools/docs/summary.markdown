@@ -41,16 +41,17 @@ unwanted scaling of the image on the display.
 
 The available parameters are:
 
-  - src - The location of the image.
+  - src - location of the image.
   - w - width of the thumbnail.
   - h - height of the thumbnail.
-  - link - Whether or not to link the thumbnail to the full size image. Omit if not needed.
-  - linkmaxsize - The maximum widht/height of the linked image.
-  - htmlwrapper - Whether or not to wrap the linked image in a small HTML page.
-  - class - The CSS class given to the image.
-  - linkclass - The CSS class given to the link, wrapping the image. 
-  - rel - Add a `rel`-attribute to the thumbnail link, so it can be grouped if using Thickbox or Fancybox.
-  - target - Sets the target of the link. Defaults to `_blank`.
+  - zc - zoom crop value to use (see explanation in includes/timthumb.php).
+  - link - whether or not to link the thumbnail to the full size image. Omit if not needed.
+  - linkmaxsize - maximum width/height of the linked image.
+  - htmlwrapper - whether or not to wrap the linked image in a small HTML page.
+  - class - CSS class given to the image.
+  - linkclass - CSS class given to the link, wrapping the image. 
+  - rel - add a `rel`-attribute to the thumbnail link, so it can be grouped if using Thickbox or Fancybox.
+  - target - sets the target of the link. Defaults to `_blank`.
 
 The Stripimages modifier
 ------------------------

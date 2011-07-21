@@ -108,6 +108,7 @@ read `snippet_fancybox.php`.
 (do not use width/height together with this parameter)
   * **objwidth** - regular approach; usage of % will possibly result in peculiar displays
   * **objheight** - see objwidth; both objwidth and objheight are used for the object to be displayed (only youtube, vimeo and text)
+  * **thumbbehav** - overrule of setting of fancybox\_thumbnail (see below)
   * **url** - specify url for iframe or flash; can also be used for youtube or 
   vimeo (movid is recommended)
   * **movid** - the movid for the YouTube (the string behind the `v=`) or Vimeo 
@@ -134,6 +135,15 @@ Currently these values exist:
   * **4** - Defaults according to fancybox site (see <http://fancybox.net/api>)
 
 If you want additional profiles to be created, please let us know!
+
+Option 'fancybox\_thumbnail' can be used to specify the behaviour of the creation of thumbnails
+and the setup of the img tag going with it.
+Possible values:
+
+  * **1** - (default) The width/height of the img tag are the same irrelevant of thumbnail size
+            (this means that when thumbnail gets created the upload width/height settings are used)
+  * **2** - If thumbnail already exists always use it's dimensions for the img tag
+  * **3** - If thumbnail exists and doesn't adhere to current width/height setting recreate it
 
 Warning!
 --------

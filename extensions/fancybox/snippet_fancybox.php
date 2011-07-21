@@ -1,11 +1,11 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.18
+// - Version: 0.19
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
 // - Description: Replace boring old Thickbox with a FancyBox!
-// - Date: 2011-05-18
+// - Date: 2011-07-21
 // - Identifier: fancybox 
 // - Required PivotX version: 2.2
 
@@ -76,13 +76,20 @@ function smarty_fancybox($params, &$smarty) {
     // it's better to just use movid to specify youtube or clipid for vimeo
     // url can also be used for fb type="iframe" or "flash"
     $url           = $params['url'];
-    $url = strip_tags($url);
+    $url           = strip_tags($url);
     $movid         = $params['movid'];
     $text          = getDefault($params['text'], "Specify your text in parm 'text'.");
     // $border = getDefault($params['border'], 0);
-    $uplw          = getDefault($PIVOTX['config']->get('upload_thumb_width'), 200);
-    $uplh          = getDefault($PIVOTX['config']->get('upload_thumb_height'), 200);
+    $imgw          = getDefault($PIVOTX['config']->get('upload_thumb_width'), 200);
+    $imgh          = getDefault($PIVOTX['config']->get('upload_thumb_height'), 200);
     $uplbasepath   = $PIVOTX['paths']['upload_base_path'];
+    // Config option 'fancybox_thumbnail' can be added and used as default for thumbnail behaviour
+    // 1 = always make sure the dimensions of the img tag are the same irrelevant of thumbnail size (default)
+    //     (this means that when thumbnail gets created the upload width/height settings are used)
+    // 2 = if thumbnail already exists always use it's dimensions for the img tag
+    // 3 = if thumbnail exists and doesn't adhere to current width/height setting recreate it
+    $fbthumb       = getDefault($PIVOTX['config']->get('fancybox_thumbnail'), 1);
+    $fbthumb       = getDefault($params['thumbbehav'], $fbthumb);
 
     // debug("fb info: '$filename'-'$thumbname'-'$title'-'$alt'-'$align'-'$fb_type'");
 
@@ -102,7 +109,7 @@ function smarty_fancybox($params, &$smarty) {
         $alt = $filename;
     }
     if ($objwidth == "0") {
-    	  $objwidth = $width;	
+        $objwidth = $width; 
     }
     if ($objheight == "0") {
         $objheight = $height;
@@ -114,11 +121,22 @@ function smarty_fancybox($params, &$smarty) {
             debug ("No filename specified for thumbnail to process");          
         } else {
             $thumbname = makeThumbname($filename);
+            // If thumbnail exists and option 3 is chosen then check the dimensions for possible recreation
+            $recreate = 0;
+            if( file_exists( $PIVOTX['paths']['upload_base_path'].$thumbname ) && $fbthumb == 3 ) {
+                list($thumbw, $thumbh) = getimagesize($uplbasepath.$thumbname);
+                //debug("dimensions of thumbnail: " . $thumbw . "/" . $thumbh);
+                //debug("imgw/h: " . $imgw . "/" . $imgh);
+                if ($thumbw != $imgw || $thumbh != $imgh) {
+                    $recreate = 1;
+                    //debug("thumb will be recreated");
+                }
+            }
             // If the thumbnail does not exist and extension is jpg or png then try to create it
             // gif could be problematic so don't try it here......
             // filename could contain a subdir! this part is removed by auto_thumbnail
             // so save it through specifying a folder var            
-            if( !file_exists( $PIVOTX['paths']['upload_base_path'].$thumbname )) {
+            if( !file_exists( $PIVOTX['paths']['upload_base_path'].$thumbname ) || $recreate == 1) {
                 $ext = strtolower(getExtension($filename));
                 if(($ext=="jpeg")||($ext=="jpg")||($ext=="png")) {
                     require_once($PIVOTX['paths']['pivotx_path'].'modules/module_imagefunctions.php');
@@ -127,7 +145,7 @@ function smarty_fancybox($params, &$smarty) {
                     $basename = basename($filename);
                     $action = "Fancybox";
                     if (($dirpart != "") && ($dirpart != ".")) {
-                    		$folder = $folder . $dirpart . "/";
+                        $folder = $folder . $dirpart . "/";
                     }
                     if (!auto_thumbnail($basename, $folder, $action, $maxthumb)) {
                         debug("Failed to create thumbnail for " . $filename);
@@ -161,27 +179,34 @@ function smarty_fancybox($params, &$smarty) {
         $ext=strtolower(getExtension($thumbname));
 
         if ( ($ext=="jpg")||($ext=="jpeg")||($ext=="gif")||($ext=="png") ) {
+            // get image dimensions
+            list($thumbw, $thumbh) = getimagesize($uplbasepath.$thumbname);
             if ($maxthumb > 0) {
-               // get size of thumbimage and calculate the right values (useful for vertical images)
-               list($thumbw, $thumbh) = getimagesize($uplbasepath.$thumbname);
+               // specthumbmax specified: calculate the right values (useful for vertical images)
                if ($thumbw > $thumbh) {
-                  $uplh = round($thumbh * ($maxthumb / $thumbw));
-                  $uplw = $maxthumb;
+                  $imgh = round($thumbh * ($maxthumb / $thumbw));
+                  $imgw = $maxthumb;
                }   
                else {
-                  $uplw = round($thumbw * ($maxthumb / $thumbh));
-                  $uplh = $maxthumb;   
+                  $imgw = round($thumbw * ($maxthumb / $thumbh));
+                  $imgh = $maxthumb;   
                }
+            }
+            // thumbnail behaviour 2: always use the dimensions of the found thumbnail
+            if ($fbthumb == 2) {
+                $imgw = $thumbw;
+                $imgh = $thumbh;
+                //debug("dimensions of found thumb used: " . $thumbw . "/" . $thumbh);
             }
             // if parms width or height have been specified they should be used!
             if (isset($params['width'])) {
-               $uplw = $width;
+               $imgw = $width;
             }
             if (isset($params['height'])) {
-               $uplh = $height;
+               $imgh = $height;
             }
             $thumbname = sprintf("<img src=\"%s%s\" alt=\"%s\" title=\"%s\" class=\"%s\" width=\"%s\" height=\"%s\" />",
-                $PIVOTX['paths']['upload_base_url'], $thumbname, $alt, $title, $fbclass, $uplw, $uplh
+                $PIVOTX['paths']['upload_base_url'], $thumbname, $alt, $title, $fbclass, $imgw, $imgh
             );
         } else {
             $thumbname = $org_thumbname;
@@ -465,7 +490,7 @@ function fancyboxIncludeCallback(&$html) {
     } elseif ($fbprof == 2) {       
         $fbparms = "\t\tjQuery(\"a.fancybox\").fancybox({ ";
         // title outside / elastic transition / diff.speed / cyclic
-		// -- although FB specifies to use titlePosition outside their js only uses float for outside title build-up
+        // -- although FB specifies to use titlePosition outside their js only uses float for outside title build-up
         $fbparms .= "padding: 2, ";
         $fbparms .= "'titlePosition': 'float', ";
         $fbparms .= "'transitionIn': 'elastic', 'transitionOut': 'elastic', ";
@@ -473,7 +498,7 @@ function fancyboxIncludeCallback(&$html) {
         $fbparms .= "'overlayShow': true, 'overlayOpacity': 0.3, ";
         $fbparms .= "'opacity': true, 'speedIn': 300, 'speedOut': 300, 'changeSpeed': 300, ";
         $fbparms .= "'showCloseButton': true, 'cyclic': true ";
-        $fbparms .= "});\n";		   
+        $fbparms .= "});\n";           
     } elseif ($fbprof == 3) {
         $fbparms = "\t\tjQuery(\"a.fancybox\").fancybox({ ";
         // no padding / no close button / Image 1/n before title (over) / cyclic
@@ -509,7 +534,7 @@ function fancyboxIncludeCallback(&$html) {
     $fbytube .= "'hideOnContentClick': true, ";     // doesn't work for youtube (yet?)
     $fbytube .= "'titlePosition': 'outside', ";
     $fbytube .= "'showCloseButton': false ";
-    $fbytube .= "});\n";	
+    $fbytube .= "});\n";    
 
     // standard fancybox text profile   
     $fbtext  = "\t\tjQuery(\"a.fancytext\").fancybox({ ";
@@ -518,7 +543,7 @@ function fancyboxIncludeCallback(&$html) {
     $fbtext .= "'overlayShow': true, 'overlayOpacity': 0.7, "; 
     $fbtext .= "'titlePosition': 'outside', ";
     $fbtext .= "'showCloseButton': true, 'cyclic': false ";
-    $fbtext .= "});\n";	
+    $fbtext .= "});\n"; 
 
     // standard fancybox iframe profile   
     $fbifram = "\t\tjQuery(\"a.fancyframe\").fancybox({ ";
@@ -529,14 +554,14 @@ function fancyboxIncludeCallback(&$html) {
     $fbifram .= "'type': 'iframe', ";
     $fbifram .= "'titlePosition': 'outside', ";
     $fbifram .= "'showCloseButton': true ";
-    $fbifram .= "});\n";	
+    $fbifram .= "});\n";    
 
     // standard fancybox swf/flash profile   
     $fbflash = "\t\tjQuery(\"a.fancyflash\").fancybox({ ";
     $fbflash .= "padding: 0, autoScale: false, ";
     $fbflash .= "'transitionIn': 'none', 'transitionOut': 'none', ";
     $fbflash .= "'showCloseButton': true ";
-    $fbflash .= "});\n";	
+    $fbflash .= "});\n";    
 
     // insert html comment within this script to fool markup validation
     $customjs  = "\n<!--\n";
@@ -565,7 +590,7 @@ function fancyboxIncludeCallback(&$html) {
         'link',
         array('href'=>$path.'jquery.fancybox_IE6_-1.3.4.css','media'=>'screen','_ms-expression'=>'if lt IE 7','_priority'=>OutputSystem::PRI_NORMAL+11)
     );
-	
+    
     OutputSystem::instance()->addCode(
         'fancybox-stylehref-ie7',
         OutputSystem::LOC_HEADEND,

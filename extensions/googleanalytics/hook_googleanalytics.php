@@ -138,7 +138,7 @@ $output .= "  _gaq.push(['_trackPageview']);
 
         // add the javascript code to the page
 
-        $html = preg_replace('#</head#si', $output."</head", $html);
+        $html = preg_replace('#</head#si', $output."</head", $html, 1);
 
     } else {
        return;

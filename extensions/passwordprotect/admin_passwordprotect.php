@@ -219,7 +219,11 @@ function passwordprotectHook() {
         if ($password_protected) {
             // Display an errorpage if we're not allowed to view the page/entry..
             if (passwordcheck_login($page) == false) {
-                $question = $PIVOTX['config']->get('passwordprotect_text');
+                $question = getDefault($PIVOTX['config']->get('passwordprotect_text'), 
+                    $passwordprotect_config['passwordprotect_text']);
+                // Convert question to ISO-8859-1, since browsers (currently) don't display 
+                // UTF-8 used as realm values correctly.
+                $question = utf8_decode($question); 
                 Header("WWW-Authenticate: Basic realm=\"$question\"");
                 Header("HTTP/1.0 401 Unauthorized");
         

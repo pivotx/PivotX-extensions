@@ -1,11 +1,11 @@
 <?php
 // - Extension: Password Protect
-// - Version: 1.1.1
+// - Version: 1.1.2
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension that makes it possible to protect entries, pages or the complete site with a password. 
-// - Date: 2011-03-10
+// - Date: 2011-09-13
 // - Identifier: passwordprotect
 
 global $passwordprotect_config;
@@ -179,7 +179,7 @@ $this->addHook(
  * main: If enabled, ask for the password..
  */
 function passwordprotectHook() {
-    global $PIVOTX;
+    global $PIVOTX, $passwordprotect_config;
 
     $modifier = $PIVOTX['parser']->modifier;
 
@@ -219,15 +219,18 @@ function passwordprotectHook() {
         if ($password_protected) {
             // Display an errorpage if we're not allowed to view the page/entry..
             if (passwordcheck_login($page) == false) {
-                Header("WWW-Authenticate: Basic realm=\"PivotX Protected Page\"");
+                $question = $PIVOTX['config']->get('passwordprotect_text');
+                Header("WWW-Authenticate: Basic realm=\"$question\"");
                 Header("HTTP/1.0 401 Unauthorized");
         
                 // Make a fake page to show (with all values, but two, empty).
                 foreach ($page as $key=>$value) {
                     $page[$key] = '';
                 }
-                $page['title'] = $PIVOTX['config']->get('passwordprotect_noaccesstitle');
-                $page['introduction'] = $PIVOTX['config']->get('passwordprotect_noaccesstext');
+                $page['title'] = getDefault($PIVOTX['config']->get('passwordprotect_noaccesstitle'), 
+                    $passwordprotect_config['passwordprotect_noaccesstitle']);
+                $page['introduction'] = getDefault($PIVOTX['config']->get('passwordprotect_noaccesstext'), 
+                    $passwordprotect_config['passwordprotect_noaccesstext']);
         
                 // Set the page in $smarty as an array, as well as separate variables.
                 $PIVOTX['template']->assign('page', $page);

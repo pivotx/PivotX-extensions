@@ -1,0 +1,2 @@
+# to prevent browsable checkout directories
+DirectoryIndex index.php

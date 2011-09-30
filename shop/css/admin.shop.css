@@ -1,0 +1,18 @@
+td div.hidden {display: none;}
+div.popup table {
+    margin: 5px 5px 10px;
+}
+a.openpopup {
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    padding: 2px;
+    margin: 0 2px;
+    background: #dadada;
+    text-decoration: none;
+    display: inline;
+    float: left;
+    clear: none;
+}
+a.openpopup:hover {
+    background: #fff;
+}

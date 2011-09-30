@@ -353,7 +353,8 @@ function _shop_show_auto_cart() {
 	global $PIVOTX;
 	// if the user selected automatic shop append the buybutton to the introduction
 	if($PIVOTX['config']->get('shop_automatic')=='1') {
-		return _shop_show_cart('compact');
+		$output = _shop_show_cart('compact');
+		return '<div class="shoppingcartcontainer">'.$output.'</div>';
 	}
 	return;
 }
@@ -1126,7 +1127,7 @@ function _shop_save_order($inorder=false) {
 			$inorder['order_items'] = $PIVOTX['shoppingcart']->loadCartItems();
 
 		} else {
-			debug('order already has items, not loading them again');
+			//debug('order already has items, not loading them again');
 			//debug_printr($inorder['order_items']);
 		}
 		

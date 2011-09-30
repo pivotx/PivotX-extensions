@@ -143,11 +143,11 @@ $this->addHook(
 function _mollie_prepare_payment(&$orderparms) {
     global $PIVOTX;
     
-    debug_printr($orderparms);
+    //debug_printr($orderparms);
     $order = $PIVOTX['order'];
-    debug_printr($order);
+    //debug_printr($order);
     $ordertotals = $order->getOrderTotals();
-    debug_printr($ordertotals);
+    //debug_printr($ordertotals);
     $order_id = $order->getOrderId();
     $order_details = $order->getOrderDetails();
     
@@ -191,14 +191,17 @@ function _mollie_prepare_payment(&$orderparms) {
     }
 
     if (isset($orderparms['bank_id']) && !empty($orderparms['bank_id'])) {
-        debug_printr(
-            array(
-                'bank id' => $orderparms['bank_id'],
-                'totaalbedrag in centen' => $ordertotals['cumulative_incl_tax'],
-                'omschrijving' => $ordertotals['payment_message'],
-                'mollie return url' => $shop_config['shop_mollie_return_url'],
-                'mollie report url' => $shop_config['shop_mollie_report_url'])
+        if($PIVOTX['config']->get('shop_mollie_testmode')) {
+            debug_printr(
+                array(
+                    'bank id' => $orderparms['bank_id'],
+                    'totaalbedrag in centen' => $ordertotals['cumulative_incl_tax'],
+                    'omschrijving' => $ordertotals['payment_message'],
+                    'mollie return url' => $shop_config['shop_mollie_return_url'],
+                    'mollie report url' => $shop_config['shop_mollie_report_url']
+                )
             );
+        }
         if ($iDEAL->createPayment($orderparms['bank_id'], $ordertotals['cumulative_incl_tax'], $ordertotals['payment_message'], $shop_config['shop_mollie_return_url'], $shop_config['shop_mollie_report_url'])) {
             /* Hier kunt u de aangemaakte betaling opslaan in uw database, bijv. met het unieke transactie_id
                Het transactie_id kunt u aanvragen door $iDEAL->getTransactionId() te gebruiken. Hierna wordt 
@@ -426,11 +429,11 @@ $this->addHook(
 function _mollie_return_page(&$orderparms) {
     global $PIVOTX;
     
-    debug_printr($orderparms);
+    //debug_printr($orderparms);
     $order = $PIVOTX['order'];
-    debug_printr($order);
+    //debug_printr($order);
     $ordertotals = $order->getOrderTotals();
-    debug_printr($ordertotals);
+    //debug_printr($ordertotals);
     $order_id = $order->getOrderId();
     $order_details = $order->getOrderDetails();
     

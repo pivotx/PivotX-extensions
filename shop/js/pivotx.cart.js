@@ -16,9 +16,14 @@ jQuery(function($){
             success: function(data) {
                 //$.fancybox('<p>Je item is toegevoegd aan de cart</p>');
                 $.fancybox(data);
-                $('.shoppingcart.compact').html(data);
+                $('.shoppingcartcontainer').html(data);
             }
         });
     
+    });
+    
+    $('#fancybox-content a.continue_shopping').live('click', function(e){
+        e.preventDefault();
+        $.fancybox.close();
     });
 });

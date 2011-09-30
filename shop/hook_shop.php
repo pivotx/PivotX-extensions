@@ -28,6 +28,7 @@ if(!class_exists('ShopCart')) {
 }
 
 // include the classfiles for mollie
+// TODO: do not break the site if no mollie is available
 if(!class_exists('iDEAL_Payment')) {
     $idealfile = $shopbasedir."/providers/mollie/ideal-php5/ideal.class.php";
 

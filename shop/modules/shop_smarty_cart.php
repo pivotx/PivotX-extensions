@@ -92,7 +92,7 @@ function smarty_shoppingcart($params, &$smarty) {
 		$output = '<!-- shop is disabled -->';
 	}
 	
-	print $output;
+    return '<div class="shoppingcartcontainer">'.$output.'</div>';
 }
 
 /**

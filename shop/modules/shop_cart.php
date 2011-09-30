@@ -15,6 +15,7 @@ class ShopCart {
     protected $user = false;
     protected $payment = false;
     protected $order = false;
+    protected $showvatincart = false;
 
     /**
      * Initialisation. Create an empty cart or load an existing
@@ -153,7 +154,7 @@ class ShopCart {
                 $this->calculateTotals();
                 $this->order['totals'] = $this->totals;
             } else {
-                debug('could not load order');
+                //debug('could not load order');
             }
     
             //debug('returned (fresh) order');
@@ -200,7 +201,7 @@ class ShopCart {
         $this->setSessionVar('cart', null);     
 
         //debug_printr(array('SESSION'=>$_SESSION, 'PIVOTX-session'=>$PIVOTX['session'], 'cart'=>$this));
-        debug('the shopping cart was reset');
+        //debug('the shopping cart was reset');
     }
     
     /**
@@ -214,11 +215,11 @@ class ShopCart {
             && is_array($this->items[$item_id][$item_variant])
             && array_key_exists('amount', $this->items[$item_id][$item_variant])
         ) {
-            debug('increase amount');
+            //debug('increase amount');
             // add amount
             $this->items[$item_id][$item_variant]['amount'] += $amount;
         } else {
-            debug('add item');
+            //debug('add item');
             $_cart_item = $this->items[$item_id];
             
             if(!$_cart_item) {
@@ -234,8 +235,8 @@ class ShopCart {
 
         
         $this->storeCart();
-        debug('add item');
-        debug_printr($this);
+        //debug('add item');
+        //debug_printr($this);
     }
     
     /**
@@ -592,7 +593,7 @@ class ShopCart {
                 // TODO: checkoutbutton template
                 $cartoutput .= '
 <form action="" method="get" class="continue '.$this->display.'"><fieldset><div class="formrow formrow_submit">
-    <label><a href="'.$shop_homepagelink.'">'.st('Continue shopping').'</a></label>
+    <label><a href="'.$shop_homepagelink.'" class="continue_shopping">'.st('Continue shopping').'</a></label>
     <button type="submit" name="action" value="checkout" class="button">
         <span>'.st('Order now').'</span>
     </button>
@@ -602,7 +603,8 @@ class ShopCart {
             case 'minimal':
             case 'compact':
                 $cartoutput .= '<p class="continue '.$this->display.'">';
-                $cartoutput .= '<a href="?action=cart">'.st('View cart').'</a>';
+                $cartoutput .= '<a href="?action=cart" class="checkout checkoutbutton button">'.st('View cart').'</a>';
+                $cartoutput .= '<a href="'.$shop_homepagelink.'" class="continue_shopping continuebutton button">'.st('Continue shopping').'</a>';
                 $cartoutput .= '</p>';
                 break;
             case 'checkout':
@@ -633,14 +635,16 @@ class ShopCart {
         // direct string output
         //$totalsoutput .= '<pre>'. print_r($this->totals,true).'</pre>';
         switch ($this->display) {
-            case 'normal':
             case 'full':
+            case 'normal':
             case 'checkout':
                 $totalsoutput = '<table class="totals '.$this->display.'">';
                 $totalsoutput .= '<tr class="odd first"><td colspan="2">'.st('Total') .' '. $this->totals['number_of_items'] .' '. st('items') .'</td></tr>';
-                $totalsoutput .= '<tr class="even totalexcl"><th>'.st('Total excl. tax') .'</th><td>'. $this->renderPrice($this->totals['cumulative_excl_tax']) .'</td></tr>';
-                foreach ($this->totals['cumulative_tax'] as $key => $tax_amount) {
-                    $totalsoutput .= '<tr class="odd tax"><th>'.st('Tax') .' '. round($key) .'%</th><td>'. $this->renderPrice($tax_amount).'</td></tr>';
+                if($this->showvatincart==true) {
+                    $totalsoutput .= '<tr class="even totalexcl"><th>'.st('Total excl. tax') .'</th><td>'. $this->renderPrice($this->totals['cumulative_excl_tax']) .'</td></tr>';
+                    foreach ($this->totals['cumulative_tax'] as $key => $tax_amount) {
+                        $totalsoutput .= '<tr class="odd tax"><th>'.st('Tax') .' '. round($key) .'%</th><td>'. $this->renderPrice($tax_amount).'</td></tr>';
+                    }
                 }
                 $totalsoutput .= '<tr class="even totalincl"><th>'.st('Total incl. tax') .'</th><td>'. $this->renderPrice($this->totals['cumulative_incl_tax']) .'</td></tr>';
                 $totalsoutput .= '</table>';
@@ -648,7 +652,7 @@ class ShopCart {
             case 'minimal':
             case 'compact':
                 $totalsoutput = '<p class="totals '.$this->display.'">';
-                $totalsoutput .= st('Total ') .' '. $this->totals['number_of_items'] .' '. st('items') .'<br />';
+                $totalsoutput .= st('Total') .' '. $this->totals['number_of_items'] .' '. st('items') .'<br />';
                 $totalsoutput .= st('Total incl. tax') .' '. $this->renderPrice($this->totals['cumulative_incl_tax']) .'<br />';
                 $totalsoutput .= '</p>';
                 break;

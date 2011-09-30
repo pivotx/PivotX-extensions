@@ -36,7 +36,11 @@ td.updateform input.productamount {float: left; clear: left;}
 
 /* nice buttons everywhere */
 /* http://www.cssbutton.me */
-.buythisbutton, button.button, a.removelink {
+.buythisbutton,
+.continuebutton,
+.checkoutbutton,
+button.button,
+a.removelink {
     -webkit-border-radius: 3px;
     -moz-border-radius: 3px;
     border-radius: 3px;
@@ -47,7 +51,10 @@ td.updateform input.productamount {float: left; clear: left;}
     font-size: 14px;
     text-decoration: none;
 }
-.buythisbutton, button.button {
+.buythisbutton,
+.continuebutton,
+.checkoutbutton,
+button.button {
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#b6d14c), color-stop(100%,#83a01c));
     background: -moz-linear-gradient(center top, #b6d14c 0%, #83a01c 100%);
     -webkit-box-shadow: 0px 1px 0px 0px #d1f25a inset, 0px -1px 0px 0px #99bc27 inset, 0px 2px 2px 0px #d4d4d4;
@@ -56,11 +63,19 @@ td.updateform input.productamount {float: left; clear: left;}
     border-color: #97b134;
     color: #FFFFFF;
 }
-.buythisbutton:hover, button.button:hover {
+.buythisbutton:hover,
+.continuebutton:hover,
+.checkoutbutton:hover,
+button.button:hover {
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#bbda4c), color-stop(100%,#83a01d));
     background: -moz-linear-gradient(center top, #bbda4c 0%, #83a01d 100%);
+    color: #FFFFFF;
+    text-decoration: none;
 }
-.buythisbutton:active, button.button:active {
+.buythisbutton:active,
+.continuebutton:active,
+.checkoutbutton:active,
+button.button:active {
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#83a01d), color-stop(100%,#a7c248));
     background: -moz-linear-gradient(center top, #83a01d 0%, #a7c248 100%);
     -webkit-box-shadow: 0px 1px 0px 0px #a3c229 inset;
@@ -79,6 +94,8 @@ a.removelink {
 a.removelink:hover {
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#cf6f4c), color-stop(100%,#9e401e));
     background: -moz-linear-gradient(center top, #cf6f4c 0%, #9e401e 100%);
+    color: #FFFFFF;
+    text-decoration: none;
 }
 a.removelink:active {
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#9e5a1e), color-stop(100%,#c27e4a));

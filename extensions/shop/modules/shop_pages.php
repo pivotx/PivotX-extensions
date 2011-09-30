@@ -118,11 +118,11 @@ function shop_payment_page($params) {
     //debug('order params:');
     //debug_printr($orderparms);
 	
-    debug('payment provider: '.$payment_provider);
+    //debug('payment provider: '.$payment_provider);
     if($payment_provider!='other') {
 		$hook = _shop_load_hook('prepare', $payment_provider);
 
-		debug('hook: '. $hook);
+		//debug('hook: '. $hook);
 
 		// the option to override it all with extensions
 		// we also have the global $PIVOTX['order']
@@ -151,9 +151,10 @@ function shop_payment_page($params) {
     }
     
     // catastrophic failure
-    debug_printr($order);
     $params['title'] = 'Payment failure';
-    $params['body'] = '<pre>'.print_r($order, true).'</pre>';
+    $params['body'] = '<p>Something really went bad, please check the debug log for info</p>';
+    debug_printr($order);
+    //$params['body'] = '<pre>'.print_r($order, true).'</pre>';
     shop_render_page($params);
 }
 /**
@@ -181,7 +182,7 @@ function shop_return_page($params) {
     //debug('order params:');
     //debug_printr($orderparms);
 	
-    debug('payment provider: '.$payment_provider);
+    //debug('payment provider: '.$payment_provider);
     if($params['transaction_id'] && $payment_provider!='other') {
 		$hook = _shop_load_hook('return', $payment_provider);
 		// the option to override it all with extensions
@@ -249,7 +250,7 @@ function shop_report_page($params) {
     //debug('order params:');
     //debug_printr($orderparms);
     
-    debug('payment provider: '.$payment_provider);
+    //debug('payment provider: '.$payment_provider);
     if($_GET['transaction_id'] && $payment_provider!='other') {
 		$hook = _shop_load_hook('report', $payment_provider);
 		// the option to override it all with extensions
@@ -284,7 +285,7 @@ function shop_error_page($params) {
 function shop_render_page($params) {
     global $PIVOTX;
 
-    debug_printr($params);
+    //debug_printr($params);
 
     $themename = getDefault($PIVOTX['config']->get('shop_default_theme'), 'skinny');
     $template = getDefault($PIVOTX['config']->get('shop_default_template'), 'shop.html');

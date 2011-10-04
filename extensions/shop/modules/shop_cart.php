@@ -603,8 +603,8 @@ class ShopCart {
             case 'minimal':
             case 'compact':
                 $cartoutput .= '<p class="continue '.$this->display.'">';
-                $cartoutput .= '<a href="?action=cart" class="checkout checkoutbutton button">'.st('View cart').'</a>';
                 $cartoutput .= '<a href="'.$shop_homepagelink.'" class="continue_shopping continuebutton button">'.st('Continue shopping').'</a>';
+                $cartoutput .= '<a href="/?action=cart" class="checkout checkoutbutton button">'.st('View cart').'</a>';
                 $cartoutput .= '</p>';
                 break;
             case 'checkout':

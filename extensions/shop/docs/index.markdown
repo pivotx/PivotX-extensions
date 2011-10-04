@@ -1,4 +1,4 @@
-Shop 0.2-35
+Shop 0.2-36
 ===========
 An extension to sell products on your website.
 
@@ -62,11 +62,7 @@ Translation
 -----------
 The messages are automaticaly translated if a translation is available.
 
-*Builtin translation*
-
-The translation uses the builtin translation you can access in your site administration onder the tab "Texts".
-
-*Manual translation*
+Ther is no multiple language support yet.
 
 You can also manually translate most of it with the following:
 To enable another translation, make sure that the translation file exists in `shop/translations`. 

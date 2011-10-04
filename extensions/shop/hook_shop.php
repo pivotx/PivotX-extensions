@@ -1,10 +1,10 @@
 <?php
 // - Extension: Shop
-// - Version: 0.2-35
+// - Version: 0.2-36
 // - Author: Two Kings // Lodewijk Evers
 // - E-mail: lodewijk@twokings.nl
 // - Description: A plug and play shop extension (needs pivotx 3 or higher)
-// - Date: 2011-09-29
+// - Date: 2011-10-04
 // - Identifier: shop
 // - Required PivotX version: 3
 
@@ -12,7 +12,7 @@
  * FIXME: add registry thingy for mailer templates for global killswitch
  */
 
-DEFINE('SHOP_VERSION', 35);
+DEFINE('SHOP_VERSION', 36);
 $shopbasedir = dirname(__FILE__);
 
 /**
@@ -24,33 +24,6 @@ if(!class_exists('ShopCart')) {
     }
     if (defined('PIVOTX_INWEBLOG')) {
         $PIVOTX['shoppingcart'] = new ShopCart();
-    }
-}
-
-// include the classfiles for mollie
-// TODO: do not break the site if no mollie is available
-if(!class_exists('iDEAL_Payment')) {
-    $idealfile = $shopbasedir."/providers/mollie/ideal-php5/ideal.class.php";
-
-    if (file_exists($idealfile)) {
-        require_once($idealfile);
-        //debug('mollie ideal class loaded');
-    } else {
-        $PIVOTX['config']->set('shop_enabled', false);
-        $logmessage = $PIVOTX['config']->get('shop_last_errors');
-        $logmessage .= '|mollie ideal class missing';
-        $PIVOTX['config']->set('shop_last_errors', $logmessage);        
-        debug('mollie ideal class missing');
-    }
-
-    if (!in_array('ssl', stream_get_transports())) {
-        $PIVOTX['config']->set('shop_enabled', false);
-        $logmessage = $PIVOTX['config']->get('shop_last_errors');
-        $logmessage .= '|ssl stream support missing';
-        $PIVOTX['config']->set('shop_last_errors', $logmessage);  
-        echo "<h1>Mollie iDEAL API Foutmelding</h1>";
-        echo "<p>Uw PHP installatie heeft geen SSL ondersteuning. SSL is nodig voor de communicatie met de Mollie iDEAL API.</p>";
-        exit;	
     }
 }
 

@@ -181,6 +181,8 @@ function shop_return_page($params) {
 	
     //debug('order params:');
     //debug_printr($orderparms);
+    //debug('order:');
+    //debug_printr($order);
 	
     //debug('payment provider: '.$payment_provider);
     if($params['transaction_id'] && $payment_provider!='other') {
@@ -208,7 +210,8 @@ function shop_return_page($params) {
         $params['body'] = $output;
     }
     $return_url = $PIVOTX['config']->get('shop_default_homepage', '/index.php?w=shop');
-    $params['body'] .= '<p><a href="'.$return_url.'" class="pivotx-more-link">'. st('Continue shopping') .'</a></p>';
+    $params['body'] .= '<p><a href="'.$return_url.'" class="continue_shopping">'. st('Continue shopping') .'</a></p>';
+	
     shop_render_page($params);
 }
 /**

@@ -86,18 +86,16 @@ function pageShopadmin() {
 		'shop_shipping_tax_rate',
 		'shop_shipping_handler',
 		'shop_use_payment',
-		'shop_mollie_testmode',
-		'shop_mollie_partner_key',
-		'shop_mollie_profile_key',
-		'shop_mollie_return_url',
-		'shop_mollie_report_url',
 		'shop_automatic',
 		'shop_builtin_css',
-		'shop_email_ideal_return_tpl',
 		'shop_email_other_return_tpl'
 	);
 
+	// hook for payment plugins
+	$PIVOTX['extensions']->executeHook('shop_admin_configkeys', $shop_configkeys);
+
 	// missing checkbox values
+	// TODO: put this in the extension
 	if(!empty($_POST) && !isset($_POST['shop_mollie_testmode'])) {
 		$_POST['shop_mollie_testmode'] = false;
 	}
@@ -274,31 +272,6 @@ function pageShopadmin() {
         'text' => makeJtip(st('Default shop template'), st('Use the template name you want to use for the shop, the file must exist in your default theme.')),
     ));
 	
-	$templatename_shop_email_ideal_return_tpl = dirname(dirname(__FILE__)) .'/'. $shop_config['shop_email_ideal_return_tpl'];
-	if(!file_exists($templatename_shop_email_ideal_return_tpl)) {
-		$form->add( array(
-			'type' => 'custom',
-			'text' => sprintf("<tr><td colspan='2'><label for='shop_email_ideal_return_tpl' class='error'>%s</label></td></tr>",
-				st('iDEAL mail template') . ' ' . st('was not found at this location') )
-		));
-		// turn the shop off
-		$PIVOTX['config']->set('shop_enabled', false);
-        $logmessage = $PIVOTX['config']->get('shop_last_errors');
-        $logmessage .= '|iDEAL mail template missing';
-        $PIVOTX['config']->set('shop_last_errors', $logmessage);  
-	}
-	
-    $form->add( array(
-        'type' => 'text',
-        'name' => 'shop_email_ideal_return_tpl',
-        'isrequired' => 1,
-        'label' => st('iDEAL mail template'),
-        'error' => st('That\'s not a proper template name!'),
-        'size' => 50,
-        'validation' => 'string|minlen=2|maxlen=60',
-        'text' => makeJtip(st('iDEAL mail template'), st('The mail template for iDEAL payment messages. The templates are located in the extension direcotry. (usually templates/name_of_template.tpl).')),
-    ));
-
 	$templatename_shop_email_other_return_tpl = dirname(dirname(__FILE__)) .'/'. $shop_config['shop_email_other_return_tpl'];
 	if(!file_exists($templatename_shop_email_other_return_tpl)) {
 
@@ -648,57 +621,9 @@ function shopExtrafields($entry) {
     </table>
     <hr class="shop-separator shopvisible" />
 <script type="text/javascript">
-function updateShop(el)
-{
-	var found = false;
-    jQuery("option:selected",el).each(function(){
-		if(jQuery(this).attr("value")=="%shopcategory%") {
-			found = true;
-		}
-    });
- 
-	if (found) {
-	    jQuery(".shopvisible").removeClass("hidden").slideDown("fast");
-	}
-	else {
-		jQuery(".shopvisible").addClass("hidden").slideUp(0);
-	}
-}
-jQuery(document).ready(function(){
-	jQuery("form .rightcolumn select").each(function(){
-		var name = jQuery(this).attr("name");
-		if(name=="categories[]") {
-			updateShop(this);
-		
-			jQuery(this).bind("change",function(e){
-				updateShop(this);
-			});
-		}
-	});
-	
-	jQuery("#extrafield-item_price").bind("change", function(e) {
-		var tax = 1 * jQuery("#extrafield-item_tax").val();
-		var taxless = 1 * jQuery(this).val();
-		var inctax = taxless + (taxless * tax);
-		//console.log(taxless, tax, (taxless * tax), inctax);
-		jQuery("#extrafield-item_price_incl_tax").val(inctax);
-	});
-	jQuery("#extrafield-item_tax").bind("change", function(e) {
-		var tax = 1 * jQuery("#extrafield-item_tax").val();
-		var taxless = 1 * jQuery("#extrafield-item_price").val();
-		var inctax = taxless + (taxless * tax);
-		jQuery("#extrafield-item_price_incl_tax").val(inctax);
-	});
-	jQuery("#extrafield-item_price_incl_tax").bind("change", function(e) {
-		var tax = 1 * jQuery("#extrafield-item_tax").val();
-		var inctax = 1 * jQuery(this).val();
-		var taxless = inctax / (1 + tax);
-		//console.log(taxless, tax, (1 + tax), inctax);
-		jQuery("#extrafield-item_price").val(taxless);
-	});
-});
+var shopcategory = "%shopcategory%";
 </script>
-	
+
 ';
 
 	// defaults to no
@@ -752,8 +677,8 @@ jQuery(document).ready(function(){
     $output = str_replace("%title_item_price_incl_tax%", st("Incl."), $output);
     $output = str_replace("%desc_item_price_incl_tax%", st("The price after VAT"), $output);
     $output = str_replace("%title_item_product_options%", st("Options"), $output);
-    $output = str_replace("%desc_item_product_options%", st("Comma separated list of value::description pairs"), $output);
-	
+    $output = str_replace("%desc_item_product_options%", st("Comma separated list of value::description pairs").' ('.st('example').': <a href="#" class="defaultoptions" rel="extrafield-item_product_options">smlxl</a>)', $output);
+
     // For ease of use, just try to replace everything in $entry here:
     foreach($entry as $key=>$value) {
         $output = str_replace("%".$key."%", $value, $output);
@@ -761,8 +686,16 @@ jQuery(document).ready(function(){
     foreach($entry['extrafields'] as $key=>$value) {
         $output = str_replace("%".$key."%", $value, $output);
     }
+
     // Don't keep any %whatever%'s hanging around..
     $output = preg_replace("/%([a-z0-9_-]+)%/i", "", $output);
+
+    $output .= str_replace('[[extensionurl]]', $PIVOTX['paths']['extensions_url'], '
+    <script type="text/javascript" src="[[extensionurl]]shop/js/admin.shop.js"></script>');
+    $output .= str_replace('[[extensionurl]]', $PIVOTX['paths']['extensions_url'], '
+    <style type="text/css">
+        @import url([[extensionurl]]shop/css/admin.shop.css);
+    </style>');
 
     return $output;
 

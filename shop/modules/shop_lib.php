@@ -401,7 +401,9 @@ function _shop_show_cart($size = 'full', $force = false) {
 			$output = "<h4>".st("Shopping cart")."</h4> ";
 			$output .= '<p class="totals">'.st("Cart is empty").'</p> ';
 			$shop_homepagelink = $PIVOTX['config']->get('shop_default_homepage');
-			$output .= '<p><a href="'.$shop_homepagelink.'">'.st('Continue shopping').'</a></p> ';
+			$output .= '<p>';
+			$output .= '<a href="'.$shop_homepagelink.'" class="continue_shopping continuebutton button">'.st('Continue shopping').'</a>';
+			$output .= '</p> ';
 			$cartoutput = '<div class="shoppingcart shoppingcart-'.$size.'">'.$output.'</div>';
 			
 			return $cartoutput;
@@ -811,7 +813,7 @@ function _shop_show_checkoutform($formdata=false) {
 // the end of the form
 	$template['footer'] = '
 	<div class="formrow formrow_submit">
-		<label><a href="?action=cart">[[backlinkname]]</a></label>
+		<label><a href="/?action=cart" class="continue_shopping">[[backlinkname]]</a></label>
 		<button type="submit" name="checkout_submit" value="[[submitvalue]]" class="button">
 			<span>[[submitvalue]]</span>
 		</button>
@@ -1373,9 +1375,12 @@ function _shop_get_mailtemplate($status) {
 	global $PIVOTX;
 	
 	$mailtemplates = array(
-		'ideal_return_tpl' => 'shop_email_ideal_return_tpl',
 		'other_return_tpl' => 'shop_email_other_return_tpl'
 	);
+	
+	// and a make everything change for the confirmation mail
+	// pass by reference dudes 
+    $PIVOTX['extensions']->executeHook('shop_return_mail', $mailtemplates);
 	
 	//debug('get mail template for '.$status .' so '. $mailtemplates[$status]);
 

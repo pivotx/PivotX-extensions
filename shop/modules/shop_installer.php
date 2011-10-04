@@ -109,9 +109,12 @@ function shopConfigTest() {
     
     // mailtemplates
     $mailtemplates = array(
-		'ideal_return_tpl' => 'shop_email_ideal_return_tpl',
 		'other_return_tpl' => 'shop_email_other_return_tpl'
 	);
+	
+	// and a make everything change for the confirmation mail
+	// pass by reference dudes 
+    $PIVOTX['extensions']->executeHook('shop_return_mail', $mailtemplates);
 	
     foreach($mailtemplates as $key => $value) {
         $templatename = dirname(dirname(__FILE__)) .'/'. $PIVOTX['config']->get($mailtemplates[$key]);
@@ -855,6 +858,16 @@ function shopInstallerUpdateTables_33() {
 
 }
 
+/**
+ * Update tables to version 36
+ */
+function shopInstallerUpdateTables_36() {
+    shopInstallerOopsSuggestions();
+    
+    $PIVOTX['config']->set('shop_email_mollie_return_tpl', 'templates/email_order_mollie_return.tpl');
+    // we see no errors, so lets just pretend that worked
+    return true;
+}
 
 /* ****
 

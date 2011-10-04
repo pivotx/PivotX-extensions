@@ -3,6 +3,38 @@
  * Payment pages for iDEAL via mollie.nl payments.
  */
 
+// include the classfiles for mollie
+if($PIVOTX['config']->get('shop_enabled')!=false) {
+    
+    $shopbasedir = dirname(dirname(__FILE__));
+    $shop_use_payment = $PIVOTX['config']->get('shop_use_payment', 'no');
+    $has_payment_mollie_ideal = (stristr($shop_use_payment, 'mollie'))?1:0;
+
+    if($has_payment_mollie_ideal && !class_exists('iDEAL_Payment')) {
+        $idealfile = $shopbasedir."/providers/mollie/ideal-php5/ideal.class.php";
+    
+        if (file_exists($idealfile)) {
+            require_once($idealfile);
+            //debug('mollie ideal class loaded');
+        } else {
+            $PIVOTX['config']->set('shop_enabled', false);
+            $logmessage = $PIVOTX['config']->get('shop_last_errors');
+            $logmessage .= '|mollie ideal class missing';
+            $PIVOTX['config']->set('shop_last_errors', $logmessage);        
+            debug('mollie ideal class missing');
+        }
+    
+        if (!in_array('ssl', stream_get_transports())) {
+            $PIVOTX['config']->set('shop_enabled', false);
+            $logmessage = $PIVOTX['config']->get('shop_last_errors');
+            $logmessage .= '|ssl stream support missing';
+            $PIVOTX['config']->set('shop_last_errors', $logmessage);  
+            echo "<h1>Mollie iDEAL API Foutmelding</h1>";
+            echo "<p>Uw PHP installatie heeft geen SSL ondersteuning. SSL is nodig voor de communicatie met de Mollie iDEAL API.</p>";
+            exit;	
+        }
+    }
+}
 
 /**
  * Add the iDEAL via mollie.nl payments to the payment methods in the checkout form
@@ -47,6 +79,26 @@ function _mollie_admin_payment_options(&$payment_options) {
 }
 
 /**
+ * Add the mollie.nl options and settings to the admin form
+ */
+$this->addHook(
+    'shop_admin_configkeys',
+    'callback',
+    '_mollie_admin_configkeys'
+    );
+
+function _mollie_admin_configkeys(&$shop_configkeys) {
+	$mollie_configkeys = array(
+		'shop_mollie_testmode',
+		'shop_mollie_partner_key',
+		'shop_mollie_profile_key',
+		'shop_mollie_return_url',
+		'shop_mollie_report_url',
+		'shop_email_mollie_return_tpl'
+	);
+    $shop_configkeys = array_merge($shop_configkeys, $mollie_configkeys);
+}
+/**
  * Add the iDEAL via mollie.nl payments options and settings in the administration form
  */
 $this->addHook(
@@ -66,6 +118,8 @@ function _mollie_admin_payment(&$form) {
 	$form->add( array(
         'type' => "hr"
     ));
+    
+    
     
     $shop_use_payment = $PIVOTX['config']->get('shop_use_payment', 'no');
 	$has_payment_mollie_ideal = (stristr($shop_use_payment, 'mollie'))?1:0;
@@ -113,6 +167,32 @@ function _mollie_admin_payment(&$form) {
                 'isrequired' => 1,
                 'label' => st('Mollie.nl report url'),
             ));
+
+            $templatename_shop_email_mollie_return_tpl = dirname(dirname(__FILE__)) .'/'. $shop_config['shop_email_mollie_return_tpl'];
+            if(!file_exists($templatename_shop_email_mollie_return_tpl)) {
+                $form->add( array(
+                    'type' => 'custom',
+                    'text' => sprintf("<tr><td colspan='2'><label for='shop_email_mollie_return_tpl' class='error'>%s</label></td></tr>",
+                        st('iDEAL mail template') . ' ' . st('was not found at this location') )
+                ));
+                // turn the shop off
+                $PIVOTX['config']->set('shop_enabled', false);
+                $logmessage = $PIVOTX['config']->get('shop_last_errors');
+                $logmessage .= '|iDEAL mail template missing';
+                $PIVOTX['config']->set('shop_last_errors', $logmessage);  
+            }
+            
+            $form->add( array(
+                'type' => 'text',
+                'name' => 'shop_email_mollie_return_tpl',
+                'isrequired' => 1,
+                'label' => st('iDEAL mail template'),
+                'error' => st('That\'s not a proper template name!'),
+                'size' => 50,
+                'validation' => 'string|minlen=2|maxlen=60',
+                'text' => makeJtip(st('iDEAL mail template'), st('The mail template for iDEAL payment messages. The templates are located in the extension direcotry. (usually templates/name_of_template.tpl).')),
+            ));
+    
         } else {
             $form->add( array(
                 'type' => 'custom',
@@ -125,6 +205,18 @@ function _mollie_admin_payment(&$form) {
     
 }
 
+/**
+ * Add the shop_return_mail for the email template
+ */
+$this->addHook(
+    'shop_return_mail',
+    'callback',
+    '_mollie_return_mail'
+    );
+
+function _mollie_return_mail(&$mailtemplates) {
+	$mailtemplates['mollie_return_tpl'] = 'shop_email_mollie_return_tpl';
+}
 
 /**
  * Add the _prepare_payment hook
@@ -251,14 +343,19 @@ function _mollie_prepare_payment(&$orderparms) {
         $output .= '<p>Er is een fout opgetreden bij het ophalen van de banklijst: '. $iDEAL->getErrorMessage(). '</p>';
 
     }
+    $mollie_introtext = '<p>'. st('Kies in het volgende formulier uw bank en klik op betalen.') .'</p>';
+    $mollie_introtext .= '<p>'. st('Hierna wordt u doorgestuurd naar de website van uw bank voor de betaling.') .'</p>';
+    $mollie_introtext .= '<p>'. st('Na de betaling komt u weer terug op deze site met een overzicht van uw bestelling en betaling.') .'</p>';
+    $mollie_introtext .= '<p>'. st('Pas als u bij iDEAL heeft betaald wordt de bestelling definitief.') .'</p>';
 
     $output .= <<<EOF
     <div id="checkoutform" class="mollie_bank_form">
+    [[mollie_introtext]]
     <form method="post">
         <select name="bank_id">
-            %options%
+            [[mollie_bank_options]]
         </select>
-        <input type="submit" name="submit" value="Betaal via iDEAL" />
+        <button type="submit" name="submit" class="button checkoutbutton ideal_button"><span>[[mollie_payment_action]]</span></button>
     </form>
     </div>
 EOF;
@@ -266,7 +363,9 @@ EOF;
     foreach ($bank_array as $bank_id => $bank_name) {
         $options .= '<option value="'.$bank_id.'">'.$bank_name .'</option>';
     }
-    $output = str_replace('%options%', $options, $output);
+    $output = str_replace('[[mollie_introtext]]', '<div class="mollie_introtekst">'.$mollie_introtext.'</div>', $output);
+    $output = str_replace('[[mollie_payment_action]]', st('Betaal via iDEAL'), $output);
+    $output = str_replace('[[mollie_bank_options]]', $options, $output);
     
     $page['title'] = 'Betaal via iDEAL';
     $page['body'] = $output;
@@ -402,7 +501,7 @@ CheckedBefore	U heeft de betalingstatus al een keer opgevraagd.
         // drop a mail with instructions
         //debug('shop mollie mail default sending');
         //debug(var_export($order, true));
-        $order_details = _shop_order_mail_default('ideal_return_tpl', $order_details);
+        $order_details = _shop_order_mail_default('mollie_return_tpl', $order_details);
         //debug('shop mollie mail default sent');
     }
     // print minimal output as required by the api
@@ -469,12 +568,33 @@ function _mollie_return_page(&$orderparms) {
             $params['body'] = '<p>'. $output .'</p>';
         }
         $return_url = $PIVOTX['config']->get('shop_default_homepage', '/index.php?w=shop');
-        $params['body'] .= '<p><a href="'.$return_url.'" class="pivotx-more-link">'. st('Continue shopping') .'</a></p>';
+        $params['body'] .= '<p><a href="'.$return_url.'" class="continue_shopping">'. st('Continue shopping') .'</a></p>';
     } else {
         $params['title'] = st('Error');
         $params['body'] = '<p>'. st('No order found.') . '</p>';
-        $params['body'] .= '<p><a href="'.$return_url.'" class="pivotx-more-link">'. st('Continue shopping') .'</a></p>';
+        $params['body'] .= '<p><a href="'.$return_url.'" class="continue_shopping">'. st('Continue shopping') .'</a></p>';
     }
+    
+    // ensure that the page has the right modifier for shop_action
+    $params['action'] = 'return';
     return $params;
 
+}
+
+
+/**
+ * Add the paymentinfo hook
+ */
+$this->addHook(
+    '_mollie_payment_info',
+    'callback',
+    '_mollie_payment_info'
+    );
+
+function _mollie_payment_info($label) {
+    if ($label=='mollie') {
+        return '<span class="ideal_label">iDEAL</span> met <a href="http://www.mollie.nl" class="mollie_label">mollie.nl</a>';
+    }
+    return $label;
+    
 }

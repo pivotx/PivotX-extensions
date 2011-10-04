@@ -22,11 +22,13 @@ function st($unstranslatedstring) {
 	/**
 	 * This will do the OOPs thing
 	 */
-	$oopslabel = 'oops_shop.'. strtolower(str_replace(array(' ','+','\'','"',',','.'), '_', $unstranslatedstring));
-	$oopstranslated = oops_text::tr($oopslabel);
 	
-	if($oopstranslated && !stristr($oopstranslated, 'oops shop ')) {
-		return $oopstranslated;
+	if(stristr($unstranslatedstring, 'oops_shop.')) {
+		$oopstranslated = oops_text::tr($unstranslatedstring);
+		
+		if($oopstranslated) {
+			return $oopstranslated;
+		}
 	}
 
 	// If a language is set, see if the string is translated

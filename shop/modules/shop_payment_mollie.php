@@ -79,6 +79,40 @@ function _mollie_admin_payment_options(&$payment_options) {
 }
 
 /**
+ * Add report page variable transform
+ *
+ * because all banks use different names
+ */
+$this->addHook(
+    '_shop_payment_report_variables',
+    'callback',
+    '_mollie_payment_report_variables'
+    );
+
+function _mollie_payment_report_variables(&$reportvariables) {
+    if($reportvariables['orderID']) {
+        $reportvariables['order_id'] = $reportvariables['orderID'];
+    }
+}
+
+
+/**
+ * Add return page variable transform
+ *
+ * because all banks use different names
+ */
+$this->addHook(
+    '_shop_payment_return_variables',
+    'callback',
+    '_mollie_payment_return_variables'
+    );
+
+function _mollie_payment_return_variables(&$returnvariables) {
+
+}
+
+
+/**
  * Add the mollie.nl options and settings to the admin form
  */
 $this->addHook(
@@ -384,39 +418,38 @@ $this->addHook(
 /**
  * background page where iDEAL via mollie.nl payments reports transaction status
  */
-function _mollie_report_page(&$orderparms) {
+function _mollie_report_page($orderandparams) {
     global $PIVOTX;
     
-    if($PIVOTX['config']->get('shop_mollie_testmode')) {
-        debug('starting transaction return: '.$_GET['transaction_id']);
-    }
+    $order = $orderandparams['order'];
+    $params = $orderandparams['params'];
     
-    //debug_printr($orderparms);
-    $order = $PIVOTX['order'];
-    //debug_printr($order);
     $ordertotals = $order->getOrderTotals();
     //debug_printr($ordertotals);
     $order_id = $order->getOrderId();
     $order_details = $order->getOrderDetails();
-
     
+    if($PIVOTX['config']->get('shop_mollie_testmode')) {
+        debug('starting transaction report: '.$order_details['transaction_id']);
+    }
+
     $shop_config['shop_mollie_partner_key'] = $PIVOTX['config']->get('shop_mollie_partner_key', 'test');
     $shop_config['shop_mollie_profile_key'] = $PIVOTX['config']->get('shop_mollie_profile_key', 'test');
     $shop_config['shop_mollie_return_url'] = $PIVOTX['config']->get('shop_mollie_return_url', 'index.php?action=return');
     $shop_config['shop_mollie_report_url'] = $PIVOTX['config']->get('shop_mollie_report_url', 'index.php?action=report');
+    
+    /**
+     *
+    Status	Omschrijving
+    Success	De betaling is gelukt
+    Cancelled	De consument heeft de betaling geannuleerd.
+    Failure	De betaling is niet gelukt (er is geen verdere informatie beschikbaar)
+    Expired	De betaling is verlopen doordat de consument niets met de betaling heeft gedaan.
+    CheckedBefore	U heeft de betalingstatus al een keer opgevraagd.
+     *
+     */
 
-/**
- *
-Status	Omschrijving
-Success	De betaling is gelukt
-Cancelled	De consument heeft de betaling geannuleerd.
-Failure	De betaling is niet gelukt (er is geen verdere informatie beschikbaar)
-Expired	De betaling is verlopen doordat de consument niets met de betaling heeft gedaan.
-CheckedBefore	U heeft de betalingstatus al een keer opgevraagd.
- *
- */
-
-    if (isset($_GET['transaction_id']) && ($order_details['payment_external_code'] == $_GET['transaction_id'])) {
+    if (isset($order_details['payment_external_code']) && ($params['transaction_id']==$order_details['payment_external_code'])) {
         $iDEAL = new iDEAL_Payment ($shop_config['shop_mollie_partner_key']);
         $iDEAL->setProfileKey($shop_config['shop_mollie_profile_key']);
         if($PIVOTX['config']->get('shop_mollie_testmode')) {
@@ -424,21 +457,13 @@ CheckedBefore	U heeft de betalingstatus al een keer opgevraagd.
             debug('Mollie testmode is active');
         }
         
-        $iDEAL->checkPayment($_GET['transaction_id']);
+        $iDEAL->checkPayment($order_details['payment_external_code']);
         $payment_external_code = $iDEAL->getTransactionId();
         if($PIVOTX['config']->get('shop_mollie_testmode')) {
             debug('transaction ids: ' . $payment_external_code . " = " . $_GET['transaction_id']);
             //debug('poging een met $payment_external_code: ' . $payment_external_code);
         }
-        /*
-        $order_details = _shop_load_order(array('payment_external_code'=>$payment_external_code));
-        if(!$order_details) {
-            if($PIVOTX['config']->get('shop_mollie_testmode')) {
-                debug('poging twee met $_GET[\'transaction_id\']: ' . $_GET['transaction_id']);
-            }
-            $order_details = _shop_load_order(array('payment_external_code'=>$_GET['transaction_id']));
-        }
-        */
+
         if($PIVOTX['config']->get('shop_mollie_testmode')) {
             debug_printr($order_details);
         }
@@ -525,25 +550,27 @@ $this->addHook(
 /**
  * return page where mollie sends customers after payment
  */
-function _mollie_return_page(&$orderparms) {
+function _mollie_return_page($orderandparams) {
     global $PIVOTX;
     
+    $order = $orderandparams['order'];
+    $params = $orderandparams['params'];
+    
     //debug_printr($orderparms);
-    $order = $PIVOTX['order'];
+    //$order = $PIVOTX['order'];
     //debug_printr($order);
     $ordertotals = $order->getOrderTotals();
     //debug_printr($ordertotals);
     $order_id = $order->getOrderId();
     $order_details = $order->getOrderDetails();
     
-    if (isset($_GET['transaction_id']) && ($order_details['payment_external_code'] == $_GET['transaction_id'])) {
+    if ($order_details['order_public_code']) {
         /*
           Via report.php heeft Mollie de betaling al gemeld, en in dat script heeft bij Mollie gecontroleerd 
           wat de betaalstatus is. Deze betaalstatus is in report.php ergens opgeslagen in het systeem (bijv. 
           in de database).
          
-          De klant komt bij dit script terug na de betaling. Hier kan dan met behulp van het 'transaction_id' 
-          de status van de betaling uit de database gehaald worden en de klant de relevante informatie tonen.
+          De klant komt bij dit script terug na de betaling.
         */
         if($order_details['order_status']=='complete'&&$order_details['payment_status']==true) {
             $title = st('Thanks');

@@ -78,6 +78,8 @@ function _shop_css_head() {
 
 function _shop_load_hook($action='prepare', $id='mollie') {
 	switch($action) {
+		case 'payment_info':
+			return '_'.$id.'_payment_info';
 		case 'prepare':
 			return '_'.$id.'_prepare_payment';
 		case 'report':
@@ -479,8 +481,25 @@ function _shop_show_order($size = 'full', $orderparms=array()) {
  */
 function _shop_load_order($params) {
 	global $PIVOTX;
+
+	if($params['transaction_id'] && !$params['order_id']) {
+		$shopdb = new ShopSql();
+		$orderfromdb = $shopdb->getOrderByPayment($params['transaction_id']);
+		
+		$params['order_id'] = $orderfromdb['order_id'];
+		$params['order_public_code'] = $orderfromdb['order_public_code'];
+		$params['order_public_hash'] = $orderfromdb['order_public_hash'];
+	}
+	
+	if($params['order_public_code'] && $params['order_public_hash'] && !$params['order_id']) {
+		$shopdb = new ShopSql();
+		$orderfromdb = $shopdb->getOrderByCode($params['order_public_code'], $params['order_public_hash']);
+		
+		$params['order_id'] = $orderfromdb['order_id'];
+	}
 	
 	if(!isset($PIVOTX['order'])) {
+
 		// prepare missing order params
 		if(!$params['order_id']) {
 			$params['order_id'] = $PIVOTX['session']->getValue('order_id');
@@ -488,6 +507,8 @@ function _shop_load_order($params) {
 		// load order into order global
 		// we can only have one!
 		$PIVOTX['order'] = new ShopCart('order', $params['order_id']);
+
+		
 	}
 	$order = $PIVOTX['order'];
 
@@ -1263,9 +1284,14 @@ function _shop_order_user($order) {
  * show the payment status
  */
 function _shop_order_payment_status($order) {
+	global $PIVOTX;
+	$hook = _shop_load_hook('payment_info', $order['payment_provider']);
+	
+	$paymentprovider = $PIVOTX['extensions']->executeHook($hook, $order['payment_provider']);
+	
 	if($order['payment_status'] == 'Success') {
 		$output = '<h4>'. st('Payment successful') .'</h4>';
-		$output .= '<p>'. st('Payment handled by') .': '.$order['payment_provider'].'</p>';
+		$output .= '<p>'. st('Payment handled by') .': '.$paymentprovider.'</p>';
 	} else {
 		$output = '<h4>'. st('Payment incomplete') .'</h4>';
 		$output .= '<p>'. st('You will receive a message with further instructions for payment.') .'</p>';

@@ -291,7 +291,7 @@ function _ogone_prepare_payment(&$orderparms) {
     if($PIVOTX['config']->get('shop_ogone_testmode')) {
         debug('Ogone testmode is active');
     }
-    $output = '<div class="autorefreshmessage"><p>'. st('Please wait until you are redirected.') .'</p><p>'. st('If you are not redirected you may click on the continue button.') .'</p></div>';
+    $output = '<div class="shop_autorefreshmessage"><p>'. st('Please wait until you are redirected.') .'</p><p>'. st('If you are not redirected you may click on the continue button.') .'</p></div>';
     
     $shop_configkeys = array_keys($shop_config);
     foreach($shop_configkeys as $key) {
@@ -446,7 +446,7 @@ function _ogone_prepare_payment(&$orderparms) {
     $output .= '<button type="submit" value="" name="submit2">'. st('Continue to bank payment page') .'</button>';
     //$output .= '<input type="submit" value="" name="submit2" />';
     
-    $output = '<form method="post" action="'.$shop_config['shop_ogone_provider_address'].'">' . $output . '</form>';
+    $output = '<form method="post" class="shop_autorefreshform" action="'.$shop_config['shop_ogone_provider_address'].'">' . $output . '</form>';
 
     if(0 && $PIVOTX['config']->get('shop_mollie_testmode')) {
         $output .= '<h2>shop_config</h2><pre>'.htmlspecialchars(print_r($shop_config, true)).'</pre> ';

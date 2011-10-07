@@ -115,3 +115,12 @@ a.removelink:hover {
 a.removelink:active {
     background: #c27e4a;
 }
+
+.buythisbutton.disabled,
+.continuebutton.disabled,
+.checkoutbutton.disabled ,
+button.button.disabled {
+    background: #aaa;
+    border-color: #DEDEDE;
+    color: #FFFFFF;
+}

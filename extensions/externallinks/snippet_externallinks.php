@@ -29,7 +29,7 @@ $script = "
             var hostname = document.location.hostname.replace('www.', '');
             var eimage = ' <img src=\"%path%extensions/externallinks/elink.gif\" alt=\"\" style=\"border:0;\" />';
             jQuery('a').each(function(){
-                if (typeof(this.hostname)!=\"undefined\") {
+                if ((typeof(this.hostname)!=\"undefined\") && (typeof(this.hostname) != \"unknown\")) {
                     var thishost = this.hostname.replace('www.', '');
                     if (this.href && (thishost != hostname) && (this.protocol=='http:' || this.protocol=='https:') && (this.innerHTML.length<50) ) {
                         this.target='_blank';

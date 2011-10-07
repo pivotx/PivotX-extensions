@@ -4,7 +4,7 @@ jQuery(function($){
         
         $(this).append('<input type="hidden" name="fromajax" value="yes" />');
         
-        console.log('submit form: ', $(this).attr('action'), $(this).serializeArray());
+        //console.log('submit form: ', $(this).attr('action'), $(this).serializeArray());
         
         $.fancybox.showActivity();
    
@@ -16,7 +16,10 @@ jQuery(function($){
             success: function(data) {
                 //$.fancybox('<p>Je item is toegevoegd aan de cart</p>');
                 $.fancybox(data);
+                // update the shopping cart in the sidebar
                 $('.shoppingcartcontainer').html(data);
+                // remove the addtocart message in the sidebar
+                $('.shoppingcartcontainer').find('.cartaddmessage').remove();
             }
         });
     

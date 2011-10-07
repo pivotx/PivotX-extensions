@@ -16,7 +16,10 @@ function shop_cart_add_page($params) {
         $cart = _shop_add_to_cart($params['entry'], $no_items, $option);
 
 		if($params['fromajax']=='yes') {
-			print _shop_show_cart('compact');
+			$cart = '<div class="cartaddmessage positive">'.st('The item has been added to your cart').'</div>'."\n";
+			$cart .= _shop_show_cart('compact');
+			
+			print $cart;
  			exit;
 		} else {
 			// redirect to cart page
@@ -162,33 +165,29 @@ function shop_payment_page($params) {
  */
 function shop_return_page($params) {
     global $PIVOTX;
-	
+
 	//debug('return page params:');
     //debug_printr($params);
+	
+	$PIVOTX['extensions']->executeHook('_shop_payment_return_variables', $params);
 
-    $orderparms = array(
-        'order_id' => $order_id,
-        'order_public_code' => $order_public_code,
-        'order_public_hash' => $order_public_hash,
-    );
-	
-    //debug('order params:');
-    //debug_printr($orderparms);
+    //debug('return page order params:');
+    //debug_printr($params);
     
-	$order = _shop_load_order($orderparms);
+	$order = _shop_load_order($params);
 	$payment_provider = $order->getPaymentProvider();
-	$orderparms = array_merge($orderparms, $params);
+	//debug('report page params:');
+    //debug_printr($params);
 	
-    //debug('order params:');
-    //debug_printr($orderparms);
-    //debug('order:');
-    //debug_printr($order);
-	
-    //debug('payment provider: '.$payment_provider);
+	//debug('payment provider: '.$payment_provider);
     if($params['transaction_id'] && $payment_provider!='other') {
+		//debug('normal return page hook');
 		$hook = _shop_load_hook('return', $payment_provider);
+		$orderandparams = array('order' => $order, 'params'=> $params);
+		//debug('hook: ' . $hook);
+		//debug_printr($orderandparams);
 		// the option to override it all with extensions
-		$page = $PIVOTX['extensions']->executeHook($hook, $order);
+		$page = $PIVOTX['extensions']->executeHook($hook, $orderandparams);
         shop_render_page($page);
         exit;
     } else {
@@ -200,6 +199,7 @@ function shop_return_page($params) {
         } else {
             $title = st('Error');
             $output = st('No order found.');
+			$output .= '<pre>'.printr_r($params, true).'</pre>';
         }
     }
     $params['title'] = $title;
@@ -223,63 +223,33 @@ function shop_report_page($params) {
 	//debug('report page params:');
     //debug_printr($params);
 	
-	if($params['transaction_id']) {
-		$shopdb = new ShopSql();
-		$orderfromdb = $shopdb->getOrderByPayment($params['transaction_id']);
-		
-		$order_id = $orderfromdb['order_id'];
-		$order_public_code = $orderfromdb['order_public_code'];
-		$order_public_hash = $orderfromdb['order_public_hash'];
-	} else {
-		$order_id = $PIVOTX['session']->getValue('order_id');
-		$order_public_code = $PIVOTX['session']->getValue('order_public_code');
-		$order_public_hash = $PIVOTX['session']->getValue('order_public_hash');
-	}
+	$PIVOTX['extensions']->executeHook('_shop_payment_report_variables', $params);
+
+    //debug('report page order params:');
+    //debug_printr($params);
     
-    $orderparms = array(
-        'order_id' => $order_id,
-        'order_public_code' => $order_public_code,
-        'order_public_hash' => $order_public_hash,
-    );
-	
-	
-    //debug('order params:');
-    //debug_printr($orderparms);
-    
-	$order = _shop_load_order($orderparms);
+	$order = _shop_load_order($params);
 	$payment_provider = $order->getPaymentProvider();
-	$orderparms = array_merge($orderparms, $params);
+	//debug('report page params:');
+    //debug_printr($params);
 	
-    //debug('order params:');
-    //debug_printr($orderparms);
-    
-    //debug('payment provider: '.$payment_provider);
-    if($_GET['transaction_id'] && $payment_provider!='other') {
+	//debug('payment provider: '.$payment_provider);
+    if($params['transaction_id'] && $payment_provider!='other') {
+		//debug('normal report page hook');
 		$hook = _shop_load_hook('report', $payment_provider);
+		$orderandparams = array('order' => $order, 'params'=> $params);
+		//debug('hook: ' . $hook);
+		//debug_printr($orderandparams);
 		// the option to override it all with extensions
-		$page = $PIVOTX['extensions']->executeHook($hook, $orderparms);
+		$page = $PIVOTX['extensions']->executeHook($hook, $orderandparams);
         shop_render_page($page);
         exit;
     } else {
+		debug('report page called for unknown method');
         header("HTTP/1.0 404 Not Found");
         print "Report method unknown";
         exit;
     }
-}
-function shop_failure_page($params) {
-    $params['title'] = st('Failure');
-    $params['body'] = '<p>Hello failure!</p>';
-    shop_render_page($params);
-}
-function shop_cancel_page($params) {
-    $params['title'] = st('Cancel');
-    $params['body'] = '<p>Hello cancel!</p>';
-    shop_render_page($params);
-}
-function shop_error_page($params) {
-    $params['title'] = st('Error');
-    $params['body'] = '<p>Hello error!</p>';
-    shop_render_page($params);
 }
 
 /**

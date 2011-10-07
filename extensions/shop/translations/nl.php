@@ -111,4 +111,5 @@ $translations = array(
     'Payment successful' => 'Betaling voltooid',
     'Payment handled by' => 'Betaling verwerkt door',
     'Payment incomplete' => 'Betaling niet voltooid',
+    'The item has been added to your cart' => 'Dit artikel is toegevoegd aan uw winkelwagen.',
 );

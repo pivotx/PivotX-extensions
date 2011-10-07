@@ -94,18 +94,22 @@ function pageShopadmin() {
 	// hook for payment plugins
 	$PIVOTX['extensions']->executeHook('shop_admin_configkeys', $shop_configkeys);
 
-	// missing checkbox values
-	// TODO: put this in the extension
-	if(!empty($_POST) && !isset($_POST['shop_mollie_testmode'])) {
-		$_POST['shop_mollie_testmode'] = false;
+	// handle empty checkbox values
+	if(!empty($_POST)) {
+		// missing checkbox values for payment testmodes
+		foreach($shop_configkeys as $key) {
+			if(stristr($key, '_testmode') && !isset($_POST[$key])) {
+				$_POST[$key] = false;
+			}
+		}
+		if(!isset($_POST['shop_automatic'])) {
+			$_POST['shop_automatic'] = false;
+		}
+		if(!isset($_POST['shop_builtin_css'])) {
+			$_POST['shop_builtin_css'] = false;
+		}
+		//debug_printr($_POST);
 	}
-	if(!empty($_POST) && !isset($_POST['shop_automatic'])) {
-		$_POST['shop_automatic'] = false;
-	}
-	if(!empty($_POST) && !isset($_POST['shop_builtin_css'])) {
-		$_POST['shop_builtin_css'] = false;
-	}
-	//debug_printr($_POST);
 	
 	foreach($shop_configkeys as $shopkey) {
 		if(isset($_POST[$shopkey])) {

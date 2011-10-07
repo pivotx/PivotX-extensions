@@ -25,6 +25,18 @@ jQuery(function($){
     
     });
     
+    
+    $('.buythisform.update form .buythisbutton').addClass('disabled').attr("disabled", true);
+    $('.buythisform.update input.productamount').bind('change', function(e) {
+        e.preventDefault();
+        $(this).parents('form').find('.buythisbutton').removeClass('disabled').attr("disabled", false);
+        $('.formrow_submit button.button').addClass('disabled').attr("disabled", true);
+    });
+    
+    if($('.shop_autorefreshmessage').is('*')) {
+        $('.shop_autorefreshform').trigger('submit');
+    }
+    
     $('#fancybox-content a.continue_shopping').live('click', function(e){
         e.preventDefault();
         $.fancybox.close();

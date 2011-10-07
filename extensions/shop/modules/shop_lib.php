@@ -799,13 +799,31 @@ function _shop_show_checkoutform($formdata=false) {
 	// payment
 	$shop_use_payment = $PIVOTX['config']->get('shop_use_payment', 'no');
 	if($shop_use_payment!='no') {		
-		$has_payment_mollie_ideal = (stristr($shop_use_payment, 'mollie'))?1:0;
-		$has_payment_other = (stristr($shop_use_payment, 'other'))?1:0;
+		//$has_payment_mollie_ideal = (stristr($shop_use_payment, 'mollie'))?1:0;
+		//$has_payment_other = (stristr($shop_use_payment, 'other'))?1:0;
 		
 		$payment = explode('|', $PIVOTX['config']->get('shop_use_payment'));
 		
 		if(count($payment)==1) {
-			$template['payment'] = '<input type="hidden" id="payment_provider_default" name="payment_provider" value="default" /><!-- no payment provider options -->';
+			// exacly one payment provider
+			foreach($payment as $payment_provider) {
+				//debug_printr($payment_provider);
+				$template['payment_options'][$payment_provider] = '
+		<label class="radio_item_label">
+			<span>[[payment_provider_options_'.$payment_provider.'_label]]</span>
+			<input type="hidden" id="payment_provider_'.$payment_provider.'" name="payment_provider" value="[[payment_provider_options_'.$payment_provider.'_value]]" class="[[radioclass]]" [[payment_provider_options_'.$payment_provider.'_selected]] />
+		</label>
+';
+			}
+			$template['payment'] = '
+	<div class="formrow formrow_radios [[payment_provider_haserror]]">
+		<label for="payment_provider" class="radio_group_label">[[payment_provider_label]]</label>
+		[[payment_options]]
+		[[payment_provider_errormessage]]
+	</div>
+	';
+			$template['payment'] = str_replace('[[payment_options]]', join("\n", $template['payment_options']), $template['payment']);
+			unset($template['payment_options']);
 		} else {
 			foreach($payment as $payment_provider) {
 				//debug_printr($payment_provider);
@@ -1187,6 +1205,8 @@ function _shop_save_order($inorder=false) {
 
 /**
  * Show the summary of an order
+ *
+ * TODO: clean this up
  */
 function _shop_order_summary($order) {
 	global $PIVOTX;
@@ -1282,6 +1302,8 @@ function _shop_order_user($order) {
 
 /**
  * show the payment status
+ *
+ * TODO: Better payment plugin support
  */
 function _shop_order_payment_status($order) {
 	global $PIVOTX;
@@ -1289,7 +1311,16 @@ function _shop_order_payment_status($order) {
 	
 	$paymentprovider = $PIVOTX['extensions']->executeHook($hook, $order['payment_provider']);
 	
-	if($order['payment_status'] == 'Success') {
+	if(
+		$order['payment_provider'] == 'mollie'
+		&& $order['payment_status'] == 'Success'
+	) {
+		$output = '<h4>'. st('Payment successful') .'</h4>';
+		$output .= '<p>'. st('Payment handled by') .': '.$paymentprovider.'</p>';
+	} elseif(
+		$order['payment_provider'] == 'ogone'
+		&& in_array($order['payment_status'], array('9: Payment requested','5: Authorized'))
+	) {
 		$output = '<h4>'. st('Payment successful') .'</h4>';
 		$output .= '<p>'. st('Payment handled by') .': '.$paymentprovider.'</p>';
 	} else {

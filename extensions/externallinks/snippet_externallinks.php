@@ -1,11 +1,11 @@
 <?php
 // - Extension: External links
-// - Version: 1.2
+// - Version: 1.3
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: Open external links in a new window (or tab).
-// - Date: 2008-11-23
+// - Date: 2011-10-07
 // - Identifier: externallinks
 
 

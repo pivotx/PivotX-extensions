@@ -528,8 +528,8 @@ function slideshowAdmin(&$form_html) {
         'name' => 'slideshow_iptcindex',
         'label' => __('IPTC Index'),
         'value' => '',
-        'text' => __("Index of image title in IPTC table. (Picasa comments use '2#120'). 
-        Leave blank to generate a nicename."),
+        'text' => __("Index of image title in IPTC table. (Picasa comments use '2#120'). " .
+            "Leave blank to generate a nicename."),
         'size' => 32,
     ));
 
@@ -538,8 +538,8 @@ function slideshowAdmin(&$form_html) {
         'name' => 'slideshow_iptcencoding',
         'label' => __('IPTC Encoding'),
         'value' => '',
-        'text' => __("Encoding of image IPTC texts. (Use the iconv encoding names.) 
-        Leave blank for no decoding."),
+        'text' => __("Encoding of image IPTC texts. (Use the iconv encoding names.) " .
+            "Leave blank for no decoding."),
         'size' => 32,
     ));
 

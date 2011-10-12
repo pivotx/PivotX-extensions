@@ -338,10 +338,10 @@ function slideshowAdmin(&$form_html) {
         'label' => __('Default folder name'),
         'value' => '',
         'error' => __('That\'s not a proper folder name!'),
-        'text' => __("The name of the folder in where the images are that Slideshow should use. 
-        This should be a folder inside your <tt>images</tt> folder. 
-        So if you input <tt>slideshow</tt>, the slideshow will look in the <tt>/images/slideshow/</tt> folder. 
-        Don't start or finish with a slash."),
+        'text' => __("The name of the folder in where the images are that Slideshow should use. " . 
+            "This should be a folder inside your <tt>images</tt> folder. " .
+            "So if you input <tt>slideshow</tt>, the slideshow will look in the " .
+            "<tt>/images/slideshow/</tt> folder. Don't start or finish with a slash."),
         'size' => 32,
         'isrequired' => 1,
         'validation' => 'string|minlen=1|maxlen=32'
@@ -377,8 +377,8 @@ function slideshowAdmin(&$form_html) {
         'label' => __('Default height'),
         'value' => '',
         'error' => __('Error!'),
-        'text' => __("The width and height of the thumbnails in the widget. 
-        The borders are added to this, so the total dimensions of the widget can be wider and taller."),
+        'text' => __("The width and height of the thumbnails in the widget. " . 
+            "The borders are added to this, so the total dimensions of the widget can be wider and taller."),
         'size' => 6,
         'isrequired' => 1,
         'validation' => 'integer|min=1|max=500'
@@ -390,9 +390,9 @@ function slideshowAdmin(&$form_html) {
         'label' => __('Default zoom crop'),
         'value' => '',
         'error' => __('Error!'),
-        'text' => __("The zoom crop value to use when creating thumbnails. 
-        See includes/timthumb.php for an explanation. 
-        Also notice the potential influence of timhumb_zc setting."),
+        'text' => __("The zoom crop value to use when creating thumbnails. " .
+            "See includes/timthumb.php for an explanation. Also notice the " . 
+            "potential influence of timhumb_zc setting."),
         'size' => 3,
         'isrequired' => 0,
         'validation' => 'integer|min=0|max=3'
@@ -416,8 +416,8 @@ function slideshowAdmin(&$form_html) {
         'label' => __('Limit'),
         'value' => '',
         'error' => __('Error!'),
-        'text' => __("This limits the number of items that are shown. 
-        If you set it too high, it will take longer to load your site."),
+        'text' => __("This limits the number of items that are shown. " .
+            "If you set it too high, it will take longer to load your site."),
         'size' => 6,
         'isrequired' => 1,
         'validation' => 'string|min=1|max=500'
@@ -466,8 +466,8 @@ function slideshowAdmin(&$form_html) {
         'isrequired' => 1,
         'validation' => 'any',
         'text' => sprintf('<p>%s</p>', 
-            __("If recursion is enabled images from either all subdirectories or just the leaf 
-            subdirectories will be included in the slide show."))
+            __("If recursion is enabled images from either all subdirectories or just the leaf " .
+                "subdirectories will be included in the slide show."))
     ));
 
     $form->add( array(

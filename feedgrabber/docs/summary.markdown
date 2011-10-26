@@ -7,23 +7,20 @@ which the items will be added to your PivotX as seperate entries. You can use
 this for when `[[feed]]` is too restrictive to use, or if you want to show
 the items from the RSS Feed as 'regular' entries on your site.
 
-**Note:** This Extension requires PivotX with a MySQL database.
-
-**Note 2:** If you use this extension to set up a splog, I will come over to your
+**Note:** If you use this extension to set up a splog, I will come over to your
 house to kick your ass. Seriously!
 
 Usage
 -----
 
-To configure this extension, open the file
-`extensions/feedgrabber/hook_feedgrabber.php`, and edit the section `$feedgrabber_config`,
-near the top of the file. Make a backup, before you edit the file, so you can
-always revert to a working copy, should something break.
+To configure this extension, create a file
+`extensions/feedgrabber/feedgrabber_config.php` and add the text below.
+Then edit file as needed.
 
+    <?php
     $feedgrabber_config = array(
         'feeds' => array(
-            'http://pivotx.net/rss',
-            'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/world/rss.xml'
+            'http://pivotx.net/rss'
         ),
         'category' => 'feed',
         'user' => 'feed',
@@ -34,7 +31,7 @@ always revert to a working copy, should something break.
 
 The options are as follows:
 
-  * **feeds** - An array of one or more feeds, to be crawled for entries. you
+  * **feeds** - An array of one or more feeds, to be crawled for entries. You
   can add extra lines as needed, but make sure that every line except the last
   one ends with a comma.
   * **category** - The Category to which the Entries will be added. Make sure

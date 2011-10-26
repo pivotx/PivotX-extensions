@@ -1,28 +1,13 @@
 <?php
 // - Extension: Feedgrabber
-// - Version: 0.3
+// - Version: 0.4
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: Fetch one or more RSS feeds, insert them as entries
-// - Date: 2010-05-30
+// - Date: 2011-10-26
 // - Identifier: feedgrabber
-// - Required PivotX Version: 2.1.0
-
-
-global $feedgrabber_config;
-
-$feedgrabber_config = array(
-    'feeds' => array(
-        'http://pivotx.net/rss',
-        'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/world/rss.xml'
-    ),
-    'category' => 'feed',
-    'user' => 'feed',
-    'status' => 'publish',
-    'allow_comments' => false,
-    'update_items' => true
-);
+// - Required PivotX Version: 2.2.0
 
 // Add a hook to the scheduler, to periodically fetch the feeds.
 $this->addHook(
@@ -47,15 +32,25 @@ include_once($PIVOTX['paths']['pivotx_path'].'includes/magpie/rss_fetch.inc');
  */
 
 function feedgrabber_callback() {
-    global $feedgrabber_config, $PIVOTX;
+    global $PIVOTX;
+
+    $configfile = dirname(__FILE__) . '/feedgrabber_config.php';
+
+    if (!file_exists($configfile)) {
+        debug("Feedgrabber didn't find the config file 'extensions/feedgrabber/feedgrabber_config.php'.");
+        return;
+    }
+
+    // The config file contains the $feedgrabber_config array.
+    include $configfile;
+
+    if (empty($feedgrabber_config['feeds'])) {
+        debug("Feedgrabber didn't feed any feeds in the config file.");
+        return;
+    }
 
     $max = 10;
-
-    // Initialize a new sql connection..
-    $sql = new sql('mysql', $PIVOTX['config']->get('db_databasename'),
-        $PIVOTX['config']->get('db_hostname'), $PIVOTX['config']->get('db_username'), $PIVOTX['config']->get('db_password') );
-    $extrafieldstable = safeString($PIVOTX['config']->get('db_prefix')."extrafields", true);
-
+    
     foreach($feedgrabber_config['feeds'] as $feedurl) {
 
         $rss = fetch_rss( $feedurl );
@@ -67,8 +62,6 @@ function feedgrabber_callback() {
             $amount = 0;
 
             foreach($rss->items as $item) {
-
-                // var_dump($item);
 
                 $entry = array();
 
@@ -93,29 +86,32 @@ function feedgrabber_callback() {
 
                 $entry['extrafields']['feedgrabber_checksum'] = md5(serialize($entry));
 
-                // var_dump($entry);
-
                 // Check if the entry is already inserted
-                $sql->query("SELECT * FROM $extrafieldstable WHERE fieldkey='feedgrabber_id' AND value=" .
-                            $sql->quote($entry['extrafields']['feedgrabber_id']) );
+                $inserted = false;
+                $oldentries = $PIVOTX['db']->read_entries(array(
+                    'full' => true, 
+                    'extrafields' => 'feedgrabber_id',)
+                );
+                foreach ($oldentries as $oldentry) {
+                    if ($oldentry['extrafields']['feedgrabber_id'] == $entry['extrafields']['feedgrabber_id']) {
+                        $inserted = true;
+                        break;
+                    }
+                }
 
-                $row = $sql->fetch_row();
-
-                if (empty($row)) {
-                    // If $row is empty, insert it..
+                if (!$inserted) {
+                    $entry['code'] = '>'; // New-entry indicator for flat file database.
                     $PIVOTX['db']->set_entry($entry);
                     $PIVOTX['db']->save_entry(true);
                     debug("Inserted entry '". $entry['title']."' from ". $entry['extrafields']['feedgrabber_source']);
                 } else if ($feedgrabber_config['update_items']) {
                     // Perhaps update it..
 
-                    $updatedentry = $PIVOTX['db']->read_entry($row['target_uid']);
+                    if ($oldentry['extrafields']['feedgrabber_checksum'] != $entry['extrafields']['feedgrabber_checksum']) {
 
-                    if ($updatedentry['extrafields']['feedgrabber_checksum'] != $entry['extrafields']['feedgrabber_checksum']) {
+                        $oldentry = array_merge($oldentry, $entry);
 
-                        $updatedentry = array_merge($updatedentry, $entry);
-
-                        $PIVOTX['db']->set_entry($updatedentry);
+                        $PIVOTX['db']->set_entry($oldentry);
                         $PIVOTX['db']->save_entry(true);
                         debug("Updated entry '". $entry['title']."' from ". $entry['extrafields']['feedgrabber_source']);
                     }

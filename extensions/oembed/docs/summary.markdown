@@ -7,43 +7,37 @@ A snippet to add oEmbed (<a href="http://www.oembed.com/" target="_blank">http:/
 
 Usage
 -----
-After enabling the extension you can add embeds tags to your entries, pages and templates. The external media will magically be included in your entries.
+After enabling the extension you can add embeds tags to your entries, pages
+and templates. The external media will magically be included in your entries.
 
-	[[embed url="http://www.youtube.com/watch?v=vIuh9pKnv5Q"]]
+	[[embed url="http://www.youtube.com/watch?v=R3jkUhG68wY"]]
 
-You can also set a width and a height to the embed code. The script will then try to fetch the video or image with the largest size still within the given dimensions.
+You can also set a width and a height to the embed code. The script will then
+try to fetch the video or image with the largest size still within the given
+dimensions.
 
-	[[embed url="http://www.youtube.com/watch?v=e57QD6Pxjeg" width="400" height="320"]]
+	[[embed url="http://www.youtube.com/watch?v=R3jkUhG68wY" width="400" height="320"]]
 
-The bookmarklet will automatically try to recognize url's from sites that are oEmbed capable, and return the embed code.
+The bookmarklet will automatically try to recognize url's from sites that are
+oEmbed capable, and return the embed code.
 
-Installation
-------------
-Extract the archive and move the directory oembed to your PivotX extentions directory. After that, log in to PivotX and enable the snippet in the extensions configuration screen.
-
-PivotX with a MySQL database is recommended for faster cacheing of the media code, but it is not required.
+PivotX with a MySQL database is recommended for faster caching of the media code, but it is not required.
 
 FAQ
 ---
 Why is the size of my Youtube video is not what I expect?
 
-If you set a width and a height it should work, if you don't set them, or only one of them, the default value will be used for the other one, and that may influence the size because youtube scales the output to fit inside the dimensions.
+If you set a width and a height it should work, if you don't set them, or only
+one of them, the default value will be used for the other one, and that may
+influence the size because youtube scales the output to fit inside the
+dimensions.
 
 
-Version Information
--------------------
-  * Version: 0.11
-  * Date: 2011-07-08
-  * Requirements: PivotX 2.1.0 or higher
-  * Recommended: mysql, PHP 5.2.0 or higher
+Information
+-----------
   * Includes: <a href="http://code.google.com/p/jquery-oembed/">jquery-oembed</a>
 
-  * Author: Two Kings // Lodewijk Evers
+  * Author: Two Kings // Lodewijk Evers 
   * E-mail: <a href="mailto:lodewijk@twokings.nl">lodewijk@twokings.nl</a>
   * Support: <a href="http://forum.pivotx.net/viewtopic.php?f=10&t=1377">http://forum.pivotx.net/viewtopic.php?f=10&t=1377</a>
   * Download: <a href="http://extensions.pivotx.net/entry/5/oembed">http://extensions.pivotx.net/entry/5/oembed</a>
-
-Maintainers
------------
-  * Two Kings: <a href="mailto:info@twokings.nl">info@twokings.nl</a>
-  * Lodewijk Evers: <a href="mailto:lodewijk@twokings.nl">info@twokings.nl</a>

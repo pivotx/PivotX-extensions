@@ -1,11 +1,11 @@
 <?php
 // - Extension: oEmbed
-// - Version: 0.11
+// - Version: 0.12
 // - Author: Two Kings // Lodewijk Evers
 // - Email: lodewijk@twokings.nl
 // - Site: http://extensions.pivotx.net/entry/5/oembed
 // - Description: Add [[embed]] snippets to your entries and pages
-// - Date: 2011-07-08
+// - Date: 2011-10-26
 // - Identifier: oembed
 // - Required PivotX version: 2.1
 
@@ -60,9 +60,9 @@ function smarty_oembed($params, &$smarty) {
     // try to get the code from the cache
     $oembed = oembedLoadContent($params['url'], 'embed', $params['maxwidth'], $params['maxheight'], $params['provider']);
 
-	if($params['assign']) {
-		$smarty->assign($params['assign'], $oembed);
-	} else {
+    if($params['assign']) {
+        $smarty->assign($params['assign'], $oembed);
+    } else {
     	return $oembed;
     }
 }
@@ -117,7 +117,7 @@ function oembedLoadContent($url, $mode='embed', $maxwidth=false, $maxheight=fals
         $cachedembed = false;
     } elseif ($PIVOTX['config']->get('db_model')!='mysql') {
         // cache will not work if json functions don't exist
-        debug("oembedLoadContent will not cache because the recommended mysql database is used\nusing jquery fallback");
+        debug("oembedLoadContent will not cache because the recommended mysql database is not used\nusing jquery fallback");
 
         // go to jquery fallback
         $cachedembed = false;
@@ -161,8 +161,8 @@ function oembedLoadContent($url, $mode='embed', $maxwidth=false, $maxheight=fals
             $oembed->saveOembedCache(array(
                 'oembed_uid' => $cachedresource['oembed_uid'],
                 'source_url' => $url,
-				'max_width' => $maxwidth,
-				'max_height' => $maxheight,
+                'max_width' => $maxwidth,
+                'max_height' => $maxheight,
                 'provider_url' => $endpoint,
                 'response' => serialize($externalresource),
                 'status' => 0
@@ -215,8 +215,6 @@ function oembedLoadContent($url, $mode='embed', $maxwidth=false, $maxheight=fals
             //$title = 'loading something from '. $provider;
             $title = $url;
         }
-        // telling pivot to include the jquery headers
-        $PIVOTX['needs_oembed_jquery'] = true;
         $PIVOTX['extensions']->addHook('after_parse', 'callback', 'oembedIncludeCallback');
 
         debug('oEmbed jquery fallback for: '. $url);
@@ -243,7 +241,7 @@ function oembedCheckEndpoint($url, $provider='default') {
     if(file_exists($oembedbasedir.'/oembed_providers.php')) {
         include($oembedbasedir.'/oembed_providers.php');
     } else {
-		debug('The oEmbed installation is broken, the providers file is not accessible.');
+        debug('The oEmbed installation is broken, the providers file is not accessible.');
         // there's something serieusly wrong in the installation
         //$providers['default'] = array('endpoint' => 'http://oohembed.com/oohembed/', 'format' => 'json');
         $providers['default'] = array('endpoint' => 'http://api.embed.ly/v1/api/oembed', 'format' => 'json');
@@ -293,55 +291,33 @@ function oembedCheckEndpoint($url, $provider='default') {
  */
 function oembedIncludeCallback(&$html) {
     global $PIVOTX;
+    static $initialized = false;
 
-    // check if it is needed, prevent going through this again
-    if($PIVOTX['needs_oembed_jquery']!=true) {
+    if ($initialized) {
         return;
     }
+    $initialized = true;
 
     // If we've set the hidden config option for 'never_jquery', just return without doing anything.
     if ($PIVOTX['config']->get('never_jquery') == 1) {
         debug("jQuery is disabled by the 'never_jquery' config option. oEmbed won't work. You must enable jQuery first.");
         return;
     }
-    $jqueryincluded = false;
-    $insert = '';
-
-    if (!preg_match("#<script [^>]*?/jquery[a-z0-9_-]*\.js['\"][^>]*?>\s*</script>#i", $html)) {
-        // We need to include Jquery
-        $insert .= "\n\t<!-- Main JQuery include -->\n";
-        $insert .= sprintf("\t<script type=\"text/javascript\" src=\"%sincludes/js/jquery.js\"></script>\n",
-            $PIVOTX['paths']['pivotx_url'] );
-        $jqueryincluded = true;
-    }
-
-    $path = $PIVOTX['paths']['extensions_url']."oembed/";
-
-    $insert .= "\n\t<!-- Includes for oEmbed script -->\n";
-    $insert .= "\t<script type=\"text/javascript\" src=\"{$path}js/jquery.oembed.min.js\"></script>\n";
-    $insert .= '
-<script type="text/javascript">
-jQuery(document).ready(function($) {
-$("a.oembed").oembed();
-});
-</script>
-';
-
-    // If JQuery was added earlier, we must insert the oEmbed code after that. Else we
-    // insert the code after the meta tag for the charset (since it ought to be first
-    // in the header) or if no charset meta tag we insert it at the top of the head section.
-    if (!$jqueryincluded) {
-        $html = preg_replace("#<script ([^>]*?/jquery[a-z0-9_-]*\.js['\"][^>]*?)>\s*</script>#si",
-            "<script $1></script>\n" . $insert, $html, 1);
-    } elseif (preg_match("/<meta http-equiv=['\"]Content-Type/si", $html)) {
-        $html = preg_replace("/<meta http-equiv=(['\"]Content-Type[^>]*?)>/si",
-            "<meta http-equiv=$1>\n" . $insert, $html, 1);
-    } else {
-        $html = preg_replace("/<head([^>]*?)>/si", "<head$1>\n" . $insert, $html, 1);
-    }
-
-    // already set, prevent going through this again
-    $PIVOTX['needs_oembed_jquery']=false;
+    
+    OutputSystem::instance()->enableCode('jquery');
+    OutputSystem::instance()->addCode(
+        'oembed-js',
+        OutputSystem::LOC_HEADEND,
+        'script',
+        array(),
+        'jQuery(document).ready(function($) { $("a.oembed").oembed(); });'
+    );
+    OutputSystem::instance()->addCode(
+        'oembed-jssrc',
+        OutputSystem::LOC_HEADEND,
+        'script',
+        array('src'=>$PIVOTX['paths']['extensions_url'].'oembed/js/jquery.oembed.min.js')
+    );
 }
 
 /**
@@ -373,14 +349,14 @@ function oembedCheckTables() {
             // stuff to do for the next update
             $x = oembedUpdateTables_3();
             $PIVOTX['config']->set('oembed_version', '3');
-			debug('updated oEmbed cache tables to version 3');
+            debug('updated oEmbed cache tables to version 3');
         }
 
         if($PIVOTX['config']->data['oembed_version'] < 4) {
             // stuff to do for the next update
             $x = oembedUpdateTables_4();
             $PIVOTX['config']->set('oembed_version', '4');
-			debug('updated oEmbed cache tables to version 4');
+            debug('updated oEmbed cache tables to version 4');
         }
 
     }

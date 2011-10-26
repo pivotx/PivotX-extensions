@@ -32,12 +32,11 @@ one of them, the default value will be used for the other one, and that may
 influence the size because youtube scales the output to fit inside the
 dimensions.
 
-
 Information
 -----------
-  * Includes: <a href="http://code.google.com/p/jquery-oembed/">jquery-oembed</a>
 
   * Author: Two Kings // Lodewijk Evers 
   * E-mail: <a href="mailto:lodewijk@twokings.nl">lodewijk@twokings.nl</a>
   * Support: <a href="http://forum.pivotx.net/viewtopic.php?f=10&t=1377">http://forum.pivotx.net/viewtopic.php?f=10&t=1377</a>
   * Download: <a href="http://extensions.pivotx.net/entry/5/oembed">http://extensions.pivotx.net/entry/5/oembed</a>
+  * Includes: <a href="http://code.google.com/p/jquery-oembed/">jquery-oembed</a>

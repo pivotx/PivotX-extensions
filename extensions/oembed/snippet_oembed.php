@@ -7,7 +7,7 @@
 // - Description: Add [[embed]] snippets to your entries and pages
 // - Date: 2011-10-26
 // - Identifier: oembed
-// - Required PivotX version: 2.1
+// - Required PivotX version: 2.2
 
 if($PIVOTX['config']->get('db_model')=='mysql') {
     // only load the sql for the extension if it is needed

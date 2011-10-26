@@ -13,15 +13,15 @@
 global $feedgrabber_config;
 
 $feedgrabber_config = array(
-	'feeds' => array(
-		'http://pivotx.net/rss',
-		'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/world/rss.xml'
-	),
-	'category' => 'feed',
-	'user' => 'feed',
-	'status' => 'publish',
+    'feeds' => array(
+        'http://pivotx.net/rss',
+        'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/world/rss.xml'
+    ),
+    'category' => 'feed',
+    'user' => 'feed',
+    'status' => 'publish',
     'allow_comments' => false,
-	'update_items' => true
+    'update_items' => true
 );
 
 // Add a hook to the scheduler, to periodically fetch the feeds.
@@ -29,14 +29,14 @@ $this->addHook(
     'scheduler',
     'callback',
     'feedgrabber_callback'
-    );
+);
 
 // Add a hook to display the extra fields in the edit screen.
 $this->addHook(
     'in_pivotx_template',
     'entry-bottom',
     array('callback' => 'feedgrabber_displayfields' )
-    );
+);
 
 
 include_once($PIVOTX['paths']['pivotx_path'].'includes/magpie/rss_fetch.inc');
@@ -47,53 +47,53 @@ include_once($PIVOTX['paths']['pivotx_path'].'includes/magpie/rss_fetch.inc');
  */
 
 function feedgrabber_callback() {
-	global $feedgrabber_config, $PIVOTX;
+    global $feedgrabber_config, $PIVOTX;
 
-	$max = 10;
+    $max = 10;
 
     // Initialize a new sql connection..
     $sql = new sql('mysql', $PIVOTX['config']->get('db_databasename'),
         $PIVOTX['config']->get('db_hostname'), $PIVOTX['config']->get('db_username'), $PIVOTX['config']->get('db_password') );
     $extrafieldstable = safeString($PIVOTX['config']->get('db_prefix')."extrafields", true);
 
-	foreach($feedgrabber_config['feeds'] as $feedurl) {
+    foreach($feedgrabber_config['feeds'] as $feedurl) {
 
-		$rss = fetch_rss( $feedurl );
+        $rss = fetch_rss( $feedurl );
 
-		debug("Checking feed ". $rss->channel['title'] . ". ". count($rss->items) . " items.");
+        debug("Checking feed ". $rss->channel['title'] . ". ". count($rss->items) . " items.");
 
-		if ($rss->items) {
+        if ($rss->items) {
 
-			$amount = 0;
+            $amount = 0;
 
-			foreach($rss->items as $item) {
+            foreach($rss->items as $item) {
 
                 // var_dump($item);
 
-				$entry = array();
+                $entry = array();
 
                 $id = getDefault($item['id'], $item['guid']);
                 if (empty($id)) {
                     $id = $feedurl.":".$item['date_timestamp'];
                 }
 
-				$entry['title'] = $item['title'];
-				$entry['introduction'] =  getDefault($item['description'], getDefault($item['atom_content'], $rss->channel['summary']));
+                $entry['title'] = $item['title'];
+                $entry['introduction'] =  getDefault($item['description'], getDefault($item['atom_content'], $rss->channel['summary']));
 
-				$entry['extrafields']['feedgrabber_link'] =  $item['link'];
-				$entry['extrafields']['feedgrabber_id'] =  $id;
-				$entry['extrafields']['feedgrabber_author'] =  getDefault($item['author'], $rss->channel['managingeditor']);
-				$entry['extrafields']['feedgrabber_source'] =  $rss->channel['title'];
+                $entry['extrafields']['feedgrabber_link'] =  $item['link'];
+                $entry['extrafields']['feedgrabber_id'] =  $id;
+                $entry['extrafields']['feedgrabber_author'] =  getDefault($item['author'], $rss->channel['managingeditor']);
+                $entry['extrafields']['feedgrabber_source'] =  $rss->channel['title'];
 
-				$entry['category'] = array($feedgrabber_config['category']);
-				$entry['user'] = $feedgrabber_config['user'];
-				$entry['status'] = $feedgrabber_config['status'];
+                $entry['category'] = array($feedgrabber_config['category']);
+                $entry['user'] = $feedgrabber_config['user'];
+                $entry['status'] = $feedgrabber_config['status'];
                 $entry['allow_comments'] = $feedgrabber_config['allow_comments'];
                 $entry['date'] = date("Y-m-d H:i:s", $item['date_timestamp']);
 
-				$entry['extrafields']['feedgrabber_checksum'] = md5(serialize($entry));
+                $entry['extrafields']['feedgrabber_checksum'] = md5(serialize($entry));
 
-				// var_dump($entry);
+                // var_dump($entry);
 
                 // Check if the entry is already inserted
                 $sql->query("SELECT * FROM $extrafieldstable WHERE fieldkey='feedgrabber_id' AND value=" .
@@ -121,17 +121,17 @@ function feedgrabber_callback() {
                     }
                 }
 
-				$amount++;
+                $amount++;
 
-				if ($amount>=$max) {
-					break;
-				}
+                if ($amount>=$max) {
+                    break;
+                }
 
-			}
+            }
 
-		}
+        }
 
-	}
+    }
 
 }
 

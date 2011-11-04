@@ -1,11 +1,11 @@
 <?php
 // - Extension: Feedgrabber
-// - Version: 0.4
+// - Version: 0.4.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: Fetch one or more RSS feeds, insert them as entries
-// - Date: 2011-10-26
+// - Date: 2011-11-04
 // - Identifier: feedgrabber
 // - Required PivotX Version: 2.2.0
 
@@ -49,6 +49,14 @@ function feedgrabber_callback() {
         return;
     }
 
+    // Load all old entries with 'feedgrabber_id' extrafields
+    $entries_count = $PIVOTX['db']->get_entries_count();
+    $oldentries = $PIVOTX['db']->read_entries(array(
+        'show' => $entries_count,
+        'full' => true,
+        'extrafields' => 'feedgrabber_id')
+    );
+
     $max = 10;
     
     foreach($feedgrabber_config['feeds'] as $feedurl) {
@@ -88,10 +96,6 @@ function feedgrabber_callback() {
 
                 // Check if the entry is already inserted
                 $inserted = false;
-                $oldentries = $PIVOTX['db']->read_entries(array(
-                    'full' => true, 
-                    'extrafields' => 'feedgrabber_id',)
-                );
                 foreach ($oldentries as $oldentry) {
                     if ($oldentry['extrafields']['feedgrabber_id'] == $entry['extrafields']['feedgrabber_id']) {
                         $inserted = true;

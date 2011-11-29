@@ -181,7 +181,7 @@ EOM;
     $output = str_replace("%thisMonthName%", $PIVOTX['locale']->getMonth($thisMonth), $output);
     $output = str_replace("%prev_month%", __("Previous Month"), $output);
     $output = str_replace("%next_month%", __("Next Month"), $output);
-    $link = smarty_self();
+    $link = smarty_self(array());
     // Remove earlier date parameters from link
     $link = preg_replace('/(\?|&amp;)m=\d{1,2}&amp;y=\d{4}/', '', $link);
     if (strpos($link, '?') == false) {

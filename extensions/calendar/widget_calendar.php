@@ -73,7 +73,7 @@ function smarty_calendar($params) {
     $params = cleanParams($params);
 
     $iWeekStart = getDefault($PIVOTX['config']->get('week_start_day'), $calendar_config['week_start_day'], true);
-    $iTimeZone = $PIVOTX['config']->get('timeoffset');
+    $iTimeZone = getDefault($PIVOTX['config']->get('timeoffset'),0);
     $iTimeZoneUnit = $PIVOTX['config']->get('timeoffset_unit');
 
     // Translate TimeZone Unit to full English

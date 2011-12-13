@@ -141,7 +141,6 @@ function shop_payment_page($params) {
 		$order_details = $order->getOrderDetails();
 		
         $order_details['order_status'] = 'waiting';
-        $order_details['payment_provider'] == 'other';
         // save userdata and create order
         $order_details = _shop_save_order($order_details);
 
@@ -176,7 +175,8 @@ function shop_return_page($params) {
     
 	$order = _shop_load_order($params);
 	$payment_provider = $order->getPaymentProvider();
-	//debug('report page params:');
+	
+	//debug('return page params:');
     //debug_printr($params);
 	
 	//debug('payment provider: '.$payment_provider);
@@ -184,7 +184,8 @@ function shop_return_page($params) {
 		//debug('normal return page hook');
 		$hook = _shop_load_hook('return', $payment_provider);
 		$orderandparams = array('order' => $order, 'params'=> $params);
-		//debug('hook: ' . $hook);
+		
+		//debug('return page hook: ' . $hook);
 		//debug_printr($orderandparams);
 		// the option to override it all with extensions
 		$page = $PIVOTX['extensions']->executeHook($hook, $orderandparams);
@@ -198,14 +199,18 @@ function shop_return_page($params) {
             $output = st('Your order is received.') . st('You will receive a message with further instructions for payment.');
 			
 			// geannuleerde orders komen hier ook uit
-			debug('order default returned - sending mail using template: '.$order_details['payment_provider'].'_return_tpl');
-			debug_printr($order_details);
+			//debug('return page with payment provider: ' . $payment_provider);
+			//debug('order default returned - sending mail using template: '.$order_details['payment_provider'].'_return_tpl');
+			//debug_printr($order_details);
+
 			$order_details = _shop_order_mail_default($order_details['payment_provider'].'_return_tpl', $order_details);
 			
         } else {
             $title = st('Error');
             $output = st('No order found.');
-			$output .= '<pre>'.printr_r($params, true).'</pre>';
+			debug(st('No order found.'));
+			debug_printr($params);
+			//$output .= '<pre>'.printr_r($params, true).'</pre>';
         }
     }
     $params['title'] = $title;
@@ -236,15 +241,17 @@ function shop_report_page($params) {
     
 	$order = _shop_load_order($params);
 	$payment_provider = $order->getPaymentProvider();
+	
 	//debug('report page params:');
     //debug_printr($params);
 	
 	//debug('payment provider: '.$payment_provider);
     if($params['transaction_id'] && $payment_provider!='other') {
-		//debug('normal report page hook');
+		//debug('normal report page');
 		$hook = _shop_load_hook('report', $payment_provider);
 		$orderandparams = array('order' => $order, 'params'=> $params);
-		//debug('hook: ' . $hook);
+		
+		//debug('report page hook: ' . $hook);
 		//debug_printr($orderandparams);
 		// the option to override it all with extensions
 		$page = $PIVOTX['extensions']->executeHook($hook, $orderandparams);
@@ -252,6 +259,7 @@ function shop_report_page($params) {
         exit;
     } else {
 		debug('report page called for unknown method');
+		debug_printr($params);
         header("HTTP/1.0 404 Not Found");
         print "Report method unknown";
         exit;

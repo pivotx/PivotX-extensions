@@ -73,7 +73,7 @@ $this->addHook(
     );
 
 function _mollie_admin_payment_options(&$payment_options) {
-    if(!array_key_exists('mollie')) {
+    if(!array_key_exists('mollie', $payment_options)) {
         $payment_options['mollie'] = st('iDEAL via Mollie.nl');
     }
 }

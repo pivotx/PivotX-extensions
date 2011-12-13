@@ -862,12 +862,35 @@ function shopInstallerUpdateTables_33() {
  * Update tables to version 36
  */
 function shopInstallerUpdateTables_36() {
+    global $PIVOTX;
     shopInstallerOopsSuggestions();
     
     $PIVOTX['config']->set('shop_email_mollie_return_tpl', 'templates/email_order_mollie_return.tpl');
     // we see no errors, so lets just pretend that worked
     return true;
 }
+
+/**
+ * Update tables to version 40
+ */
+function shopInstallerUpdateTables_40() {
+    global $PIVOTX;
+	
+	$sha1old = $PIVOTX['config']->get('shop_ogone_sha1', 'test');
+    if($sha1old != 'test') {
+		$sha1in = $PIVOTX['config']->set('shop_ogone_sha1in', 'test');
+		$sha1out = $PIVOTX['config']->set('shop_ogone_sha1out', 'test');
+		if($sha1in=='test') {
+			$PIVOTX['config']->set('shop_ogone_sha1in', $sha1old);
+		}
+		if($sha1out=='test') {
+			$PIVOTX['config']->set('shop_ogone_sha1out', $sha1old);
+		}
+	}
+    // we see no errors, so lets just pretend that worked
+    return true;
+}
+
 
 /* ****
 

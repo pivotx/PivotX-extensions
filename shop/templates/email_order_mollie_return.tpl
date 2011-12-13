@@ -18,6 +18,7 @@ subject: Bevestiging van uw bestelling en betaling bij [[sitename]]
 <p>Vriendelijke groet,<br>
 [[sitename]]</p>
 
+
 <p><br><br>--<br><small><font style="font-size: smaller; color: grey;">systeemcode: pc-[[order_public_code]]</font></small></p>
     </body>
 </html>

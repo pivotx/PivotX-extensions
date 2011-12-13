@@ -1,10 +1,10 @@
 <?php
 // - Extension: Shop
-// - Version: 0.2-39
+// - Version: 0.2-40
 // - Author: Two Kings // Lodewijk Evers
 // - E-mail: lodewijk@twokings.nl
 // - Description: A plug and play shop extension (needs pivotx 3 or higher)
-// - Date: 2011-12-12
+// - Date: 2011-12-13
 // - Identifier: shop
 // - Required PivotX version: 3
 
@@ -12,7 +12,7 @@
  * FIXME: add registry thingy for mailer templates for global killswitch
  */
 
-DEFINE('SHOP_VERSION', 37);
+DEFINE('SHOP_VERSION', 40);
 $shopbasedir = dirname(__FILE__);
 
 /**

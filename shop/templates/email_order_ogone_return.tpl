@@ -5,7 +5,6 @@ subject: Bevestiging van uw bestelling en betaling bij [[sitename]]
         <title>Bevestiging van uw bestelling en betaling bij [[sitename]]</title>        
     </head>
     <body>
-<img src="[[host]][[upload_base_url]]email_logo.gif" alt="Boxersenzo.nl" title="Boxersenzo.nl" width="395" height="109" />
 
 <p>Beste [[user_name]],<br></p>
 
@@ -22,6 +21,7 @@ subject: Bevestiging van uw bestelling en betaling bij [[sitename]]
 
 <p>Vriendelijke groet,<br>
 [[sitename]]</p>
+
 
 <p><br><br>--<br><small><font style="font-size: smaller; color: grey;">systeemcode: pc-[[order_public_code]]</font></small></p>
     </body>

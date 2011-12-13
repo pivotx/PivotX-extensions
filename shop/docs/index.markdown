@@ -1,4 +1,4 @@
-Shop 0.2-39
+Shop 0.2-40
 ===========
 An extension to sell products on your website.
 
@@ -43,15 +43,38 @@ Automatically add CSS
 ---------------------
 If you don't like the CSS the shop gives you, you can disable 'Use builtin CSS' in the shop configuration. See the contents of`../shop/css/pivotx.shop.css` for example style rules.
 
-Mollie.nl
----------
+Payment with Mollie.nl
+----------------------
 The default payment provider for this shop is <a href="http://mollie.nl">mollie</a>. You need an account for that. After setting up an account you need to set up a profile for iDEAL. Your partner key and your profile key need to be set in the Shop configuration in PivotX. Mollie.nl requires that your payments are in Euros.
 
 For testing purposes you have to make sure your iDEAL account is set to testmode both in the mollie.nl configuration and in the pivotx shop configuration. Transactions will then redirect to the big mollie testbank and no money will be required. Final testing in real transaction mode could be done with a product that only costs &euro;1.18 to see if all transactions come through.
 
+Payment with OGONE
+------------------
+Ogone works for <a href="https://i-kassa.rabobank.nl/">Rabobank internetkassa (RIK)</a>, <a href="https://internetkassa.abnamro.nl/">ABN-Amro internetkassa</a> and generic dutch <a href="http://www.ogone.com/">Ogone</a>. The ogone configuration is a lot more complicated than the mollie configuration.
+
+  * First set up a testkassa account, when you have your `PSPID` and password you can enter the technical details.
+  * Setup the default operation to 'Verkoop' (Direct sales) and the transaction handling to 'Online maar overschakelen naar offline wanneer het online systeem van de aquirer niet beschikbaar is'.
+  * It is recommended to use `SHA512` as hashing algorithm, you must also set this to the corresponding value in your pivotx shop configuration.
+  * You also need to setup a `SHA-1-IN` and `SHA-1-OUT` key in the ogone control panel.
+
+Further there are three kind of URL's you need to fill in. The source URL report URL and the return URL.
+
+  * The source URL looks like `http://www.example.com/index.php?action=payment` The ogone control panel states that more URL's may be entered by separating them with ";" but the PivotX shop does not need that.
+  * The report URL looks like `http://www.example.com/index.php?action=report&status={status}` In these links the report `{status}` must be one of the following: unsure, rejected, update. Use these links for the post-payment and status-update pages
+  * The return URL looks like `http://www.example.com/index.php?action=return&status={status}` In these links the return `{status}` must be one of the following: back, accept, decline, exception, cancel. Use these links for the Back button, Accepturl, Declineurl, Exceptionurl and Cancelurl.
+  
+The domain *www.example.com* is obviously your own domain.
+
+*Please note:* Your site may only have one url, so use a no-www `.htaccess` rule. You will also need a separate account for each site. 
+
+After you have tested the payments you can upgrade the test account to a production account.
+
+*Please note:* Sometimes your testaccount will be inacessible after upgrading, you may need a separate test account for your testsites. If you have multiple e-commerce sites you will also need a separate bank account for each site.
+
 Emails
 ------
-There are two email templates that are automatically configured. One for the default order and one for orders with payment by Mollie.nl
+There are some email templates that are automatically configured. One for the default order and others for orders with each payment provider.
 You can customize these templates. Make sure that the templates are in the correct location and available.
 
 The first line of the template will be used as subject for the email. The text after the second line is an html template which will be used for the body of the email. The keywords enclosed by "[[" "]]" will be replaced by the information from the order.

@@ -1,6 +1,10 @@
 subject: Standaard order mail with debug information [[sitename]]
 ==========
+
 'status' => [[status]],
+'sitename' => [[sitename]],
+'from_name' => [[from_name]],
+'from_email' => [[from_email]],
 'order_id' => [[order_id]],
 'order_public_code' => [[order_public_code]],
 'order_public_hash' => [[order_public_hash]],
@@ -25,7 +29,24 @@ subject: Standaard order mail with debug information [[sitename]]
 'payment_status' => [[payment_status]],
 'payment_datetime' => [[payment_datetime]],
 'payment_amount_total' => [[payment_amount_total]],
-'payment_message' => [[payment_message]],
+'payment_message' => [[payment_message]]
 
-order summary:
+order summary==
 [[order_summary]]
+==-==
+order splitted:
+'order_summary_delivery_address'==
+[[order_summary_delivery_address]]
+==-==
+'order_summary_invoice_address'==
+[[order_summary_invoice_address]]
+==-==
+'order_summary_date'==
+[[order_summary_date]]
+==-==
+'order_summary_items'==
+[[order_summary_items]]
+==-==
+'order_summary_status'==
+[[order_summary_status]]
+==-==

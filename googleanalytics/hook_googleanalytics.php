@@ -172,7 +172,7 @@ function googleanalyticsAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'ga_UAcode',
-        'label' => __('Web Propery ID'),
+        'label' => __('Web Property ID'),
         'value' => '',
         'error' => __('Error - input needs to be in the form of UA-xxxxxx-x'),
         'text' => __('Enter your personal Web Property ID, aka. UA tracking code. This looks like UA-xxxxxx-y or UA-xxxxx-yy. Check your account information after logging in to Google Analytics'),

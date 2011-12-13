@@ -113,8 +113,8 @@ function pageShopadmin() {
 	}
 	
 	foreach($shop_configkeys as $shopkey) {
+
 		if(isset($_POST[$shopkey])) {
-			//debug($shopkey .': '. print_r($_POST[$shopkey], true));
 			if(is_array($_POST[$shopkey])) {
 				$shop_config[$shopkey] = $PIVOTX['config']->set($shopkey, join('|',$_POST[$shopkey]));
 			} else {
@@ -122,6 +122,7 @@ function pageShopadmin() {
 			}
 		}
 		$shop_config[$shopkey] = $PIVOTX['config']->get($shopkey);
+
 		if(stristr($shop_config[$shopkey], '|')) {
 			$shop_config[$shopkey] = explode('|', $shop_config[$shopkey]);
 		}
@@ -383,7 +384,7 @@ function pageShopadmin() {
         'text' => makeJtip(st('Tax rate for shipping'), st('Enter the tax rate for shipping (20% would be 0.2). If no taxes apply use &quot;0&quot;')),
     ));
 	
-	if(in_array('handler', $shop_config['shop_use_shipping']) ) {
+	if(is_array($shop_config['shop_use_shipping']) && in_array('handler', $shop_config['shop_use_shipping']) ) {
 		$shipping_options = array(
 				'no' => st('Dont use shipping handlers'),
 				'storepickup' => st('Store pickup'),
@@ -425,10 +426,11 @@ function pageShopadmin() {
 			'no' => st('No'),
 			'other' => st('Offline payment')
 		);
+
 	
 	// hook for payment plugins
 	$PIVOTX['extensions']->executeHook('shop_admin_payment_options', $payment_options);
-	
+	// selected : $shop_config['shop_use_payment'];
     $form->add( array(
         'type' => 'select',
         'options' => $payment_options,
@@ -442,8 +444,8 @@ function pageShopadmin() {
 
 	// hook for payment plugins
 	$PIVOTX['extensions']->executeHook('shop_admin_payment', $form);
-	
-    $form->setValues($shop_config);
+
+	$form->setValues($shop_config);
     $form_html = $form->fetch();
 
 	$PIVOTX['template']->assign('html', $form_html);

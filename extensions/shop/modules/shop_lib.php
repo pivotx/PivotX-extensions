@@ -79,16 +79,28 @@ function _shop_css_head() {
 function _shop_load_hook($action='prepare', $id='mollie') {
 	switch($action) {
 		case 'payment_info':
-			return '_'.$id.'_payment_info';
+			$hook = '_'.$id.'_payment_info';
+			break;
+		case 'payment_status':
+			$hook = '_'.$id.'_payment_status';
+			break;
 		case 'prepare':
-			return '_'.$id.'_prepare_payment';
+			$hook = '_'.$id.'_prepare_payment';
+			break;
 		case 'report':
-			return '_'.$id.'_report_page';
+			$hook = '_'.$id.'_report_page';
+			break;
 		case 'return':
-			return '_'.$id.'_return_page';
+			$hook = '_'.$id.'_return_page';
+			break;
 		default:
-			return '_shop_hook_failure';
+			$hook = '_'.$id.'_hook_'.$action;
+			break;
 	}
+	if(function_exists($hook)) {
+		return $hook;
+	}
+	return false;
 }
 
 /**
@@ -1394,40 +1406,27 @@ function _shop_order_user($order, $verbose=true) {
 
 /**
  * show the payment status
- *
- * TODO: Better payment plugin support
  */
 function _shop_order_payment_status($order, $verbose=true) {
 	global $PIVOTX;
 	$hook = _shop_load_hook('payment_info', $order['payment_provider']);
 	
+	
 	$paymentprovider = $PIVOTX['extensions']->executeHook($hook, $order['payment_provider']);
-	
-	$output = '';
-	
-	if(
-		$order['payment_provider'] == 'mollie'
-		&& $order['payment_status'] == 'Success'
-	) {
-		if($verbose) {
-			$output = '<h4>'. st('Payment successful') .'</h4>';
-		}
-		$output .= '<p>'. st('Payment handled by') .': '.$paymentprovider.'</p>';
-	} elseif(
-		$order['payment_provider'] == 'ogone'
-		&& in_array($order['payment_status'], array('9: Payment requested','5: Authorized'))
-	) {
-		if($verbose) {
-			$output = '<h4>'. st('Payment successful') .'</h4>';
-		}
-		$output .= '<p>'. st('Payment handled by') .': '.$paymentprovider.'</p>';
-	} else {
-		if($verbose) {
-			$output = '<h4>'. st('Payment incomplete') .'</h4>';
-		}
-		$output .= '<p>'. st('You will receive a message with further instructions for payment.') .'</p>';
-	}
 
+	$statushook = _shop_load_hook('payment_status', $order['payment_provider']);
+	if($statushook) {
+		if($verbose) { $order['verbose_output'] = true; }
+		$output = $PIVOTX['extensions']->executeHook($statushook, $order);
+	} else {
+		if($order['payment_provider'] == 'mollie' && $order['payment_status'] == 'Success') {
+			if($verbose) { $output = '<h4>'. st('Payment successful') .'</h4>';	}
+			$output .= '<p>'. st('Payment handled by') .': '.$paymentprovider.'</p>';
+		} else {
+			if($verbose) { $output = '<h4>'. st('Payment incomplete') .'</h4>'; }
+			$output .= '<p>'. st('You will receive a message with further instructions for payment.') .'</p>';
+		}
+	}
 	return '<div class="paymentinfo">'.$output."</div>";
 }
 

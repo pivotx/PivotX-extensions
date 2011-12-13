@@ -40,7 +40,7 @@ $this->addHook(
     );
 
 function _ogone_admin_payment_options(&$payment_options) {
-    if(!array_key_exists('ogone')) {
+    if(!array_key_exists('ogone', $payment_options)) {
         $payment_options['ogone'] = st('iDEAL via Ogone.nl, Rabobank or ABN AMRO');
     }
 }
@@ -103,6 +103,8 @@ function _ogone_admin_configkeys(&$shop_configkeys) {
         'shop_ogone_return_url',
         'shop_ogone_report_url',
         'shop_ogone_sha1',
+        'shop_ogone_sha1out',
+        'shop_ogone_sha1in',
         'shop_ogone_encryption',
 		'shop_email_ogone_return_tpl'
 	);
@@ -173,11 +175,17 @@ function _ogone_admin_payment(&$form) {
     
         $form->add( array(
             'type' => 'text',
-            'name' => 'shop_ogone_sha1',
+            'name' => 'shop_ogone_sha1in',
             'isrequired' => 1,
-            'label' => st('SHA1 secret'),
+            'label' => st('SHA-1-IN secret'),
         ));
-        
+        $form->add( array(
+            'type' => 'text',
+            'name' => 'shop_ogone_sha1out',
+            'isrequired' => 1,
+            'label' => st('SHA-1-OUT secret'),
+        ));
+ 
         $encryptions = array(
             'sha1' => 'SHA-1',
             'sha512' => 'SHA-512 (veiliger)',
@@ -285,7 +293,9 @@ function _ogone_prepare_payment(&$orderparms) {
     $shop_config['shop_ogone_decline_url'] = $shop_config['shop_ogone_return_url'] . '&status=decline';
     $shop_config['shop_ogone_exception_url'] = $shop_config['shop_ogone_return_url'] . '&status=exception';
     $shop_config['shop_ogone_cancel_url'] = $shop_config['shop_ogone_return_url'] . '&status=cancel';
-    $shop_config['shop_ogone_sha1'] = $PIVOTX['config']->get('shop_ogone_sha1', 'test');
+    //$shop_config['shop_ogone_sha1'] = $PIVOTX['config']->get('shop_ogone_sha1in', 'test');
+    $shop_config['shop_ogone_sha1in'] = $PIVOTX['config']->get('shop_ogone_sha1in', 'test');
+    $shop_config['shop_ogone_sha1out'] = $PIVOTX['config']->get('shop_ogone_sha1out', 'test');
     $shop_config['shop_ogone_encryption'] = $PIVOTX['config']->get('shop_ogone_encryption', 'sha1');
     
     if($PIVOTX['config']->get('shop_ogone_testmode')) {
@@ -304,7 +314,8 @@ function _ogone_prepare_payment(&$orderparms) {
     }
 
     if($shop_config['shop_ogone_pspid']=='test'
-       ||$shop_config['shop_ogone_sha1']=='test'
+       ||$shop_config['shop_ogone_sha1in']=='test'
+       ||$shop_config['shop_ogone_sha1out']=='test'
        ||empty($shop_config['shop_ogone_return_url'])
        ||empty($shop_config['shop_ogone_accept_url'])
        ) {
@@ -315,7 +326,7 @@ function _ogone_prepare_payment(&$orderparms) {
     
     
     $ogone_fields = _ogone_fields();
-    if($PIVOTX['config']->get('shop_mollie_testmode')) {
+    if($PIVOTX['config']->get('shop_ogone_testmode')) {
         $ogone_type = 'hidden';
     } else {
         $ogone_type = 'hidden';
@@ -407,10 +418,10 @@ function _ogone_prepare_payment(&$orderparms) {
             
             if($value!='') {
                 $shastring[] = strtoupper($key).'='.$value;
-                $shastring_plain .= strtoupper($key).'='.$value.$shop_config['shop_ogone_sha1'];
+                $shastring_plain .= strtoupper($key).'='.$value.$shop_config['shop_ogone_sha1in'];
             }
 
-            if(0 && $PIVOTX['config']->get('shop_mollie_testmode')) {
+            if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
                 $output .= '<label>' . $key;
                 $output .= '<input type="'.$ogone_type.'" name="'.$key.'" size="60" value="'.$value.'" />';
                 $output .= '</label><br />';
@@ -422,9 +433,9 @@ function _ogone_prepare_payment(&$orderparms) {
     }
     
     
-    $shastring = join($shop_config['shop_ogone_sha1'], $shastring).$shop_config['shop_ogone_sha1'];
+    $shastring = join($shop_config['shop_ogone_sha1in'], $shastring).$shop_config['shop_ogone_sha1in'];
     
-    if(0 && $PIVOTX['config']->get('shop_mollie_testmode')) {
+    if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
         $output .= '<pre>'. $shastring . '</pre><br />';
     }
     
@@ -434,7 +445,7 @@ function _ogone_prepare_payment(&$orderparms) {
         $shaencoded = strtoupper(sha1($shastring));
     }
 
-    if(0 && $PIVOTX['config']->get('shop_mollie_testmode')) {
+    if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
         $output .= '<label>' . 'SHASign';
         $output .= '<input type="'.$ogone_type.'" name="'. 'SHASign'.'" size="60" value="'.$shaencoded.'" />';
         $output .= '</label><br />';
@@ -448,7 +459,7 @@ function _ogone_prepare_payment(&$orderparms) {
     
     $output = '<form method="post" class="shop_autorefreshform" action="'.$shop_config['shop_ogone_provider_address'].'">' . $output . '</form>';
 
-    if(0 && $PIVOTX['config']->get('shop_mollie_testmode')) {
+    if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
         $output .= '<h2>shop_config</h2><pre>'.htmlspecialchars(print_r($shop_config, true)).'</pre> ';
         $output .= '<h2>postvars</h2><pre>'.htmlspecialchars(print_r($postvars, true)).'</pre> ';
         $output .= '<h2>order</h2><pre>'.htmlspecialchars(print_r($order, true)).'</pre> ';
@@ -505,6 +516,81 @@ function _ogone_sha_out_fields() {
     return $uppercasefields;
 }
 
+/**
+ * Status codes for ogone responses
+ *
+	Status of the payment.
+	The table above summarises the possible statuses of the payments.
+	
+	Statuses in 1 digit are 'normal' statuses:
+	0 means the payment is invalid (e.g. data validation error) or the processing is not complete either because it is still underway, or because the transaction was interrupted. If the cause is a validation error, an additional error code (*) (NCERROR) identifies the error.
+	1 means the customer cancelled the transaction.
+	2 means the acquirer did not authorise the payment.
+	5 means the acquirer autorised the payment.
+	9 means the payment was captured.
+	
+	Statuses in 2 digits correspond either to 'intermediary' situations or to abnormal events. When the second digit is:
+	1, this means the payment processing is on hold.
+	2, this means an unrecoverable error occurred during the communication with the acquirer. The result is therefore not determined. You must therefore call the acquirer's helpdesk to find out the actual result of this transaction.
+	3, this means the payment processing (capture or cancellation) was refused by the acquirer whilst the payment had been authorised beforehand. It can be due to a technical error or to the expiration of the authorisation. You must therefore call the acquirer's helpdesk to find out the actual result of this transaction.
+	4, this means our system has been notified the transaction was rejected well after the transaction was sent to your acquirer.
+	5, this means our system hasn’t sent the requested transaction to the acquirer since the merchant will send the transaction to the acquirer himself, like he specified in his configuration.
+ **/
+function _ogone_status_codes($lookup=false) {
+
+	$returncodes = array(
+		'0'=>'Incomplete or invalid',
+		'1'=>'Cancelled by client',
+		'2'=>'Authorization refused',
+		
+		'4'=>'Order stored',
+		'41'=>'Waiting client payment',
+		
+		'5'=>'Authorized',
+		'51'=>'Authorization waiting',
+		'52'=>'Authorization not known',
+		'59'=>'Author. to get manually',
+		
+		'6'=>'Authorized and canceled',
+		'61'=>'Author. deletion waiting',
+		'62'=>'Author. deletion uncertain',
+		'63'=>'Author. deletion refused',
+		
+		'7'=>'Payment deleted',
+		'71'=>'Payment deletion pending',
+		'72'=>'Payment deletion uncertain',
+		'73'=>'Payment deletion refused',
+		'74'=>'Payment deleted (not accepted)',
+		'75'=>'Deletion processed by merchant',
+		
+		'8'=>'Refund',
+		'81'=>'Refund pending',
+		'82'=>'Refund uncertain',
+		'83'=>'Refund refused',
+		'84'=>'Payment declined by the acquirer (will be debited)',
+		'85'=>'Refund processed by merchant',
+		
+		'9'=>'Payment requested',
+		'91'=>'Payment processing',
+		'92'=>'Payment uncertain',
+		'93'=>'Payment refused',
+		'94'=>'Refund declined by the acquirer',
+		'95'=>'Payment processed by merchant',
+		'97'=>'Being processed (intermediate technical status)',
+		'98'=>'Being processed (intermediate technical status)',
+		'99'=>'Being processed (intermediate technical status)'
+	);
+	if($lookup===false) {
+		return $returncodes;
+	} else {
+		if(isset($returncodes[$lookup])) {
+			return $returncodes[$lookup];
+		} else {
+			return $returncodes[0];
+		}
+	}
+}
+
 function _ogone_urls($provider, $testmode=true) {
     if($testmode) {
         $infix = 'test';
@@ -543,31 +629,26 @@ $this->addHook(
 function _ogone_report_page($orderandparams) {
     global $PIVOTX;
     
-    if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
-		debug('ogone report orderandparams');
-		debug_printr($orderandparams);
-	}
-    
     $order = $orderandparams['order'];
     $params = $orderandparams['params'];
     
     $ordertotals = $order->getOrderTotals();
-    if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
-		debug_printr($ordertotals);
-	}
+
     $order_id = $order->getOrderId();
     $order_details = $order->getOrderDetails();
     
+	debug('ogone report order starting transaction: '.$order_id);
     if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
-		debug('ogone report order_details');
+		debug('ogone report order orderandparams');
+		debug_printr($orderandparams);
+		debug('ogone report order ordertotals');
+		debug_printr($ordertotals);
+		debug('ogone report order order_details');
 		debug_printr($order_details);
-	}
-    
-    if($PIVOTX['config']->get('shop_ogone_testmode')) {
-        debug('starting transaction report: '.$order_id);
     }
+	
     // check SHASIGN
-    $shop_config['shop_ogone_sha1'] = $PIVOTX['config']->get('shop_ogone_sha1', 'test');
+    $shop_config['shop_ogone_sha1out'] = $PIVOTX['config']->get('shop_ogone_sha1out', 'test');
     $shop_config['shop_ogone_encryption'] = $PIVOTX['config']->get('shop_ogone_encryption', 'sha1');
 
     $shaoutkeys = _ogone_sha_out_fields();
@@ -582,7 +663,7 @@ function _ogone_report_page($orderandparams) {
             //nothing
             //debug('dont use get status');
         } elseif(in_array(strtoupper($key), $shaoutkeys) && ($params[$key]!='')) {
-            $shastring .= strtoupper($key).'='.$params[$key].$shop_config['shop_ogone_sha1'];
+            $shastring .= strtoupper($key).'='.$params[$key].$shop_config['shop_ogone_sha1out'];
             $shavalues .= strtoupper($key).'='.$params[$key]." \n ";
         }
     }
@@ -592,7 +673,8 @@ function _ogone_report_page($orderandparams) {
         $shaencoded = strtoupper(sha1($shastring));
     }
     if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
-        debug('shasecret : '.$shop_config['shop_ogone_sha1']);
+		debug('ogone report order sha values');
+        debug('shasecret : '.$shop_config['shop_ogone_sha1out']);
         debug('enctype : '.$shop_config['shop_ogone_encryption']);
         debug('shastring : '."\n".$shastring);
         debug('shavalues : '.$shavalues);
@@ -602,14 +684,17 @@ function _ogone_report_page($orderandparams) {
     
     if($shaencoded == $params['SHASIGN']) {
         if($PIVOTX['config']->get('shop_ogone_testmode')) {
-            debug('order shasign = valid');
-        }
-		if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
-		    debug_printr($order_details);
+            debug('ogone report page shasign = valid');
+            debug('ogone report page request variables');
+			debug_printr($_REQUEST);
+            debug('ogone report page server variables');
+			debug_printr($_SERVER);
 		}
-		debug('amount: '.$params['amount'] .' ==? order incl tax: '.$order_details['totals']['cumulative_incl_tax']);
         if(round($order_details['totals']['cumulative_incl_tax']) != round($params['amount']*100)) {
-            debug('order amount not valid!');
+            if($PIVOTX['config']->get('shop_ogone_testmode')) {
+				debug('amount: '.$params['amount'] .' ==? order incl tax: '.$order_details['totals']['cumulative_incl_tax']);
+				debug('ogone report order order amount not valid!');
+            }
             $order_details['order_status'] = 'error';
             $order_details['payment_datetime'] = date("Y-m-d H:i:s", time());
             $order_details['payment_message'] = $order_details['payment_message'] . "\n". $params['STATUS'] ." - " .  $returncodes[$params['STATUS']] . ': amount code does not match ('.($params['amount']*100).' should be '.$order_details['totals']['cumulative_incl_tax'].')';
@@ -619,76 +704,18 @@ function _ogone_report_page($orderandparams) {
             $order_details = _shop_save_order($order_details);
             print 'error';
             if($PIVOTX['config']->get('shop_ogone_testmode')) {
-                debug('done transaction return: '.$order_id);
+                debug('ogone report order abort transaction with error: '.$order_id);
             }
             exit;
         }
-        /*
-        Status of the payment.
-        The table above summarises the possible statuses of the payments.
-        
-        Statuses in 1 digit are 'normal' statuses:
-        0 means the payment is invalid (e.g. data validation error) or the processing is not complete either because it is still underway, or because the transaction was interrupted. If the cause is a validation error, an additional error code (*) (NCERROR) identifies the error.
-        1 means the customer cancelled the transaction.
-        2 means the acquirer did not authorise the payment.
-        5 means the acquirer autorised the payment.
-        9 means the payment was captured.
-        
-        Statuses in 2 digits correspond either to 'intermediary' situations or to abnormal events. When the second digit is:
-        1, this means the payment processing is on hold.
-        2, this means an unrecoverable error occurred during the communication with the acquirer. The result is therefore not determined. You must therefore call the acquirer's helpdesk to find out the actual result of this transaction.
-        3, this means the payment processing (capture or cancellation) was refused by the acquirer whilst the payment had been authorised beforehand. It can be due to a technical error or to the expiration of the authorisation. You must therefore call the acquirer's helpdesk to find out the actual result of this transaction.
-        4, this means our system has been notified the transaction was rejected well after the transaction was sent to your acquirer.
-        5, this means our system hasn’t sent the requested transaction to the acquirer since the merchant will send the transaction to the acquirer himself, like he specified in his configuration.
-        
-        */
-        $returncodes = array(
-            '0'=>'Incomplete or invalid',
-            '1'=>'Cancelled by client',
-            '2'=>'Authorization refused',
-            
-            '4'=>'Order stored',
-            '41'=>'Waiting client payment',
-            
-            '5'=>'Authorized',
-            '51'=>'Authorization waiting',
-            '52'=>'Authorization not known',
-            '59'=>'Author. to get manually',
-            
-            '6'=>'Authorized and canceled',
-            '61'=>'Author. deletion waiting',
-            '62'=>'Author. deletion uncertain',
-            '63'=>'Author. deletion refused',
-            
-            '7'=>'Payment deleted',
-            '71'=>'Payment deletion pending',
-            '72'=>'Payment deletion uncertain',
-            '73'=>'Payment deletion refused',
-            '74'=>'Payment deleted (not accepted)',
-            '75'=>'Deletion processed by merchant',
-            
-            '8'=>'Refund',
-            '81'=>'Refund pending',
-            '82'=>'Refund uncertain',
-            '83'=>'Refund refused',
-            '84'=>'Payment declined by the acquirer (will be debited)',
-            '85'=>'Refund processed by merchant',
-            
-            '9'=>'Payment requested',
-            '91'=>'Payment processing',
-            '92'=>'Payment uncertain',
-            '93'=>'Payment refused',
-            '94'=>'Refund declined by the acquirer',
-            '95'=>'Payment processed by merchant',
-            '97'=>'Being processed (intermediate technical status)',
-            '98'=>'Being processed (intermediate technical status)',
-            '99'=>'Being processed (intermediate technical status)'
-        );
+        $returncodes =  _ogone_status_codes();
         $order_details['payment_status'] = $params['STATUS'] . ': ' . $returncodes[$params['STATUS']];
         $order_details['payment_external_code'] = $params['PAYID'];
+		$order_details['order_old_status'] = $order_details['order_status'];
+		$order_details['payment_old_status']= $order_details['payment_status'];
+		
         switch($params['STATUS']) {
             case 9:
-            case 5:
                 $order_details['order_status'] = 'complete';
                 break;
             case 0:
@@ -701,13 +728,29 @@ function _ogone_report_page($orderandparams) {
                 $order_details['order_status'] = 'waiting';
                 break;
         }
+		
+		
         $order_details['payment_datetime'] = date("Y-m-d H:i:s", time());
         $order_details['payment_amount_total'] = ($params['amount']*100);
-        $order_details['payment_message'] = '';
+        $order_details['payment_message'] = $order_details['payment_message'] . "\n". $params['STATUS'] ." - " .  $returncodes[$params['STATUS']];
+		if($order_details['order_old_status']=='waiting' && $order_details['order_status'] == 'complete') {
+			if(in_array($order_details['payment_old_status'], array(
+												'91: Payment processing',
+												'92: Payment uncertain',
+												'95: Payment processed by merchant'))) {
+				if($PIVOTX['config']->get('shop_ogone_testmode')) {
+					debug('order ogone report - sending mail using template: '.$order_details['payment_provider'].'_return_tpl');
+				}
+				$order_details['payment_message'] = $order_details['payment_message'] . "\nSent confirmation email again with completed payment message";
+				// order was upgraded - send an email
+				$order_details = _shop_order_mail_default($order_details['payment_provider'].'_return_tpl', $order_details);
+			}
+		}
+
         $order_details = _shop_save_order($order_details);
     } else {
         if($PIVOTX['config']->get('shop_ogone_testmode')) {
-            debug('order shasign not valid!');
+            debug('ogone report order shasign not valid!');
         }
         $order_details['order_status'] = 'error';
 
@@ -720,10 +763,11 @@ function _ogone_report_page($orderandparams) {
     // print minimal output as required by the api
     print 'OK';
     if($PIVOTX['config']->get('shop_ogone_testmode')) {
-        debug('done transaction return: '.$order_id);
+        debug('ogone report order complete transaction: '.$order_id);
     }
     exit;
 }
+
 
 
 /**
@@ -753,9 +797,19 @@ function _ogone_return_page($orderandparams) {
     //debug_printr($ordertotals);
     $order_id = $order->getOrderId();
     $order_details = $order->getOrderDetails();
-    
+
+    if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
+		debug('ogone return page orderandparams');
+		debug_printr($orderandparams);
+		debug('ogone return page ordertotals');
+		debug_printr($ordertotals);
+		debug('ogone return page order_details');
+		debug_printr($order_details);
+	    debug('ogone return page starting transaction return: '.$order_id);
+    }
+
     // check SHASIGN
-    $shop_config['shop_ogone_sha1'] = $PIVOTX['config']->get('shop_ogone_sha1', 'test');
+    $shop_config['shop_ogone_sha1out'] = $PIVOTX['config']->get('shop_ogone_sha1out', 'test');
     $shop_config['shop_ogone_encryption'] = $PIVOTX['config']->get('shop_ogone_encryption', 'sha1');
 
     $shaoutkeys = _ogone_sha_out_fields();
@@ -770,7 +824,7 @@ function _ogone_return_page($orderandparams) {
             //nothing
             //debug('dont use get status');
         } elseif(in_array(strtoupper($key), $shaoutkeys) && ($params[$key]!='')) {
-            $shastring .= strtoupper($key).'='.$params[$key].$shop_config['shop_ogone_sha1'];
+            $shastring .= strtoupper($key).'='.$params[$key].$shop_config['shop_ogone_sha1out'];
             $shavalues .= strtoupper($key).'='.$params[$key]." \n ";
         }
     }
@@ -780,7 +834,8 @@ function _ogone_return_page($orderandparams) {
         $shaencoded = strtoupper(sha1($shastring));
     }
     if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
-        debug('shasecret : '.$shop_config['shop_ogone_sha1']);
+		debug('ogone return page sha out');
+        debug('shasecret : '.$shop_config['shop_ogone_sha1out']);
         debug('enctype : '.$shop_config['shop_ogone_encryption']);
         debug('shastring : '."\n".$shastring);
         debug('shavalues : '."\n".$shavalues);
@@ -789,9 +844,7 @@ function _ogone_return_page($orderandparams) {
     }
 
     if($shaencoded != $params['SHASIGN']) {
-        if($PIVOTX['config']->get('shop_ogone_testmode')) {
-            debug('sha error');
-        }
+        debug('ogone return page: sha error');
         $params['title'] = st('Error');
         $params['body'] = '<p>'. st('No order found.') . '</p>';
         $params['body'] .= '<p><a href="'.$return_url.'" class="continue_shopping">'. st('Continue shopping') .'</a></p>';
@@ -807,35 +860,59 @@ function _ogone_return_page($orderandparams) {
         */
         if($order_details['order_status']=='complete') {
             $title = st('Thanks');
-            $output = st('Thank you for your order.') . ' '
-                      .st('Your payment is confirmed.') . ' '
+            $output = st('Thank you for your order.') . '<br />'
+                      .st('Your payment is confirmed.') . '<br />'
                       .st('You will get a message with the confirmation soon.');
-        } elseif($order_details['payment_provider']=='ogone') {
+			$mail_on_complete = true;
+        } elseif($order_details['order_status']=='waiting') {
+			// status not complete
             $title = st('Thanks');
-            $output = st('Thank you for your order.') . ' '
-                      . st('Your payment is not yet confirmed (by ogone).') . ' '
+            $output = st('Thank you for your order.') . '<br />'
+                      . st('Your payment is not yet confirmed.') . '<br />'
                       . st('As soon as your payment is confirmed you will receive a message.');
+			$mail_on_complete = true;
+        } elseif($order_details['order_status']=='cancelled') {
+			// status not complete
+            $title = st('Cancelled');
+            $output = st('Your order is cancelled.') . '<br />'
+                      . st('Either you cancelled the payment or something went wrong during the payment process.') . '<br />'
+                      . st('If you still want to order, you will have to order again.') . '<br />'
+                      . st('You will not receive a confirmation message.');
+			$mail_on_complete = false;
         } else {
-            $title = st('Thanks');
-            $output = st('Your order is received.') . st('You will receive a message with further instructions for payment.');
+            $title = st('Error');
+            $output = st('Your order is cancelled.') . '<br />'
+                      . st('Something went wrong during the payment process.') . '<br />'
+                      . st('If you still want to order, you will have to order again.') . '<br />'
+                      . st('You will not receive a confirmation message.');
+			$mail_on_complete = false;
         }
 
         $params['title'] = $title;
-        if($order_details) {
+        if($order_details && $mail_on_complete) {
+			// only show order summary when successfull
             $params['body'] = '<p>'. $output .'</p>';
             $params['body'] .= _shop_order_summary($order_details);
         } else {
             $params['body'] = '<p>'. $output .'</p>';
         }
-		
-        // drop a mail with instructions
-		debug('order ogone returned - sending mail using template: '.$order_details['payment_provider'].'_return_tpl');
-		debug_printr($order_details);
-        $order_details = _shop_order_mail_default($order_details['payment_provider'].'_return_tpl', $order_details);
+
+		if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
+			debug('order ogone returned - sending mail using template: '.$order_details['payment_provider'].'_return_tpl');
+			debug('ogone return page params');
+			debug_printr($params);
+			debug('ogone return page order details');
+			debug_printr($order_details);
+		}
+		if($mail_on_complete) {
+	        // drop a mail with instructions
+			$order_details = _shop_order_mail_default($order_details['payment_provider'].'_return_tpl', $order_details);
+		}
 		
         $return_url = $PIVOTX['config']->get('shop_default_homepage', '/index.php?w=shop');
         $params['body'] .= '<p><a href="'.$return_url.'" class="continue_shopping">'. st('Continue shopping') .'</a></p>';
     } else {
+		debug('ogone return page:'. st('No order found.'));
         $params['title'] = st('Error');
         $params['body'] = '<p>'. st('No order found.') . '</p>';
         $params['body'] .= '<p><a href="'.$return_url.'" class="continue_shopping">'. st('Continue shopping') .'</a></p>';
@@ -858,9 +935,64 @@ $this->addHook(
     );
 
 function _ogone_payment_info($label) {
-    if ($label=='ogone') {
+	global $PIVOTX;
+	$shop_ogone_provider = $PIVOTX['config']->get('shop_ogone_provider','ogone');
+	
+	if ($label=='ogone' && $shop_ogone_provider == 'ogone') {
         return '<span class="ideal_label">iDEAL</span> via ogone.nl';
+    } elseif ($label=='ogone' && $shop_ogone_provider == 'rabobank') {
+        return '<span class="ideal_label">iDEAL</span> via <span class="rabobank_label">Rabobank</span>';
+    } elseif ($label=='ogone' && $shop_ogone_provider == 'abnamro') {
+        return '<span class="ideal_label">iDEAL</span> via <span class="abnamro_label">ABN-Amro</span>';
     }
     return $label;
-    
+}
+
+/**
+ * Add the paymentinfo hook
+ */
+$this->addHook(
+    '_ogone_payment_status',
+    'callback',
+    '_ogone_payment_status'
+    );
+
+/**
+ * Todo: call this one on return pages too
+ */
+function _ogone_payment_status($order) {
+	global $PIVOTX;
+	debug('_ogone_payment_status order=: '. print_r($order, true));
+	debug('_ogone_payment_status called with verbose=: '. print_r($verbose, true));
+	
+	if($order['payment_provider'] == 'ogone') {
+	   if(in_array($order['payment_status'], array('9: Payment requested'))) {
+			// this is the completed payment
+			if($order['verbose_output']) { $output = '<h4>'. st('Payment successful') .'</h4>'; }
+			$output .= '<p>'. st('Payment handled by') .': '.$paymentprovider.'</p>';
+		} elseif(in_array($order['payment_status'], array(
+												'91: Payment processing',
+												'92: Payment uncertain',
+												'95: Payment processed by merchant'))) {
+			// this is a pending payment
+			if($order['verbose_output']) { $output = '<h4>'. st('Payment waiting') .'</h4>'; }
+			$output = '<p>'. st('Payment waiting') .'</p>';
+			$output .= '<p>'. st('You will receive a message when the status changes.') .'</p>';
+		} elseif(in_array($order['payment_status'], array('1: Cancelled by client'))) {
+			// no we wont do anything here
+			if($order['verbose_output']) { $output = '<h4>'. st('Cancelled') .'</h4>'; }
+			$output = '<p>'. st('Your order is cancelled.') .'</p>';
+			$output .= '<p>'. st('You will not receive a confirmation message.') .'</p>';
+		} else {
+			// maybe something will happen
+			if($order['verbose_output']) { $output = '<h4>'. st('Payment incomplete') .'</h4>'; }
+			$output .= '<p>'. st('You will receive a message with further instructions for payment.') .'</p>';
+		}
+	} else {
+		// kaput
+		if($order['verbose_output']) { $output = '<h4>'. st('Error') .'</h4>'; }
+		$output .= '<p>'. st('Something went wrong during the payment process.') .'</p>';
+		$output .= '<p>'. st('You will not receive a confirmation message.') .'</p>';
+	}
+    return $output;
 }

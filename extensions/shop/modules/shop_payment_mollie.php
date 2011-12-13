@@ -594,6 +594,10 @@ function _mollie_return_page($orderandparams) {
         } else {
             $params['body'] = '<p>'. $output .'</p>';
         }
+
+        // drop a mail with instructions
+        $order_details = _shop_order_mail_default($order_details['payment_provider'].'_return_tpl', $order_details);
+		
         $return_url = $PIVOTX['config']->get('shop_default_homepage', '/index.php?w=shop');
         $params['body'] .= '<p><a href="'.$return_url.'" class="continue_shopping">'. st('Continue shopping') .'</a></p>';
     } else {

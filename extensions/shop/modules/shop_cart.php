@@ -280,6 +280,59 @@ class ShopCart {
         $this->storeCart();
         //debug_printr($this);
     }
+
+    /**
+     * Return only the 'product' items we want to render on the user screen
+     *
+     * Mostly strips products that fall in the shop_extrascategory.
+     */
+    protected function filterItemsProductsOnly()
+    {
+        global $PIVOTX;
+
+        $items = array();
+
+        $shop_extrascategory = $PIVOTX['config']->get('shop_extrascategory', 'shop');
+        if ($shop_extrascategory == '') {
+            $items = $this->items;
+        }
+        else {
+            foreach($this->items as $item_id => $item_items) {
+                $entryitem = $PIVOTX['db']->read_entry($item_id);
+
+                if (!in_array($shop_extrascategory,$entryitem['category'])) {
+                    $items[$item_id] = $item_items;
+                }
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * Return only the 'extra' items we want to render on the user screen
+     *
+     * Mostly leaves the products that fall in the shop_extrascategory.
+     */
+    protected function filterItemsExtrasOnly()
+    {
+        global $PIVOTX;
+
+        $items = array();
+
+        $shop_extrascategory = $PIVOTX['config']->get('shop_extrascategory', 'shop');
+        if ($shop_extrascategory != '') {
+            foreach($this->items as $item_id => $item_items) {
+                $entryitem = $PIVOTX['db']->read_entry($item_id);
+
+                if (in_array($shop_extrascategory,$entryitem['category'])) {
+                    $items[$item_id] = $item_items;
+                }
+            }
+        }
+
+        return $items;
+    }
     
     public function setTemplate($key, $template) {
         $this->templates[$key] = $template;
@@ -309,7 +362,7 @@ class ShopCart {
         $amount = number_format($amount/100, 2, ',', '.');
 
         if(!is_object($this) && !$pricetemplate) {
-            $pricetemplate = '<span class="price"><span class="currency">%currency%</span> <span class="amount">%amount%</span></span>';
+            $pricetemplate = '<span class="price" itemprop="offers" itemscope itemtype="http://schema.org/Offer"><span itemprop="price"><span class="currency">%currency%</span> <span class="amount">%amount%</span></span></span>';
         } elseif($pricetemplate != $this->getTemplate('price')) {
             $this->templates['price'] = '<span class="price"><span class="currency">%currency%</span> <span class="amount">%amount%</span></span>';
             $pricetemplate = $this->templates['price']; 
@@ -471,6 +524,7 @@ class ShopCart {
     public function setDisplay($var) {
         $this->display = $var;
     }
+
     /**
      * Show the full cart
      */
@@ -479,10 +533,15 @@ class ShopCart {
 	
         $cartoutput = '';
 
+        $render_extras = false;
+
         switch ($this->display) {
             case 'normal':
                 $cartoutput .= '<h4>'.st('Shopping cart'). "</h4>";
+                // fall-through
+
             case 'full':
+                $render_extras = true;
                 $oddeven = false;
                 $counter = 0;
 
@@ -494,7 +553,8 @@ class ShopCart {
                 $cartoutput .= '<th scope="col">'. st('Total').'</th>';
                 $cartoutput .= '</tr></thead>';
                 $cartoutput .= '<tbody>';
-                foreach($this->items as $item_id => $items) {
+                $items = $this->filterItemsProductsOnly();
+                foreach($items as $item_id => $items) {
                     foreach($items as $variant => $item) {
                         $oddeven = ($oddeven!='odd')?'odd':'even';
                         if($countclass == 0) {
@@ -583,6 +643,9 @@ class ShopCart {
 
         $cartoutput .= $this->renderDiscounts();
         $cartoutput .= $this->renderShipping();
+        if ($render_extras) {
+            $cartoutput .= $this->renderExtras();
+        }
         $cartoutput .= $this->renderTotals();
 
         switch ($this->display) {
@@ -593,8 +656,9 @@ class ShopCart {
                 // TODO: checkoutbutton template
                 $cartoutput .= '
 <form action="" method="get" class="continue '.$this->display.'"><fieldset><div class="formrow formrow_submit">
-    <label><a href="'.$shop_homepagelink.'" class="continue_shopping">'.st('Continue shopping').'</a></label>
-    <button type="submit" name="action" value="checkout" class="button">
+    <input type="hidden" name="action" value="checkout" />
+    <label><a href="'.$shop_homepagelink.'" class="continue_shopping continuebutton button">'.st('Continue shopping').'</a></label>
+    <button type="submit" class="button">
         <span>'.st('Order now').'</span>
     </button>
 </div></fieldset></form>
@@ -639,7 +703,7 @@ class ShopCart {
             case 'normal':
             case 'checkout':
                 $totalsoutput = '<table class="totals '.$this->display.'">';
-                $totalsoutput .= '<tr class="odd first"><td colspan="2">'.st('Total') .' '. $this->totals['number_of_items'] .' '. st('items') .'</td></tr>';
+                $totalsoutput .= '<tr class="odd first totalexcl"><td colspan="2">'.st('Total') .' '. $this->totals['number_of_items'] .' '. st('items') .'</td></tr>';
                 if($this->showvatincart==true) {
                     $totalsoutput .= '<tr class="even totalexcl"><th>'.st('Total excl. tax') .'</th><td>'. $this->renderPrice($this->totals['cumulative_excl_tax']) .'</td></tr>';
                     foreach ($this->totals['cumulative_tax'] as $key => $tax_amount) {
@@ -651,20 +715,20 @@ class ShopCart {
                 break;
             case 'minimal':
             case 'compact':
-                $totalsoutput = '<p class="totals '.$this->display.'">';
-                $totalsoutput .= st('Total') .' '. $this->totals['number_of_items'] .' '. st('items') .'<br />';
-                $totalsoutput .= st('Total incl. tax') .' '. $this->renderPrice($this->totals['cumulative_incl_tax']) .'<br />';
-                $totalsoutput .= '</p>';
+                $totalsoutput = '<div class="totals '.$this->display.'">';
+                $totalsoutput .= '<div class="totalamount">'. st('Total') .' '. $this->totals['number_of_items'] .' '. st('items') ."</div>\n";
+                $totalsoutput .= '<div class="totalincl">'. st('Total incl. tax') .' '. $this->renderPrice($this->totals['cumulative_incl_tax']) ."</div>\n";
+                $totalsoutput .= '</div>';
                 break;
             case 'email':
             default:
-                $totalsoutput = '<p class="totals '.$this->display.'">';
-                $totalsoutput .= st('Total excl. tax') .' '. $this->renderPrice($this->totals['cumulative_excl_tax']) .'<br />';
+                $totalsoutput = '<div class="totals '.$this->display.'">';
+                $totalsoutput .= '<div class="totalexcl">'. st('Total excl. tax') .' '. $this->renderPrice($this->totals['cumulative_excl_tax']) ."</div>\n";
                 foreach ($this->totals['cumulative_tax'] as $key => $tax_amount) {
-                    $totalsoutput .= st('Tax') .' '. round($key) .'% '. $this->renderPrice($tax_amount).'<br />';
+                    $totalsoutput .= '<div class="taxes">'. st('Tax') .' '. round($key) .'% '. $this->renderPrice($tax_amount) ."</div>\n";
                 }
-                $totalsoutput .= st('Total incl. tax') .' '. $this->renderPrice($this->totals['cumulative_incl_tax']) .'<br />';
-                $totalsoutput .= '</p>';
+                $totalsoutput .= '<div class="totalincl">'. st('Total incl. tax') .' '. $this->renderPrice($this->totals['cumulative_incl_tax']) ."</div>\n";
+                $totalsoutput .= '</div>';
                 break;
         }
 
@@ -711,6 +775,96 @@ class ShopCart {
     }
 
     /**
+     */
+    public function renderExtras() {
+        global $PIVOTX;
+
+        $output = '';
+        $extras = false;
+
+        $shop_extrascategory = $PIVOTX['config']->get('shop_extrascategory', 'shop');
+        if ($shop_extrascategory != '') {
+            $extras = $PIVOTX['db']->read_entries(array(
+                'cats' => array ( $shop_extrascategory )
+            ));
+
+            if (count($extras) == 0) {
+                $extras = false;
+            }
+        }
+
+        if (is_array($extras)) {
+            $items = $this->filterItemsExtrasOnly();
+
+            $output .= '<ul class="cart-extras">'."\n";
+
+            $optionid = 200;
+            foreach($extras as $extra_id => $extra) {
+                $optionchecked = '';
+
+                $entryitem = $PIVOTX['db']->read_entry($extra_id);
+
+                $options = _shop_load_entry_options($entryitem);
+                $optionshtml = '';
+                $first_option = false;
+                foreach($options as $key => $label) {
+                    $checkhref = '/?action=editextra&amp;entry='.$entryitem['uid'];
+                    $checkhref .= '&amp;option='.rawurlencode($key);
+
+                    $checked = '';
+                    if (isset($items[$entryitem['uid']])) {
+                        if ($items[$entryitem['uid']][$key]['amount'] == 1) {
+                            $checked = ' checked="checked"';
+                        }
+                    }
+
+                    $optionshtml .= "\t\t".'<label class="check"><input type="radio" data-href="'.$checkhref.'" name="item_option_'.$uid.'" value="'.htmlspecialchars($key).'"'.$checked.' /> '.htmlspecialchars($label).'</label>'."\n";
+                    if ($first_option === false) {
+                        $first_option = $key;
+                    }
+                }
+
+                $checkhref = '/?action=editextra&amp;entry='.$entryitem['uid'];
+                if (isset($items[$entryitem['uid']])) {
+                    $optionchecked = ' checked="checked"';
+                    $checkhref     = '/?action=delextra&amp;entry='.$entryitem['uid'];
+                }
+                else if ($first_option !== false) {
+                    $checkhref .= '&amp;option='.rawurlencode($first_option);
+                }
+
+                $uid          = $entryitem['uid'];
+                $title        = htmlspecialchars($entryitem['extrafields']['selection_text']) . ' ' . _shop_pricedisplay($entryitem) . '';
+                $introduction = parse_intro_or_body($entryitem['introduction']);
+
+                $output .= <<<THEEND
+    <li>
+        <div class="check">
+            <label><input type="checkbox" data-href="$checkhref" name="item_checkbox_$uid"$optionchecked> $title</label>
+        </div>
+THEEND;
+
+                if (isset($items[$entryitem['uid']])) {
+                    $output .= <<<THEEND
+        <div class="content">
+            <div class="introduction">$introduction</div>
+            
+            <div class="value">
+$optionshtml
+            </div>
+        </div>
+    </li>
+THEEND;
+                }
+            }
+
+            $output .= '</ul>'."\n";
+        }
+
+        return $output;
+    }
+
+    /**
      * Get and show the discount amounts
      */
     public function renderDiscounts() {
@@ -745,6 +899,14 @@ class ShopCart {
             $option_label = '';
         }
         
+        if($entries[$item_id]['item_cart_title']=='') {
+            if($entries[$item_id]['extrafields']['cart_title']!="") {
+                $entries[$item_id]['item_cart_title'] = $entries[$item_id]['extrafields']['cart_title'];
+            } else {
+                $entries[$item_id]['item_cart_title'] = $entries[$item_id]['title'];
+            }
+        }
+        
         // load single prices
         $entries[$item_id] = $this->itemPriceSingle($entries[$item_id]);
         
@@ -755,7 +917,7 @@ class ShopCart {
         switch ($this->display) {
             case 'normal':
             case 'full':
-                $output['title'] = '<a href="'. $entries[$item_id]['link'] .'" class="itemlink">'. $entries[$item_id]['title'] .'</a>';
+                $output['title'] = '<a href="'. $entries[$item_id]['link'] .'" class="itemlink">'. $entries[$item_id]['item_cart_title'] .'</a>';
                 $output['variant'] = $option_label;
                 
 				$params['no_items'] = $amount;
@@ -778,7 +940,7 @@ class ShopCart {
                 $output['amount'] = $amount;
                 $output['timesx'] = '<span>&times;</span>';
                 //$output['title'] = '<a href="'. $entries[$item_id]['link'] .'" class="itemlink">'. $entries[$item_id]['title'] .'</a>';
-                $output['title'] =  $entries[$item_id]['title'];
+                $output['title'] =  $entries[$item_id]['item_cart_title'];
                 $output['variant'] = $option_label;
                 $output['price_single'] = st('&agrave;').' '. $this->renderPrice($entries[$item_id]['extrafields']['item_price_incl_tax']);
                 $output['timesx'] = '<span>&times;</span>';
@@ -787,7 +949,7 @@ class ShopCart {
             case 'email':
                 $output['amount'] = $amount;
                 $output['timesx'] = ' &times; ';
-                $output['title'] = $entries[$item_id]['title'];
+                $output['title'] = $entries[$item_id]['item_cart_title'];
                 $output['variant'] = strip_tags($option_label);
                 $output['price_single'] = st('&agrave;').' '. $this->renderPrice($entries[$item_id]['extrafields']['item_price_incl_tax']);
                 $output['timesx'] = '<span>&times;</span>';
@@ -799,7 +961,7 @@ class ShopCart {
             default:
                 $output['amount'] = $amount;
                 $output['timesx'] = '<span>&times;</span>';
-                $output['title'] = '<a href="'. $entries[$item_id]['link'] .'" class="itemlink">'. $entries[$item_id]['title'] .'</a>';
+                $output['title'] = '<a href="'. $entries[$item_id]['link'] .'" class="itemlink">'. $entries[$item_id]['item_cart_title'] .'</a>';
                 $output['variant'] = $option_label;
                 break;
         }
@@ -821,6 +983,7 @@ class ShopCart {
                     $cart_item['item_option'] = $key_option;
                     $cart_item['item_code'] = $entries[$item_id]['extrafields']['item_code'];
                     $cart_item['item_title'] = $entries[$item_id]['title'];
+                    $cart_item['item_cart_title'] = $entries[$item_id]['extrafields']['cart_title'];
                     $cart_item['item_content'] = $entries[$item_id]['extrafields']['item_code'];
                     $cart_item['item_price'] = $entries[$item_id]['extrafields']['item_price'];
                     $cart_item['item_price_incl_tax'] = $entries[$item_id]['extrafields']['item_price'] + ($entries[$item_id]['extrafields']['item_price'] * $entries[$item_id]['extrafields']['item_tax']);

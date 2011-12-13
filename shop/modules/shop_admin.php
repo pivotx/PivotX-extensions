@@ -75,6 +75,7 @@ function pageShopadmin() {
 		'shop_email_name',
 		'shop_language',
 		'shop_category',
+		'shop_extrascategory',
 		'shop_default_homepage',
 		'shop_default_template',
 		'shop_default_theme',
@@ -189,8 +190,13 @@ function pageShopadmin() {
 
 	$allcats = $PIVOTX['categories']->getCategories();
 	// Make an array where the keys are the same as the values
+    $extracatoptions = array(
+        '' => '(not in use)'
+    );
+    $catoptions = array();
     foreach($allcats as $cat) {
         $catoptions[$cat['name']] = sprintf("%s (%s)", $cat['display'], $cat['name']);
+        $extracatoptions[$cat['name']] = sprintf("%s (%s)", $cat['display'], $cat['name']);
     }
 	
     $form->add( array(
@@ -213,6 +219,21 @@ function pageShopadmin() {
         'size' => 50,
         'validation' => 'string|minlen=2|maxlen=40',
         'text' => makeJtip(st('Default shop homepage'), st('Enter the url to your shop homepage here. This can be a category, a weblog or any PivotX url.')),
+    ));
+
+    $form->add( array(
+        'type' => "hr"
+    ));
+	
+    $form->add( array(
+        'type' => 'select',
+        'name' => 'shop_extrascategory',
+        'options' => $extracatoptions,
+        'isrequired' => 0,
+        'label' => st('Extras shop category'),
+        'error' => st('That\'s not a proper category name!'),
+        'validation' => 'string|minlen=2|maxlen=40',
+        'text' => makeJtip(st('Extras shop category'), st('Use the internal category name of the category you want to use for the extras in the shop')),
     ));
 
     $form->add( array(
@@ -613,6 +634,18 @@ function shopExtrafields($entry) {
 
             <tr>
                 <td>
+                     <label><strong>%title_cart_title%:</strong></label>
+                </td>
+                <td>
+                    <input id="extrafield-cart_title" name="extrafields[cart_title]" value="%cart_title%" type="text" style="width: 150px;"/>
+                </td>
+                <td>
+                    <div class="description">%desc_cart_title%</div>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
                      <label><strong>%title_item_product_options%:</strong></label>
                 </td>
 				<td colspan="2">
@@ -626,6 +659,7 @@ function shopExtrafields($entry) {
     <hr class="shop-separator shopvisible" />
 <script type="text/javascript">
 var shopcategory = "%shopcategory%";
+var shopextrascategory = "%shopextrascategory%";
 </script>
 
 ';
@@ -663,6 +697,8 @@ var shopcategory = "%shopcategory%";
 	
 	$shop_category = $PIVOTX['config']->get('shop_category', 'shop');
     $output = str_replace("%shopcategory%", $shop_category, $output);
+	$shop_extrascategory = $PIVOTX['config']->get('shop_extrascategory', 'shop');
+    $output = str_replace("%shopextrascategory%", $shop_extrascategory, $output);
 	
     // Substitute some labels..
     $output = str_replace("%title_item_is_available%", st("Available"), $output);
@@ -672,6 +708,10 @@ var shopcategory = "%shopcategory%";
     $output = str_replace("%label_yes%", st("Yes"), $output);
     $output = str_replace("%title_item_code%", st("Product Code"), $output);
     $output = str_replace("%desc_item_code%", st("SKU, internal product ID or barcode number"), $output);
+	
+    $output = str_replace("%title_cart_title%", st("Title in cart"), $output);
+    $output = str_replace("%desc_cart_title%", st("An alternative title to display in the order and cart, if this is empty the normal title will be used."), $output);
+	
     $output = str_replace("%title_item_price%", st("Price"), $output);
     $output = str_replace("%extra_item_price%", st("Prices should be given in cents. The shop calculates totals from the price before VAT."), $output);
     $output = str_replace("%title_item_price_excl_tax%", st("Excl."), $output);

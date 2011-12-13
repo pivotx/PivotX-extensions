@@ -1,4 +1,4 @@
-Shop 0.2-37
+Shop 0.2-39
 ===========
 An extension to sell products on your website.
 

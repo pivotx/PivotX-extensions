@@ -146,7 +146,7 @@ function shop_payment_page($params) {
         $order_details = _shop_save_order($order_details);
 
         // drop a mail with instructions
-        $order_details = _shop_order_mail_default('other_return_tpl', $order_details);
+        $order_details = _shop_order_mail_default($order_details['payment_provider'].'_return_tpl', $order_details);
 
         // redirect to return page
         header("Location: /index.php?action=return");
@@ -196,6 +196,12 @@ function shop_return_page($params) {
         if($order_details) {
             $title = st('Thanks');
             $output = st('Your order is received.') . st('You will receive a message with further instructions for payment.');
+			
+			// geannuleerde orders komen hier ook uit
+			debug('order default returned - sending mail using template: '.$order_details['payment_provider'].'_return_tpl');
+			debug_printr($order_details);
+			$order_details = _shop_order_mail_default($order_details['payment_provider'].'_return_tpl', $order_details);
+			
         } else {
             $title = st('Error');
             $output = st('No order found.');
@@ -256,7 +262,7 @@ function shop_report_page($params) {
  * The output function that does all the rendering
  */
 function shop_render_page($params) {
-    global $PIVOTX;
+    global $PIVOTX, $shop_cart_config;
 
     //debug_printr($params);
 
@@ -293,6 +299,15 @@ function shop_render_page($params) {
             $PIVOTX['template']->assign($key, $value);
         }
     }
+	
+	if(!$shop_cart_config['js_inserted']) {
+		// we always want to see jquery
+		$PIVOTX['extensions']->addHook('after_parse', 'callback', 'jqueryIncludeCallback');
+		
+		$js_head = str_replace('[[extensionurl]]', $PIVOTX['paths']['extensions_url'], '<script type="text/javascript" src="[[extensionurl]]shop/js/pivotx.cart.js"></script>');
+		$PIVOTX['extensions']->addHook('after_parse', 'insert_before_close_head', $js_head);
+		$shop_cart_config['js_inserted'] = true;
+	}
 
     $parser = new Parser();
     $parser->modifier['template'] = $template;
@@ -309,6 +324,29 @@ function shop_render_page($params) {
     
     //shop_debug($params['action'], $params);
 
+}
+
+/**
+ * Extra options
+ */
+function shop_extra_page($params)
+{
+    global $PIVOTX;
+
+    $entry = false;
+    if(isset($params['entry']) && !is_array($params['entry'])) {
+        $entry = $PIVOTX['db']->read_entry($params['entry']);
+    }
+
+    if (is_array($entry)) {
+        $PIVOTX['shoppingcart']->deleteItem($entry['uid']);
+        if (isset($params['option'])) {
+            $PIVOTX['shoppingcart']->addItem($entry['uid'],1,$params['option']);
+        }
+    }
+
+    header('location: /index.php?action=cart');
+    exit();
 }
 
 /**

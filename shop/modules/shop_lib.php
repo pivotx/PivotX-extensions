@@ -248,15 +248,20 @@ function _shop_buythisbutton($entry, $params) {
 			$params['formid'] = $entry['uid'] .'_'. $params['option_key'];
 			$product_options =  "\t" . '<input type="hidden" name="item_product_options" value="'.$params['option_key'].'" />';
 		} else {
+            if (true) {
+                $label = ''; // @todo make a translatable string
+				$product_options_str .= "\t\t" . '<option value="">'.$label.'</option>'."\n";
+            }
 			foreach($product_options_arr as $key => $label) {
 				$product_options_str .= "\t\t" . '<option value="'.$key.'">'.$label.'</option>'."\n";
 			}
 			$product_options = '
-	<select name="item_product_options" class="productoptions">
+	<select name="item_product_options" class="productoptions" data-condition="required" data-condition-error-message="[[message]]">
 [[product_options]]
 	</select>
 ';
 			$product_options = str_replace("[[product_options]]", $product_options_str, $product_options);
+			$product_options = str_replace("[[message]]", st('Choose a size is required'), $product_options);
 		}
 		// show labels on form
 		if($params['showlabels']) {
@@ -288,7 +293,9 @@ function _shop_load_entry_options($entry) {
 		//debug_printr($tmp_options);
 		foreach($tmp_options as $tmp_option) {
 			list($key, $label) = explode("::", $tmp_option);
-			$product_options_arr[trim($key)] = st(trim($label));
+            if (($key != '') && ($label != '')) {
+                $product_options_arr[trim($key)] = st(trim($label));
+            }
 		}
 		
 		return $product_options_arr;
@@ -782,7 +789,7 @@ function _shop_show_checkoutform($formdata=false) {
 ';
 			}
 			$template['shipping'] = '
-	<div class="formrow formrow_radios [[shipping_handler_haserror]]">
+	<div id="shipping_handler_options" class="formrow formrow_radios [[shipping_handler_haserror]]">
 		<label for="shipping_handler" class="radio_group_label">[[shipping_handler_label]]</label>
 		[[shipping_options]]
 		[[shipping_handler_errormessage]]
@@ -816,7 +823,7 @@ function _shop_show_checkoutform($formdata=false) {
 ';
 			}
 			$template['payment'] = '
-	<div class="formrow formrow_radios [[payment_provider_haserror]]">
+	<div id="payment_provider_options" class="formrow formrow_radios [[payment_provider_haserror]]">
 		<label for="payment_provider" class="radio_group_label">[[payment_provider_label]]</label>
 		[[payment_options]]
 		[[payment_provider_errormessage]]
@@ -852,7 +859,7 @@ function _shop_show_checkoutform($formdata=false) {
 // the end of the form
 	$template['footer'] = '
 	<div class="formrow formrow_submit">
-		<label><a href="/?action=cart" class="continue_shopping">[[backlinkname]]</a></label>
+		<label><a href="/?action=cart" class="continue_shopping continuebutton button">[[backlinkname]]</a></label>
 		<button type="submit" name="checkout_submit" value="[[submitvalue]]" class="button">
 			<span>[[submitvalue]]</span>
 		</button>
@@ -862,16 +869,12 @@ function _shop_show_checkoutform($formdata=false) {
 
 	$formdata['submitvalue'] = st('Continue');
 
+    $formdata['template'] = $template;
 
 	// the option to override it all with extensions
     $PIVOTX['extensions']->executeHook('shop_after_checkoutform', $formdata);
 	
-	// might be overridden
-	if(!empty($formdata['template'])) {
-		$template = $formdata['template'];
-	}
-	
-	$template = join('', $template);
+	$template = join('', $formdata['template']);
     //debug($template);
 
     foreach($formdata as $key=>$value) {
@@ -1208,93 +1211,182 @@ function _shop_save_order($inorder=false) {
  *
  * TODO: clean this up
  */
-function _shop_order_summary($order) {
+function _shop_order_summary($order, $blocks=false) {
 	global $PIVOTX;
-	
+
 	//$output = '<pre>'.var_export($order, true).'</pre>';
-	$output = _shop_order_user($order);
+	$output = '';
+	if(!$blocks) {
+		$output .= _shop_order_user($order);
+		$output .= "<h4>".st("Order summary")."</h4>";
+		$output .= "<p>".st("Order date").": ".date('D, d M Y', strtotime($order['order_datetime']))."</p>";
 	
-
-	$output .= "<h4>".st("Order summary")."</h4>";
-	$output .= "<p>".st("Order date").": ".date('D, d M Y', strtotime($order['order_datetime']))."</p>";
-	//$cart = $order['order_items'];
-	$cart['items'] = array();
-
-	if(is_array($order['order_items']) && count($order['order_items'])>0) {
-		$output .= '<table class="order_summary">';
-		foreach($order['order_items'] as $xkey => $entry) {
-			if(stristr($item_id, "::")) {
-				list($item_id, $key_option) = explode("::", $item_id);
-			} else {
-				$key_option = false;
+		//$cart = $order['order_items'];
+		$cart['items'] = array();
+	
+		if(is_array($order['order_items']) && count($order['order_items'])>0) {
+			$output .= '<table class="order_summary">';
+			foreach($order['order_items'] as $xkey => $entry) {
+				if(stristr($item_id, "::")) {
+					list($item_id, $key_option) = explode("::", $item_id);
+				} else {
+					$key_option = false;
+				}
+				$key = $entry['item_id'];
+				$key_option = $entry['item_option'];
+				if($key_option) {
+					$key = $key ."::". $key_option;
+				}
+	
+				$cart['items'][$key] = $entry['order_no_items'];
+	
+				// load entry if it exists
+				$entries[$key] = $PIVOTX['db']->read_entry($entry['item_id']);
+				//debug_printr($entries[$key]);
+				if($key_option) {
+					$entries[$key]['item_product_options'] = _shop_load_entry_options($entries[$key]);
+					$entries[$key]['option_key'] = $key_option;
+					$entries[$key]['option_label'] = $entries[$key]['item_product_options'][$key_option];
+				
+					$option_label = ' <span class="option">'.$entries[$key]['option_label'].'</span>';
+	
+				} else {
+					$option_label = '';
+				}
+				
+				if($entries[$key]['item_cart_title']=='') {
+					if($entries[$key]['extrafields']['cart_title']!="") {
+						$entries[$key]['item_cart_title'] = $entries[$key]['extrafields']['cart_title'];
+					} else {
+						$entries[$key]['item_cart_title'] = $entries[$key]['title'];
+					}
+				}
+	
+				$entries[$key]['pricedisplay'] = ($entries[$key]['pricedisplay'])?$entries[$key]['pricedisplay']:_shop_pricedisplay($entries[$key]);
+				$oddclass = !($oddclass)?'odd':'';
+				$output .= '<tr class="'.$oddclass.'">';
+				$output .= '<td class="title-of-item"><span>'. $entries[$key]['item_cart_title'] . $option_label .'</span></td>';
+				$output .= '<td class="singleprice">'.$entries[$key]['pricedisplay'].'</td>';
+				$output .= '<td class="times">'.st('&times;').'</td>';
+				$output .= '<td class="no-items"><strong>'.$entry['order_no_items'].' </strong></td>';
+				$output .= '<td class="is">&nbsp;</td>';
+				$totaldisplay = _shop_pricetotaldisplay($entries[$key], $entry['order_no_items']);
+				$output .= '<td class="totalprice">'.$totaldisplay.'</td>';
+				$num += $entry['order_no_items'];
+				$output .= '</tr>';
 			}
-			$key = $entry['item_id'];
-			$key_option = $entry['item_option'];
-			if($key_option) {
-				$key = $key ."::". $key_option;
-			}
-
-			$cart['items'][$key] = $entry['order_no_items'];
-
-			// load entry if it exists
-			$entries[$key] = $PIVOTX['db']->read_entry($entry['item_id']);
-			//debug_printr($entries[$key]);
-			if($key_option) {
-				$entries[$key]['item_product_options'] = _shop_load_entry_options($entries[$key]);
-				$entries[$key]['option_key'] = $key_option;
-				$entries[$key]['option_label'] = $entries[$key]['item_product_options'][$key_option];
 			
-				$option_label = ' <span class="option">'.$entries[$key]['option_label'].'</span>';
-
-			} else {
-				$option_label = '';
-			}
-
-			$entries[$key]['pricedisplay'] = ($entries[$key]['pricedisplay'])?$entries[$key]['pricedisplay']:_shop_pricedisplay($entries[$key]);
-			$oddclass = !($oddclass)?'odd':'';
-			$output .= '<tr class="'.$oddclass.'">';
-			$output .= '<td><span>'. $entries[$key]['title'] . $option_label .'</span></td>';
-			$output .= '<td class="singleprice">'.$entries[$key]['pricedisplay'].'</td>';
-			$output .= '<td>'.st('&times;').'</td>';
-			$output .= '<td><strong>'.$entry['order_no_items'].' </strong></td>';
-			$output .= '<td>&#61;</td>';
-			$totaldisplay = _shop_pricetotaldisplay($entries[$key], $entry['order_no_items']);
-			$output .= '<td class="totalprice">'.$totaldisplay.'</td>';
-			$num += $entry['order_no_items'];
-			$output .= '</tr>';
-		}
-		
-		$output .= '<tr class="totals"><td colspan="6"><em>'.$num.'</em> '.st('items in order').'.</td></tr>';
-
-		if($PIVOTX['config']->get('shop_use_shipping')==true) {
-			$cart = _shop_total_shipping($cart);
-			$output .= '<tr class="totals odd"><td colspan="1"></td><td>'.st('Shipping costs').'</td><td colspan="4">'.$cart['shipping']['display']['full'].'</td></tr>';
-		}
-		
-		$totals = _shop_cart_total_amounts($cart, $entries);
-		$output .= '<tr class="totals odd"><td colspan="1"></td><td>'.st('Total').'</td><td colspan="4">'.$totals['display_amount_checkout'].'</td></tr>';
-		$output .= "</table>";
-	} else {
-		$output .= '<p class="totals">'.st("Cart is empty").'</p>';
-	}
-	$output .= _shop_order_payment_status($order);
+			$output .= '<tr class="totals"><td colspan="6"><em>'.$num.'</em> '.st('items in order').'.</td></tr>';
 	
+			if($PIVOTX['config']->get('shop_use_shipping')==true) {
+				$cart = _shop_total_shipping($cart);
+				$output .= '<tr class="totals odd"><td colspan="4"></td><td>'.st('Shipping costs').'</td><td class="totalprice" colspan="1">'.$cart['shipping']['display']['full'].'</td></tr>';
+			}
+			
+			$totals = _shop_cart_total_amounts($cart, $entries);
+			$output .= '<tr class="totals odd"><td colspan="4"></td><td>'.st('Total').'</td><td class="totalprice" colspan="1">'.$totals['display_amount_checkout'].'</td></tr>';
+			$output .= "</table>";
+		} else {
+			$output .= '<p class="totals">'.st("Cart is empty").'</p>';
+		}
+		$output .= _shop_order_payment_status($order);
+	} else {
+		$blocks_output['user'] = _shop_order_user($order, true);
+		$blocks_output['delivery_address'] = _shop_order_user($order, false);
+		$blocks_output['invoice_address'] = $blocks_output['delivery_address'];
+		$blocks_output['date'] = date('D, d M Y', strtotime($order['order_datetime']));
+		$blocks_output['status'] .= _shop_order_payment_status($order, false);
+		
+		$cart['items'] = array();
+	
+		if(is_array($order['order_items']) && count($order['order_items'])>0) {
+			$blocks_output['items'] = '<table class="order_summary">';
+			foreach($order['order_items'] as $xkey => $entry) {
+				if(stristr($item_id, "::")) {
+					list($item_id, $key_option) = explode("::", $item_id);
+				} else {
+					$key_option = false;
+				}
+				$key = $entry['item_id'];
+				$key_option = $entry['item_option'];
+				if($key_option) {
+					$key = $key ."::". $key_option;
+				}
+	
+				$cart['items'][$key] = $entry['order_no_items'];
+	
+				// load entry if it exists
+				$entries[$key] = $PIVOTX['db']->read_entry($entry['item_id']);
+				//debug_printr($entries[$key]);
+				if($key_option) {
+					$entries[$key]['item_product_options'] = _shop_load_entry_options($entries[$key]);
+					$entries[$key]['option_key'] = $key_option;
+					$entries[$key]['option_label'] = $entries[$key]['item_product_options'][$key_option];
+				
+					$option_label = ' <span class="option">'.$entries[$key]['option_label'].'</span>';
+	
+				} else {
+					$option_label = '';
+				}
+
+				if($entries[$key]['item_cart_title']=='') {
+					if($entries[$key]['extrafields']['cart_title']!="") {
+						$entries[$key]['item_cart_title'] = $entries[$key]['extrafields']['cart_title'];
+					} else {
+						$entries[$key]['item_cart_title'] = $entries[$key]['title'];
+					}
+				}
+	
+				$entries[$key]['pricedisplay'] = ($entries[$key]['pricedisplay'])?$entries[$key]['pricedisplay']:_shop_pricedisplay($entries[$key]);
+				$oddclass = !($oddclass)?'odd':'';
+				$blocks_output['items']  .= '<tr class="'.$oddclass.'">';
+				$blocks_output['items']  .= '<td class="title-of-item"><span>'. $entries[$key]['item_cart_title'] . $option_label .'</span></td>';
+				$blocks_output['items']  .= '<td class="singleprice">'.$entries[$key]['pricedisplay'].'</td>';
+				$blocks_output['items']  .= '<td class="times">'.st('&times;').'</td>';
+				$blocks_output['items']  .= '<td class="no-items"><strong>'.$entry['order_no_items'].' </strong></td>';
+				$blocks_output['items']  .= '<td class="is">&nbsp;</td>';
+				$totaldisplay = _shop_pricetotaldisplay($entries[$key], $entry['order_no_items']);
+				$blocks_output['items']  .= '<td class="totalprice">'.$totaldisplay.'</td>';
+				$num += $entry['order_no_items'];
+				$blocks_output['items']  .= '</tr>';
+			}
+			
+			$blocks_output['items']  .= '<tr class="totals"><td colspan="6"><em>'.$num.'</em> '.st('items in order').'.</td></tr>';
+	
+			if($PIVOTX['config']->get('shop_use_shipping')==true) {
+				$cart = _shop_total_shipping($cart);
+				$blocks_output['items']  .= '<tr class="totals odd"><td colspan="4"></td><td>'.st('Shipping costs').'</td><td class="totalprice" colspan="1">'.$cart['shipping']['display']['full'].'</td></tr>';
+			}
+			
+			$totals = _shop_cart_total_amounts($cart, $entries);
+			$blocks_output['items']  .= '<tr class="totals odd"><td colspan="4"></td><td>'.st('Total').'</td><td class="totalprice" colspan="1">'.$totals['display_amount_checkout'].'</td></tr>';
+			$blocks_output['items']  .= "</table>";
+		} else {
+			$blocks_output['items']  .= '<p class="totals">'.st("Cart is empty").'</p>';
+		}
+		$output = $blocks_output;
+	}
+
 	return $output;
 }
 
 /**
  * show the personal details of a customer
  */
-function _shop_order_user($order) {
-	
-	$output = "<h4>".st("Your personal data")."</h4>";
+function _shop_order_user($order, $verbose=true) {
+	$output = '';
+	if($verbose) {
+		$output .= "<h4>".st("Your personal data")."</h4>";
+	}
 	$output .= '<table class="personaldata">';
-	$output .= "<tr><td>".st("Name").":</td><td>".$order['user_name']."</td></tr>";
-	$output .= "<tr><td>".st("Email").":</td><td>".$order['user_email']."</td></tr>";
-	$output .= "<tr><td>".st("Phone").":</td><td>".((!empty($order['user_phone']))?$order['user_phone']:st('Not entered'))."</td></tr>";
-	$output .= '<tr><td rowspan="3">'.st("Address").":</td><td>".nl2br($order['user_address'])."</td></tr>";
-	$output .= "<tr><td>".$order['user_postcode'] .' '. $order['user_city']."</td></tr>";
-	$output .= "<tr><td>".$order['user_country']."</td></tr>";	
+	$output .= '<tr class="name"><td>'.st("Name").":</td><td>".$order['user_name']."</td></tr>";
+	if($verbose) {
+		$output .= '<tr class="email"><td>'.st("Email").":</td><td>".$order['user_email']."</td></tr>";
+		$output .= '<tr class="phone"><td>'.st("Phone").":</td><td>".((!empty($order['user_phone']))?$order['user_phone']:st('Not entered'))."</td></tr>";
+	}
+	$output .= '<tr class="address"><td>'.st("Address").":</td><td>".nl2br($order['user_address'])."</td></tr>";
+	$output .= '<tr class="address"><td>&nbsp;</td><td>'.$order['user_postcode'] .' '. $order['user_city']."</td></tr>";
+	$output .= '<tr class="address"><td>&nbsp;</td><td>'.$order['user_country']."</td></tr>";	
 	$output .= "</table>";
 
 	return $output;
@@ -1305,26 +1397,34 @@ function _shop_order_user($order) {
  *
  * TODO: Better payment plugin support
  */
-function _shop_order_payment_status($order) {
+function _shop_order_payment_status($order, $verbose=true) {
 	global $PIVOTX;
 	$hook = _shop_load_hook('payment_info', $order['payment_provider']);
 	
 	$paymentprovider = $PIVOTX['extensions']->executeHook($hook, $order['payment_provider']);
 	
+	$output = '';
+	
 	if(
 		$order['payment_provider'] == 'mollie'
 		&& $order['payment_status'] == 'Success'
 	) {
-		$output = '<h4>'. st('Payment successful') .'</h4>';
+		if($verbose) {
+			$output = '<h4>'. st('Payment successful') .'</h4>';
+		}
 		$output .= '<p>'. st('Payment handled by') .': '.$paymentprovider.'</p>';
 	} elseif(
 		$order['payment_provider'] == 'ogone'
 		&& in_array($order['payment_status'], array('9: Payment requested','5: Authorized'))
 	) {
-		$output = '<h4>'. st('Payment successful') .'</h4>';
+		if($verbose) {
+			$output = '<h4>'. st('Payment successful') .'</h4>';
+		}
 		$output .= '<p>'. st('Payment handled by') .': '.$paymentprovider.'</p>';
 	} else {
-		$output = '<h4>'. st('Payment incomplete') .'</h4>';
+		if($verbose) {
+			$output = '<h4>'. st('Payment incomplete') .'</h4>';
+		}
 		$output .= '<p>'. st('You will receive a message with further instructions for payment.') .'</p>';
 	}
 
@@ -1442,6 +1542,7 @@ function _shop_get_mailtemplate($status) {
 	//debug('get mail template for '.$status .' so '. $mailtemplates[$status]);
 
 	$templatename = dirname(dirname(__FILE__)) .'/'. $PIVOTX['config']->get($mailtemplates[$status]);
+	
 	//debug('attempting '.  $templatename . ' ...');
 	if(file_exists($templatename)) {
 		//debug( $templatename . ' exists');
@@ -1461,13 +1562,12 @@ function _shop_get_mailtemplate($status) {
  */
 function _shop_order_mail_default($status, $order) {
 	global $PIVOTX;
+	
 	//debug('get template for status: ' . $status);
-	
-	
 	$templatename = _shop_get_mailtemplate($status);
-
 	//debug('get template: ' . $templatename);
 	if(class_exists('pivotmail')) {
+		
 		$template = pivotmail::read_mail_template($templatename);
 		$macros = array();
 		
@@ -1477,6 +1577,7 @@ function _shop_order_mail_default($status, $order) {
 
 		pivotmail::set_sender($macros['[[from_name]]'], $macros['[[from_email]]']);
 
+		//debug('sender set: '. $PIVOTX['config']->get('shop_email_name'));
 		// order specific macros
 		$macros['[[status]]'] = $status;
 		$macros['[[sitename]]'] = $PIVOTX['config']->get('sitename');
@@ -1490,10 +1591,20 @@ function _shop_order_mail_default($status, $order) {
 			$macros['[['.$label.']]'] = $value;
 		}
 		$macros['[[order_summary]]'] = _shop_order_summary($order);
-
+		$order_summary =  _shop_order_summary($order, true);
+		$macros['[[order_summary_delivery_address]]'] = $order_summary['delivery_address'];
+		$macros['[[order_summary_invoice_address]]'] = $order_summary['invoice_address'];
+		$macros['[[order_summary_date]]'] = $order_summary['date'];
+		$macros['[[order_summary_items]]'] = $order_summary['items'];
+		$macros['[[order_summary_status]]'] = $order_summary['status'];
 		//$template = strtr($template, $macros);
 
-		if(stristr($template, '<body>')) {
+		$htmlmailheader = "Return-path: ".$PIVOTX['config']->get('shop_email_address');
+		pivotmail::add_header($htmlmailheader);
+		
+		if(0&&stristr($template, '<body>')) {
+			$htmlmailheader = "MIME-Version: 1.0";
+			pivotmail::add_header($htmlmailheader);
 			$htmlmailheader = "Content-Type: text/html; charset=utf-8";
 			pivotmail::add_header($htmlmailheader);
 			$htmlmailheader = "Content-Transfer-Encoding: quoted-printable";
@@ -1502,10 +1613,13 @@ function _shop_order_mail_default($status, $order) {
 		
 		// always bcc shop owner
 		$bccowner = true;
-
+		//mail($to_name, $to_email, $template, $macros=false, $bccself=false)
 		$order['mail_result'] = pivotmail::mail($macros['[[user_name]]'], $macros['[[user_email]]'], $template, $macros, $bccowner);
 		
 	} else {
+		
+		debug('mail class is missing');
+		
 		$order['mail_result'] = 'pivotmail class is missing';
 	}
 	return $order;

@@ -74,6 +74,9 @@ jQuery(function($){
             if($(this).attr("value")==shopcategory) {
                 found = true;
             }
+            if((shopextrascategory!='') && ($(this).attr("value")==shopextrascategory)) {
+                found = true;
+            }
         });
      
         if (found) {

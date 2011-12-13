@@ -1,7 +1,7 @@
 Shop for PivotX
 
-*   Version: 0.2-37
-*   Date: 2011-10-07
+*   Version: 0.2-39
+*   Date: 2011-12-12
 *   Author: Two Kings // [Lodewijk Evers](mailto:lodewijk@twokings.nl)
 *   Support: n/a
 *   Download: n/a

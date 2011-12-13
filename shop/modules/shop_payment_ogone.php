@@ -20,7 +20,7 @@ function _ogone_payment_methods(&$defaultvalues) {
 
     if($has_payment_ogone_ideal) {
         $defaultvalues['payment_provider']['options']['ogone'] = array(
-                        'label' => st('iDEAL via Ogone.nl'),
+                        'label' => _ogone_payment_info('ogone'),
                         'value' => 'ogone',
                         'text' => st('Continue to pay using iDEAL via Ogone.nl'),
                         'charge_incl_tax' => 0,
@@ -543,19 +543,25 @@ $this->addHook(
 function _ogone_report_page($orderandparams) {
     global $PIVOTX;
     
-    //debug('ogone report orderandparams');
-    //debug_printr($orderandparams);
+    if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
+		debug('ogone report orderandparams');
+		debug_printr($orderandparams);
+	}
     
     $order = $orderandparams['order'];
     $params = $orderandparams['params'];
     
     $ordertotals = $order->getOrderTotals();
-    //debug_printr($ordertotals);
+    if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
+		debug_printr($ordertotals);
+	}
     $order_id = $order->getOrderId();
     $order_details = $order->getOrderDetails();
     
-    //debug('ogone report order_details');
-    //debug_printr($order_details);
+    if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
+		debug('ogone report order_details');
+		debug_printr($order_details);
+	}
     
     if($PIVOTX['config']->get('shop_ogone_testmode')) {
         debug('starting transaction report: '.$order_id);
@@ -598,13 +604,18 @@ function _ogone_report_page($orderandparams) {
         if($PIVOTX['config']->get('shop_ogone_testmode')) {
             debug('order shasign = valid');
         }
-        
-        if($order_details['totals']['cumulative_incl_tax'] != ($params['amount']*100)) {
+		if(0 && $PIVOTX['config']->get('shop_ogone_testmode')) {
+		    debug_printr($order_details);
+		}
+		debug('amount: '.$params['amount'] .' ==? order incl tax: '.$order_details['totals']['cumulative_incl_tax']);
+        if(round($order_details['totals']['cumulative_incl_tax']) != round($params['amount']*100)) {
             debug('order amount not valid!');
             $order_details['order_status'] = 'error';
             $order_details['payment_datetime'] = date("Y-m-d H:i:s", time());
-            $order_details['payment_message'] = $order_details['payment_message'] . "\n". $params['STATUS'] ." - " .  $returncodes[$params['STATUS']] . ': amount code does not match';
+            $order_details['payment_message'] = $order_details['payment_message'] . "\n". $params['STATUS'] ." - " .  $returncodes[$params['STATUS']] . ': amount code does not match ('.($params['amount']*100).' should be '.$order_details['totals']['cumulative_incl_tax'].')';
             $order_details['payment_status'] = 'error';
+			$order_details['payment_amount'] = $params['amount']*100;
+			
             $order_details = _shop_save_order($order_details);
             print 'error';
             if($PIVOTX['config']->get('shop_ogone_testmode')) {
@@ -816,6 +827,12 @@ function _ogone_return_page($orderandparams) {
         } else {
             $params['body'] = '<p>'. $output .'</p>';
         }
+		
+        // drop a mail with instructions
+		debug('order ogone returned - sending mail using template: '.$order_details['payment_provider'].'_return_tpl');
+		debug_printr($order_details);
+        $order_details = _shop_order_mail_default($order_details['payment_provider'].'_return_tpl', $order_details);
+		
         $return_url = $PIVOTX['config']->get('shop_default_homepage', '/index.php?w=shop');
         $params['body'] .= '<p><a href="'.$return_url.'" class="continue_shopping">'. st('Continue shopping') .'</a></p>';
     } else {
@@ -842,7 +859,7 @@ $this->addHook(
 
 function _ogone_payment_info($label) {
     if ($label=='ogone') {
-        return '<span class="ideal_label">iDEAL</span> met <a href="http://www.ogone.nl" class="ogone_label">ogone.nl</a>';
+        return '<span class="ideal_label">iDEAL</span> via ogone.nl';
     }
     return $label;
     

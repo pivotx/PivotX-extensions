@@ -1,10 +1,10 @@
 <?php
 // - Extension: Shop
-// - Version: 0.2-37
+// - Version: 0.2-39
 // - Author: Two Kings // Lodewijk Evers
 // - E-mail: lodewijk@twokings.nl
 // - Description: A plug and play shop extension (needs pivotx 3 or higher)
-// - Date: 2011-10-07
+// - Date: 2011-12-12
 // - Identifier: shop
 // - Required PivotX version: 3
 
@@ -54,6 +54,8 @@ function _shop_initialize_callback() {
         'success',
         'failure',
         'cancel',
+        'editextra',
+        'delextra',
         // --- overly verbose
         'addtocart',
         'updatecart',
@@ -134,6 +136,12 @@ function _shop_initialize_callback() {
             case 'cancel':
                 shop_cancel_page($params);
                 break;
+
+            case 'editextra':
+            case 'delextra':
+                shop_extra_page($params);
+                break;
+
             default:
                 shop_error_page();
         }

@@ -25,6 +25,7 @@ The available parameters are:
    insert the correct link to the current entry or page.
  - text - The text to tweet. Usually you can leave this blank, because PivotX will
    insert the title of the current entry or page.    
+ - size - The size of the Tweet button, 'medium' (default) or 'large'.
  - button - there are three options. Omit this parameter for 'horizontal'
    - vertical - Vertical layout. Button is higher than with the other options.
    - horizontal - Compact horizontal layout.

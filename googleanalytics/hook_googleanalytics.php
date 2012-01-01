@@ -1,11 +1,11 @@
 <?php
 // - Extension: Google Analytics
-// - Version: 0.7
+// - Version: 0.7.1
 // - Author: Wim Bekkers / Bob den Otter
 // - Email: wim@tellertest.com / Bob@pivotx.net
 // - Site: http://tellertest.com/pivotextensions/
 // - Description: Add the Google Analytics code to your PivotX pages with full control over tracking code customization. Display an overview of stats on the Dashboard screen
-// - Date: 2011-07-18
+// - Date: 2012-01-01
 // - Identifier: googleanalytics
 
 

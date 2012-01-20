@@ -1,11 +1,11 @@
 <?php
 // - Extension: Image Tools
-// - Version: 0.6.1
+// - Version: 0.7
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A collection of small tools to simplify handling images in your content.
-// - Date: 2011-07-09
+// - Date: 2012-01-20
 // - Identifier: imagetools
 // - Required PivotX version: 2.2.4
 
@@ -93,6 +93,11 @@ function smarty_thumbnail($params, &$smarty) {
     if (!empty($params['link'])) {
         
         $linkmaxsize = getDefault($params['linkmaxsize'], 1000);
+        $uplbasepath = $PIVOTX['paths']['upload_base_path'];
+        list($srcw, $srch) = getimagesize($uplbasepath.$params['src']);
+        // list won't work for images on other locations; continue linkmaxsize for such situations
+        if (!$srcw || $srcw > $linkmaxsize) { $srcw = $linkmaxsize; }
+        if (!$srch || $srch > $linkmaxsize) { $srch = $linkmaxsize; }
         
         if (empty($params['htmlwrap']) && empty($params['htmlwrapper'])) {
             $link = $PIVOTX['paths']['pivotx_url'] . "includes/timthumb.php?"; 
@@ -114,14 +119,15 @@ function smarty_thumbnail($params, &$smarty) {
         
         $linkparams = array();
         $linkparams[] = "src=" . base64_encode($params['src']);
-        $linkparams[] = "w=" . $linkmaxsize;
-        $linkparams[] = "h=" . $linkmaxsize;
+        $linkparams[] = "w=" . $srcw;
+        $linkparams[] = "h=" . $srch;
         $linkparams[] = "fit=1";
         $linkparams[] = "type=." . getExtension($params['src']);
 
         $link = $link . implode("&amp;", $linkparams);
             
-        $link = sprintf("<a href=\"%s\"%s%s target='%s'>%s</a>", $link, $rel, $class, $target, $img);
+        $link = sprintf("<a href=\"%s\"%s%s title='%s' target='%s'>%s</a>", 
+            $link, $rel, $class, $title, $target, $img);
         
         return $link;
         

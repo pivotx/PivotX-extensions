@@ -1,11 +1,11 @@
 <?php
 // - Extension: Image Tools
-// - Version: 0.7
+// - Version: 0.7.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A collection of small tools to simplify handling images in your content.
-// - Date: 2012-01-20
+// - Date: 2012-01-23
 // - Identifier: imagetools
 // - Required PivotX version: 2.2.4
 
@@ -50,14 +50,17 @@ function smarty_thumbnail($params, &$smarty) {
         $imgparams[] = "src=".base64_encode($params['src']);
     }
 
+    $whcombined = "";
     if (!empty($params['w'])) {
         $imgparams[] = "w=".$params['w'];
+        $whcombined  = "width=".$params['w'];
     }
 
     if (!empty($params['h'])) {
         $imgparams[] = "h=".$params['h'];
+        $whcombined  .= " height=".$params['h'];
     }
-    // if not specified timthumb default will be used (or when it is overriden by timthumb_zc setting)
+    // if not specified timthumb default will be used (see timthumb-config.php)
     if (!empty($params['zc'])) {
         $imgparams[] = "zc=".$params['zc'];
     }   
@@ -72,7 +75,7 @@ function smarty_thumbnail($params, &$smarty) {
     $target = getDefault($params['target'], "_blank");
 
     if (empty($title)) {
-        $title = basename($url);
+        $title = basename($params['src']);
     }
 
     if (!empty($params['class'])) {
@@ -81,11 +84,10 @@ function smarty_thumbnail($params, &$smarty) {
         $class = "";
     }
 
-    $img = sprintf("<img src=\"%s\" alt=\"%s\" width=\"%s\" height=\"%s\"%s />",
+    $img = sprintf("<img src=\"%s\" alt=\"%s\" %s %s />",
         $url,
         htmlentities($title, ENT_QUOTES),
-        $params['w'],
-        $params['h'],
+        $whcombined,
         $class
     );
 

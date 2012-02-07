@@ -1,11 +1,11 @@
 <?php
 // - Extension: Mobile Browser Extension
-// - Version: 0.6
+// - Version: 0.7
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A snippet extension to detect mobile browsers, and redirect them to a specific page.
-// - Date: 2011-01-13
+// - Date: 2012-02-07
 // - Identifier: mobile
 // - Required PivotX version: 2.2.3
 
@@ -116,23 +116,26 @@ if ( defined('PIVOTX_INWEBLOG') && ($PIVOTX['config']->get('mobile_domain') != $
                     'insert_after_open_body',
                     $linktext
                 );
-                
             }
-            
         }
-            
     }
-    
 }
 
 
 
 function mobileHook(&$params) {
     global $PIVOTX;
-    
-    
-    // Only change the templates when we're at the correct (sub)domain
-    if ($PIVOTX['config']->get('mobile_domain') != $_SERVER['HTTP_HOST'] ) {
+
+    // Only run this hook if we are on a mobile device (or a tablet and we 
+    // treat it as a mobile).
+    $allowTablet = ( isTablet() && !$PIVOTX['config']->get('mobile_treat_tablet_as_mobile') );
+    if (!isMobile() || $allowTablet) {
+        return;
+    }
+ 
+    // Only change the templates when we're at the correct (sub)domain or we 
+    // haven't chosen to see the full version.
+    if (($PIVOTX['config']->get('mobile_domain') != $_SERVER['HTTP_HOST']) || !empty($_COOKIE['mobileversion'])){
         return;
     }
 
@@ -264,7 +267,7 @@ function mobileAdmin(&$form_html) {
 
     // When running for the first time, set the default options, if they are not available in config..
     foreach ($mobiledetect_config as $key => $value) {
-        if ($PIVOTX['config']->get($key)==="") {
+        if ($PIVOTX['config']->get($key) === false) {
             $PIVOTX['config']->set($key, $value);
         }
     }

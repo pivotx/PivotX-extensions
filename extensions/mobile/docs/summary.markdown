@@ -17,6 +17,9 @@ use as the mobile version. So, if your domain name is `example.org` you should
 have a `mobile.example.org` or `m.example.org` set up, that shows the same
 content on both URLs.
 
+NB! The extension does work without using a subdomain. Just make sure that you
+set "Mobile Domain name" in the configuration to your normal domain name.
+
 How to do this might differ from server to server. Some ways to do this are:
 
   * Try it. Go to `m.example.org` (substitute your domain name, of course). Your

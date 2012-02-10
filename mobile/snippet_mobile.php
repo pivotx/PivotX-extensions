@@ -1,11 +1,11 @@
 <?php
 // - Extension: Mobile Browser Extension
-// - Version: 0.7
+// - Version: 0.7.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A snippet extension to detect mobile browsers, and redirect them to a specific page.
-// - Date: 2012-02-07
+// - Date: 2012-02-10
 // - Identifier: mobile
 // - Required PivotX version: 2.2.3
 
@@ -223,29 +223,27 @@ function smarty_mobilelink($params, &$smarty) {
     $to = getDefault($params['to'], "mobile");
 
     if ($to != "mobile") {
-        
-        $to = "full";
-        
         $link = $PIVOTX['config']->get('canonical_host');
-        if (strlen($_SERVER['REQUEST_URI'])>1) {
-            $link .= $_SERVER['REQUEST_URI'] . "&amp;mobilecookie=1";
-        } else {
-            $link .= "?mobilecookie=1";
-        }
-        
+        $query = 'mobilecookie=1';
         $text = getDefault($params['text'], "View the full version of this site.");
-        
     } else {
-        
         $link = "http://" . $PIVOTX['config']->get('mobile_domain');
-        if (strlen($_SERVER['REQUEST_URI'])>1) {
-            $link .= $_SERVER['REQUEST_URI'] . "&amp;mobilecookie=-1";
-        } else {
-            $link .= "?mobilecookie=-1";
-        }
-        
+        $query = 'mobilecookie=-1';
         $text = getDefault($params['text'], "View the mobile version of this site.");   
     }
+
+    if (strlen($_SERVER['REQUEST_URI'])>1) {
+        $link .= $_SERVER['REQUEST_URI'];
+    }
+
+    if (strpos($link, 'mobilecookie=') > 0) {
+        $link = str_replace(array('mobilecookie=1', 'mobilecookie=-1'), $query, $link);
+    } elseif (strpos($link, '?') === false) {
+        $link .= '?' . $query;
+    } else {
+        $link .= '&amp;' . $query;
+    }
+
     
     $output = sprintf("<a href='%s'>%s</a>", $link, $text);
     

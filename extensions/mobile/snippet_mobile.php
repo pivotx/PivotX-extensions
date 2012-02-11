@@ -1,11 +1,11 @@
 <?php
 // - Extension: Mobile Browser Extension
-// - Version: 0.7.1
+// - Version: 0.7.2
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A snippet extension to detect mobile browsers, and redirect them to a specific page.
-// - Date: 2012-02-10
+// - Date: 2012-02-11
 // - Identifier: mobile
 // - Required PivotX version: 2.2.3
 
@@ -158,12 +158,17 @@ function mobileHook(&$params) {
             $params['template'] = $PIVOTX['config']->get('mobile_page');
             break;
 
+        case "tag":
         case "search":
             $params['template'] = $PIVOTX['config']->get('mobile_extrapage');
             break;
 
+        // This default case is needed because of a bug in renderTag in PivotX 
+        // before version 2.3.2, that causes the "tag" case above to not work.
+        default:
+            $params['template'] = $PIVOTX['config']->get('mobile_extrapage');
+            break;
     }
-
 }
 
 

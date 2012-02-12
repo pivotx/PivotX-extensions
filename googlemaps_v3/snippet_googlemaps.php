@@ -1,11 +1,11 @@
 <?php
 // - Extension: Google Maps (Version 3)
-// - Version: 1.2
+// - Version: 1.2.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: Insert a Google Maps with an optional KML overlay using version 3 of the API.
-// - Date: 2011-04-28
+// - Date: 2012-02-12
 // - Identifier: googlemaps_v3
 
 global $googlemaps_v3_config;
@@ -148,13 +148,17 @@ EOF;
     $js_gmap_insert = <<<EOF
 <script type="text/javascript">
     function googlemaps_v3_initialize_%n%() {
+        var mapdiv = document.getElementById("googlemap_v3_%n%");
+        if (!mapdiv) {
+            return;
+        }
         var latlng =  new google.maps.LatLng(%lat%,%long%);
         var options = {
             zoom: %zoom%,
             center: latlng,
             mapTypeId: google.maps.MapTypeId.%maptype%
         };
-        var map = new google.maps.Map(document.getElementById("googlemap_v3_%n%"), options);
+        var map = new google.maps.Map(mapdiv, options);
 %address%
 %overlay%
     }

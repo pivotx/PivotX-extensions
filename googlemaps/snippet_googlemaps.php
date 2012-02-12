@@ -1,11 +1,11 @@
 <?php
 // - Extension: Google Maps
-// - Version: 1.0
+// - Version: 1.0.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: Insert a Google Maps with an optional KML overlay.
-// - Date: 2008-06-26
+// - Date: 2012-02-12
 // - Identifier: googlemaps
 
 $PIVOTX['template']->register_function('googlemaps', 'smarty_googlemaps');
@@ -44,7 +44,11 @@ EOF;
     $js_gmap_insert = <<<EOF
 <script type="text/javascript">
     function googlemaps_initialize_%n%() {
-        var map = new google.maps.Map2(document.getElementById("googlemap_%n%"));
+        var mapdiv = document.getElementById("googlemap_%n%");
+        if (!mapdiv) {
+            return;
+        }
+        var map = new google.maps.Map2(mapdiv);
         map.setCenter(new GLatLng(%lat%,%long%), %zoom%); 
         map.addControl(new GLargeMapControl());%overlay%
     }

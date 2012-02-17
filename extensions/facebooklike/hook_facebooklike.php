@@ -1,11 +1,11 @@
 <?php
 // - Extension: Facebook Like Button
-// - Version: 1.11
+// - Version: 1.12
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension to place a Facebook 'Like' button on your entries and pages.
-// - Date: 2011-03-25
+// - Date: 2012-02-17
 // - Identifier: facebooklikebutton
 
 // Register 'facebook_like' as a smarty tag.
@@ -28,6 +28,12 @@ function smarty_facebook_like($params, &$smarty) {
     $urlparams['action'] = "action=" . getDefault($params['action'], 'like');
     $urlparams['font'] = "font=" . getDefault($params['font'], 'arial');
     $urlparams['colorscheme'] = "colorscheme=" . getDefault($params['colorscheme'], 'light');
+    if (isset($params['locale'])) {
+        $urlparams['locale'] = "locale=" . $params['locale'];
+    }
+    if (isset($params['ref'])) {
+        $urlparams['ref'] = "ref=" . str_replace(' ','*',substr($params['ref'],0,50));
+    }
 
     if ((!isset($params['link'])) && (isset($params['href']))) {
         $params['link'] = $params['href'];

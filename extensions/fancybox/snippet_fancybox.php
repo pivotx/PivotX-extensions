@@ -1,11 +1,11 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.19
+// - Version: 0.20
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
 // - Description: Replace boring old Thickbox with a FancyBox!
-// - Date: 2011-07-21
+// - Date: 2012-02-17
 // - Identifier: fancybox 
 // - Required PivotX version: 2.2
 
@@ -84,11 +84,11 @@ function smarty_fancybox($params, &$smarty) {
     $imgh          = getDefault($PIVOTX['config']->get('upload_thumb_height'), 200);
     $uplbasepath   = $PIVOTX['paths']['upload_base_path'];
     // Config option 'fancybox_thumbnail' can be added and used as default for thumbnail behaviour
-    // 1 = always make sure the dimensions of the img tag are the same irrelevant of thumbnail size (default)
+    // 1 = always make sure the dimensions of the img tag are the same irrelevant of current thumbnail size
     //     (this means that when thumbnail gets created the upload width/height settings are used)
-    // 2 = if thumbnail already exists always use it's dimensions for the img tag
+    // 2 = if thumbnail already exists always use its dimensions for the img tag (default)
     // 3 = if thumbnail exists and doesn't adhere to current width/height setting recreate it
-    $fbthumb       = getDefault($PIVOTX['config']->get('fancybox_thumbnail'), 1);
+    $fbthumb       = getDefault($PIVOTX['config']->get('fancybox_thumbnail'), 2);
     $fbthumb       = getDefault($params['thumbbehav'], $fbthumb);
 
     // debug("fb info: '$filename'-'$thumbname'-'$title'-'$alt'-'$align'-'$fb_type'");

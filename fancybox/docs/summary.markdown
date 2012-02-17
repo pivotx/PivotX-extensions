@@ -140,9 +140,9 @@ Option 'fancybox\_thumbnail' can be used to specify the behaviour of the creatio
 and the setup of the img tag going with it.
 Possible values:
 
-  * **1** - (default) The width/height of the img tag are the same irrelevant of thumbnail size
+  * **1** - The width/height of the img tag are the same irrelevant of thumbnail size
             (this means that when thumbnail gets created the upload width/height settings are used)
-  * **2** - If thumbnail already exists always use it's dimensions for the img tag
+  * **2** - (default) If thumbnail already exists always use its dimensions for the img tag
   * **3** - If thumbnail exists and doesn't adhere to current width/height setting recreate it
 
 Warning!

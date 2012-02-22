@@ -17,7 +17,7 @@ the default button, with the default options selected.
 Several parameters are available to customize the button. For example, to insert
 a simpler button, use:
 
-	[[ twitterbutton text="Post on Twitter" link="http://example.org" button="vertical" username="example" ]]
+    [[ twitterbutton text="Post on Twitter" link="http://example.org" button="vertical" username="example" ]]
 
 The available parameters are:
 

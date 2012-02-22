@@ -4,7 +4,6 @@
 // - Author: Two Kings
 // - Email: lodewijk@twokings.nl
 // - Site: http://www.twokings.nl
-// - Updatecheck: http://www.pivotx.net/update.php?ext=publishpreview
 // - Description: An extension that makes it possible to send someone a previewlink for unpublished entries
 // - Date: 2011-05-26
 // - Identifier: publishpreview

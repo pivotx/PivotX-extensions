@@ -6,7 +6,7 @@
 // - Site: http://www.pivotx.net
 // - Description: Some examples to demonstrate the hooks for events that are used in caching.
 // - Date: 2009-09-15
-
+// - Identifier: test
 
 $this->addHook(
     'cache_before_write',

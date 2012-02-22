@@ -6,8 +6,7 @@
 // - Site: http://www.pivotx.net
 // - Description: This is a simple extension to demonstrate how to add hooks to the warning and messages that are shown by pivot. This extension will display a warning on the dashboard 50% of the times that it is requested, and it will show a message on all pages, also 50% of the time.
 // - Date: 2007-09-23
-
-
+// - Identifier: warning
 
 // Options for hooks are:
 // - before_checkwarnings

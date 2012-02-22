@@ -4,7 +4,6 @@
 // - Author: Two Kings // Marcel Wouters // Lodewijk Evers
 // - Email: marcel@twokings.nl // lodewijk@twokings.nl
 // - Site: http://twokings.nl/
-// - Updatecheck: none
 // - Description: Pivotx mail extension
 // - Date: 2011-05-17
 // - Identifier: pivotmail

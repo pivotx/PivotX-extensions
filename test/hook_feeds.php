@@ -6,7 +6,7 @@
 // - Site: http://www.pivotx.net
 // - Description: Some examples to demonstrate the hooks for RSS and Atom feeds.
 // - Date: 2008-10-02
-
+// - Identifier: test
 
 $this->addHook(
     'feed_rss_template',

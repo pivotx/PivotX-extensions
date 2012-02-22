@@ -1,12 +1,12 @@
 <?php
 // - Extension: Twitter Button
-// - Version: 1.0.2
+// - Version: 1.0.3
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension to place a Twitter button on your entries and pages.
-// - Date: 2012-01-01
-// - Identifier: twi1tterbutton
+// - Date: 2012-02-22
+// - Identifier: twitterbutton
 
 // Register 'twitterbutton' as a smarty tag.
 $PIVOTX['template']->register_function('twitterbutton', 'smarty_twitterbutton');

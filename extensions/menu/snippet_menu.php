@@ -1,12 +1,13 @@
 <?php
 // - Extension: Hierarchical menus
-// - Version: 1.0
+// - Version: 1.0.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: Add hierarchical menus to your website
-// - Date: 2010-07-15
+// - Date: 2012-02-22
 // - Required PivotX version: 2.0.2
+// - Identifier: menu
 
 // Register 'menu' as a smarty tag.
 $PIVOTX['template']->register_function('menu', 'smarty_menu');

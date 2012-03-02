@@ -6,7 +6,7 @@
 // - Site: http://www.pivotx.net
 // - Description: A simple example to demonstrate 'Hello world' as a Hook Extension. This will insert small bits of text or code in various places of the output HTML.
 // - Date: 2007-05-20
-// - Identifier: hello_world-hook
+// - Identifier: hello-world-hook
 
 
 /**

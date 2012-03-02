@@ -6,7 +6,7 @@
 // - Site: http://www.pivotx.net
 // - Description: A simple example to demonstrate 'Hello world' as a Widget Extension.
 // - Date: 2007-05-20
-// - Identifier: hello_world-widget
+// - Identifier: hello-world-widget
 
 /**
  * Adds the hook for the actual widget. We just use the same

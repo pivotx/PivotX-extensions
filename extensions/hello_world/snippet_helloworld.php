@@ -1,12 +1,12 @@
 <?php
 // - Extension: Hello world snippet
-// - Version: 1.0
+// - Version: 0.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
-// - Description: A small 'Hello World' extension snippet.
+// - Description: A small 'Hello World' extension snippet (this one has the regular Identifier).
 // - Date: 2007-05-20
-// - Identifier: hello_world-snippet
+// - Identifier: hello-world
 
 
 /**

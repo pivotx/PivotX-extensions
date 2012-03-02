@@ -1,11 +1,11 @@
 <?php
 // - Extension: Google 'Plus 1' Button
-// - Version: 1.0.2
+// - Version: 1.0.3
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension to place a Google 'Plus 1' button on your entries and pages.
-// - Date: 2011-07-02
+// - Date: 2012-03-02
 // - Identifier: plusonebutton
 
 // Register 'plusonebutton' as a smarty tag.
@@ -39,7 +39,7 @@ function smarty_plusonebutton($params, &$smarty) {
     if (empty($params['lang'])) {
         $lang = $PIVOTX['config']->get('language');
     } else {
-        $size = safe_string($params['lang']);    
+        $lang = safe_string($params['lang']);    
     }    
 
     if (!empty($params['link'])) {

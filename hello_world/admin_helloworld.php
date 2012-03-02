@@ -6,7 +6,7 @@
 // - Site: http://www.pivotx.net
 // - Description: A simple example to demonstrate the 'Hello world' administration page.
 // - Date: 2007-05-20
-// - Identifier: hello_world-admin
+// - Identifier: hello-world-admin
 
 
 /**

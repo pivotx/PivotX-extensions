@@ -1,11 +1,11 @@
 <?php
 // - Extension: Slideshow
-// - Version: 0.8
+// - Version: 0.9
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A snippet and widget to add a slideshow to your site or entries/pages/templates.
-// - Date: 2011-07-12
+// - Date: 2012-03-15
 // - Identifier: slideshow
 // - Required PivotX version: 2.0.2
 
@@ -139,7 +139,7 @@ function smarty_slideshow($params) {
 
     $js_insert = <<<EOF
 <script type="text/javascript">
-$(window).bind("load", function(){
+jQuery(window).bind("load", function(){
     jQuery("div#pivotx-slideshow-%count%").slideView(%parms%);
     setTimeout('slideNext_%count%()', %timeout%);
 });

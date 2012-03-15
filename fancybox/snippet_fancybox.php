@@ -1,11 +1,11 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.20
+// - Version: 0.21
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
 // - Description: Replace boring old Thickbox with a FancyBox!
-// - Date: 2012-02-17
+// - Date: 2012-03-15
 // - Identifier: fancybox 
 // - Required PivotX version: 2.2
 
@@ -127,6 +127,17 @@ function smarty_fancybox($params, &$smarty) {
                 list($thumbw, $thumbh) = getimagesize($uplbasepath.$thumbname);
                 //debug("dimensions of thumbnail: " . $thumbw . "/" . $thumbh);
                 //debug("imgw/h: " . $imgw . "/" . $imgh);
+                //debug("maxthumb: " . $maxthumb);
+                if ($maxthumb > 0) {
+                // specthumbmax specified: calculate the right values (useful for vertical images)
+                    if ($thumbw > $thumbh) {
+                        $imgh = round($thumbh * ($maxthumb / $thumbw));
+                        $imgw = $maxthumb;
+                    } else {
+                        $imgw = round($thumbw * ($maxthumb / $thumbh));
+                        $imgh = $maxthumb;   
+                    }
+                }
                 if ($thumbw != $imgw || $thumbh != $imgh) {
                     $recreate = 1;
                     //debug("thumb will be recreated");

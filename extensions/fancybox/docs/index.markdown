@@ -45,8 +45,18 @@ Grouping of images using the optional __`rel_id`__ parameter (only for images):
 You can use this extension also to insert popups of a __YouTube__ video: 
 (notice the difference between url/movid parms!) 
 
-    [[popup description="Rammstein!" fb_type="youtube" movid="WNcQ5VE1vWI"]]
-    [[popup description="Epica!" fb_type="youtube" url="http://www.youtube.com/v/jVkJkcvaA1A"]]
+    [[popup description="Rammstein!" fb_type="youtube" movid="uPMHzPBrZeI"]]
+    [[popup description="Epica!" fb_type="youtube" url="http://www.youtube.com/v/J3BCshj_fqk"]]
+
+but these will also work:
+
+    [[popup description="Epica!" fb_type="youtube" url="http://www.youtube.com/watch?v=J3BCshj_fqk"]]
+    [[popup description="Epica!" fb_type="youtube" url="http://www.youtube.com/embed/J3BCshj_fqk"]]
+    [[popup description="Epica!" fb_type="youtube" url="http://youtu.be/J3BCshj_fqk"]]
+
+and also a start time of the video can be specified:
+
+    [[popup description="Epica!" fb_type="youtube" url="http://www.youtube.com/watch?v=J3BCshj_fqk&t=2m51s"]]
 
 Or show a __Vimeo__ video in a popup: 
 (also notice the difference between url/movid parms!)
@@ -71,7 +81,7 @@ Or create an __Iframe__ to open up a weblink:
 
     [[popup description="A webwindow" title="Google" fb_type="iframe" url="http://www.google.com"]]
 
-    [[popup description="Own window" title="My page" fb_type="iframe" url="pivotx/docs/FBsample.php"]]
+    [[popup description="Own window" title="My page" fb_type="iframe" url="../../pivotx/docs/FBsample.php"]]
 
 Or popup a __SWF/Flash__:
 

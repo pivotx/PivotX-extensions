@@ -1,11 +1,11 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.21
+// - Version: 0.22
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
 // - Description: Replace boring old Thickbox with a FancyBox!
-// - Date: 2012-03-15
+// - Date: 2012-03-21
 // - Identifier: fancybox 
 // - Required PivotX version: 2.2
 
@@ -271,8 +271,38 @@ function smarty_fancybox($params, &$smarty) {
         if (empty($movid) && empty($url)) {
             debug("Popup type youtube/vimeo needs either a 'movid' or a fully qualified 'url' parm!");
         } 
+        $movstart = 0;
         if (empty($movid)) {
             $movthumb = formatFilename($url);
+            $movthumb = str_replace('watch?v=', '', $movthumb);
+            $movtime  = '';
+            // link contains time parm? &t=
+            if (strpos($movthumb, "&t=")) { 
+                $timepos  = strpos($movthumb, "&t=");
+                $movtime  = substr($movthumb,$timepos+3);
+                $movthumb = substr($movthumb,0,$timepos); 
+            } 
+            // short link supplied with time parm?
+            if (strpos($movthumb, "?t=")) { 
+                $timepos  = strpos($movthumb, "?t=");
+                $movtime  = substr($movthumb,$timepos+3);
+                $movthumb = substr($movthumb,0,$timepos); 
+            } 
+            // calculate the amount of seconds to supply to the player
+            if ($movtime != '') {
+                $movh = 0; $movm = 0; $movs = 0;
+                $hpos = strpos($movtime, "h");
+                if ($hpos) { $movh = substr($movtime,0,$hpos); $movtime = substr($movtime,$hpos+1); }
+                $mpos = strpos($movtime, "m");
+                if ($mpos) { $movm = substr($movtime,0,$mpos); $movtime = substr($movtime,$mpos+1); }
+                $spos = strpos($movtime, "s");
+                if ($spos) { $movs = substr($movtime,0,$spos); $movtime = substr($movtime,$spos+1); }
+                if (is_numeric($movh)) { $movstart = ($movh * 3600); } 
+                if (is_numeric($movm)) { $movstart = $movstart + ($movm * 60); } 
+                if (is_numeric($movs)) { $movstart = $movstart + $movs; } 
+            }
+            // formatFilename replaces underscore by space -- undo this
+            $movthumb = str_replace(' ', '_', $movthumb);
             if ($fb_type=="vimeo"){
                 // possible formats: http://www.vimeo.com/moogaloop.swf?clip_id=6566857 
                 //                   http://www.vimeo.com/5324878
@@ -296,7 +326,7 @@ function smarty_fancybox($params, &$smarty) {
         if ($fb_type=="youtube"){
             $urlthumb = "http://i2.ytimg.com/vi/" . $movthumb . "/default.jpg";
         } else if ($fb_type=="vimeo"){
-            $urlvimphp = "http://vimeo.com/api/clip/" . $movthumb . "/php";
+            $urlvimphp = "http://vimeo.com/api/v2/video/" . $movthumb . ".php";
             $vimeocontents = @file_get_contents($urlvimphp);
             $thumbcontents = @unserialize(trim($vimeocontents));
             $urlthumb = $thumbcontents[0][thumbnail_small];
@@ -325,7 +355,13 @@ function smarty_fancybox($params, &$smarty) {
 
         // options for vimeo just found by browsing through Google
         if (empty($movid)) {
-            $urlmain = $url;
+            $urlmain = str_replace('watch?v=', 'v/', $url);
+            $urlmain = str_replace('/embed/', '/v/', $urlmain);
+            // convert a short link to a long one otherwise it won't work (if parms were in link they are now gone)
+            // also if time parm was found the link needs to be reformatted to obligatory format
+            if (strpos($urlmain, "//youtu.be/") || $movstart != 0) { 
+                $urlmain = "http://www.youtube.com/v/" . $movthumb;
+            }
             $urlid   = "";
         } else {
             if ($fb_type=="youtube"){
@@ -337,7 +373,7 @@ function smarty_fancybox($params, &$smarty) {
             }   
         }
         if ($fb_type=="youtube"){
-            $urlextra = "&amp;hl=en&amp;autoplay=1&amp;rel=0&amp;fs=1";
+            $urlextra = "&amp;hl=en&amp;autoplay=1&amp;rel=0&amp;fs=1&amp;start=" . $movstart;
         } else if ($fb_type=="vimeo"){
             $urlextra = "&amp;server=vimeo.com&amp;autoplay=1&amp;fullscreen=1&amp;show_title=1&amp;show_byline=0&amp;show_portrait=0";
         }    

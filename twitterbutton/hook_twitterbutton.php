@@ -1,11 +1,11 @@
 <?php
 // - Extension: Twitter Button
-// - Version: 1.0.3
+// - Version: 1.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension to place a Twitter button on your entries and pages.
-// - Date: 2012-02-22
+// - Date: 2012-03-30
 // - Identifier: twitterbutton
 
 // Register 'twitterbutton' as a smarty tag.
@@ -25,6 +25,9 @@ function smarty_twitterbutton($params, &$smarty) {
     $button = getDefault($params['button'], 'horizontal');
     $username = getDefault($params['username'], '');
     $size = getDefault($params['size'], 'medium');
+    $related = getDefault($params['related'], '');
+    $hashtags = getDefault($params['hashtags'], ''); // can contain more than 1 comma separated
+    $lang = getDefault($params['lang'], $PIVOTX['config']->get('language'));
 
     if (!empty($params['link'])) {
         $link = addslashes($params['link']);
@@ -41,10 +44,19 @@ function smarty_twitterbutton($params, &$smarty) {
     } else {
         $text = addslashes($page['title']);
     }
+    // add the script to the header (so it will only be added once)
+    $twjsloc  = "http://platform.twitter.com/widgets.js";
+    OutputSystem::instance()->addCode(
+        'twitterbutton-js',
+        OutputSystem::LOC_HEADEND,
+        'script',
+        array('src'=>$twjsloc,'_priority'=>OutputSystem::PRI_NORMAL+42)
+    );
         
     $html = "<a href=\"http://twitter.com/share\" class=\"twitter-share-button\" data-size=\"{$size}\" " .
-        "data-url=\"{$link}\" data-text=\"{$text}\" data-count=\"{$button}\" data-via=\"{$username}\">" .
-        "{$label}</a><script type=\"text/javascript\" src=\"http://platform.twitter.com/widgets.js\"></script>";
+        "data-url=\"{$link}\" data-text=\"{$text}\" data-count=\"{$button}\" data-via=\"{$username}\" " .
+        "data-related=\"{$related}\" data-hashtags=\"{$hashtags}\" data-lang=\"{$lang}\">" .
+        "{$label}</a>";
         
     return $html;
 

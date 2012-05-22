@@ -1,11 +1,11 @@
 <?php
 // - Extension: Slideshow
-// - Version: 0.9
+// - Version: 0.9.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A snippet and widget to add a slideshow to your site or entries/pages/templates.
-// - Date: 2012-03-15
+// - Date: 2012-05-22
 // - Identifier: slideshow
 // - Required PivotX version: 2.0.2
 

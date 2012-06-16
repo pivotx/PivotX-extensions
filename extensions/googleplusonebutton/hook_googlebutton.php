@@ -1,11 +1,11 @@
 <?php
 // - Extension: Google 'Plus 1' Button
-// - Version: 1.1
+// - Version: 1.2
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension to place a Google 'Plus 1' button on your entries and pages.
-// - Date: 2012-03-30
+// - Date: 2012-06-16
 // - Identifier: plusonebutton
 
 // Register 'plusonebutton' as a smarty tag.
@@ -62,13 +62,20 @@ function smarty_plusonebutton($params, &$smarty) {
     } else {
         $bubble = safe_string($params['bubble']);    
     }
-    // only used in combination with annotation inline (defaults to 450; minimum 120)
+    // default is 450; when using ballon it's set to 120 and when using none not set
+    // this is all for downward compatibility because Google started to use the width specified
+    // if specified the minimum is 120.
     if (empty($params['width'])) {
         $width = "450";
+        if ($annotation == "ballon") {
+            $width = "120";
+            if ($size == "tall") { $width = "0"; }
+        }
+        if ($annotation == "none") { $width = "0"; }
     } else {
         $width = safe_string($params['width']);    
     }
-    // only used in combination with annotation inline (defaults to left)
+    // alignment within width specified (now for all annotations -- defaults to left)
     if (empty($params['align'])) {
         $align = "left";
     } else {
@@ -93,9 +100,12 @@ function smarty_plusonebutton($params, &$smarty) {
         $g1script
     );
     // deprecated count removed (see remark above)
+    // only specify width when it's not zero
+    $htmlwidth = 'data-width="'.$width.'"';
+    if ($width == "0") { $htmlwidth = ''; } 
     $html = "<div class=\"g-plusone\" data-href=\"{$link}\" " . 
         "data-size=\"{$size}\" " . 
-        "data-annotation=\"{$annotation}\" data-width=\"{$width}\" " . 
+        "data-annotation=\"{$annotation}\" {$htmlwidth} " . 
         "data-align=\"{$align}\" data-expandTo=\"{$bubble}\" " . 
         "></div>";
         

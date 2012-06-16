@@ -31,8 +31,8 @@ The available parameters are:
    Possible values: `none`, `inline`, `ballon`. Default is none. When size is tall then default is ballon.
  - bubble - specifies where the mouse-over bubble will be displayed. 
    Possible values: `top`, `bottom`, `left`, `right`. Default is bottom.
- - width - (only with annotation inline) width of the display. Default is 450. Minimum 120.
- - align - (only with annotation inline) alignment of the display. Values: left or right. Default left.
+ - width - width of the display. Default is 450 (for inline), 120 (for ballon) or not used (for none). Minimum 120 (if specified).
+ - align - alignment of the display. Values: left or right. Default left.
  - lang - set this to the desired language 
    [valid codes](http://code.google.com/intl/nl/apis/+1button/#languages).
    When not set PivotX setting will be used.

@@ -1,5 +1,11 @@
 # Changelog
 
+*   ## Version 1.2: data-width correction
+    2012-06-16
+
+    *   Google started using the data-width specified also for annotation ballon and none so the defaults are changed
+        Also alignment is now used for all annotations (doc change)
+    
 *   ## Version 1.1: a lot of corrections/enhancements
     2012-03-30
 

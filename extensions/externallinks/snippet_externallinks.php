@@ -1,11 +1,11 @@
 <?php
 // - Extension: External links
-// - Version: 1.3
+// - Version: 1.4
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: Open external links in a new window (or tab).
-// - Date: 2011-10-07
+// - Date: 2012-06-20
 // - Identifier: externallinks
 
 
@@ -13,7 +13,8 @@ global $externallinks_config;
 
 $externallinks_config = array(
     'externallinks_addimage' => true,
-    'externallinks_title' => "This link opens in a new window: %link%"
+    'externallinks_title' => "This link opens in a new window: %link%",
+    'externallinks_add_to_title' => "###DONOTUSE###"
 );
 
 /* ------------------------------------------------------------------------ */
@@ -47,11 +48,23 @@ if ($externallinks_config['externallinks_addimage']) {
     $script = str_replace("%add%", "this.innerHTML = this.innerHTML+eimage;
                         %add%", $script);
 }
-
-if (!empty($externallinks_config['externallinks_title'])) {
-    $script = str_replace("%add%",
+// when add_to_title has its default value then perform the "old" function for backward compatibility
+if ($externallinks_config['externallinks_add_to_title'] == '###DONOTUSE###') {
+    if (!empty($externallinks_config['externallinks_title'])) {
+        $script = str_replace("%add%",
         "this.title = this.title + \"" . addslashes($externallinks_config['externallinks_title']) . "\";",
         $script);    
+    }
+} else if (!empty($externallinks_config['externallinks_add_to_title'])
+        || !empty($externallinks_config['externallinks_title'])) {
+        $script = str_replace("%add%",
+        "if (this.title == '') { this.title = \"" 
+        . addslashes($externallinks_config['externallinks_title'])
+        . "\";}"
+        . "else { this.title = this.title + \""
+        . addslashes($externallinks_config['externallinks_add_to_title']) 
+        . "\";}",
+        $script);   
 }
 
 

@@ -20,6 +20,11 @@ foreach($_GET as $key=>$value) {
     }
 
     // If we get here, we have a numerical UID, and a value.
+    $nrstars = getDefault($PIVOTX['config']->get('starrating_nrofstars'), 5);
+    if ($value < 1 || $value > $nrstars) {
+        debug('No vote! -- For an unknown reason the Star Rating vote is not within the min and the max: ' . $value);
+        continue;
+    }
 
     if ($dummy=="entry") {
         $data = $PIVOTX['db']->read_entry(intval($uid));

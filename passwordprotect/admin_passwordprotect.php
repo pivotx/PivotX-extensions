@@ -1,11 +1,11 @@
 <?php
 // - Extension: Password Protect
-// - Version: 1.1.2
+// - Version: 1.2.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension that makes it possible to protect entries, pages or the complete site with a password. 
-// - Date: 2011-09-13
+// - Date: 2012-09-30
 // - Identifier: passwordprotect
 
 global $passwordprotect_config;
@@ -15,6 +15,8 @@ $passwordprotect_config = array(
     'passwordprotect_loggedin_access' => false,
     'passwordprotect_default' => "password",
     'passwordprotect_text' => __("This page requires a password to view. Please give the password."),
+    'passwordprotect_catlist' => "",
+    'passwordprotect_chplist' => "",
     'passwordprotect_noaccesstemplate' => "skinny/page_template.html",
     'passwordprotect_noaccesstitle' => __("You don't have access to this page"),
     'passwordprotect_noaccesstext' => __("You didn't provide the correct password to access the requested entry. If you've made a typo, go back, and try again. <br /><br />If you don't know the password, you could ask the owner of the website to get access to the entry."),
@@ -103,6 +105,32 @@ function passwordprotectAdmin(&$form_html) {
        'text' => "<tr><td colspan='3'><hr size='1' noshade='1' /></td></tr>"
         
     ));
+
+    $form->add( array(
+        'type' => 'text',
+        'size' => 500,
+        'name' => 'passwordprotect_catlist',
+        'label' => __("Protected categories"),
+        'text' => __("Categories to be protected when option 'only pages and entries' is selected. Use their internal names."),
+        'isrequired' => 0,
+        'validation' => 'ifany'        
+    ));
+
+    $form->add( array(
+        'type' => 'text',
+        'size' => 500,
+        'name' => 'passwordprotect_chplist',
+        'label' => __("Protected chapters"),
+        'text' => __("Chapters to be protected when option 'only pages and entries' is selected. Use their display names."),
+        'isrequired' => 0,
+        'validation' => 'ifany'        
+    ));
+
+    $form->add( array(
+       'type' => 'custom',
+       'text' => "<tr><td colspan='3'><hr size='1' noshade='1' /></td></tr>"
+        
+    ));
     
     $form->add( array(
         'type' => 'text',
@@ -144,7 +172,7 @@ function passwordprotectAdmin(&$form_html) {
         'label' => __("All access ipnumbers"),
         'text' => __("These ipnumbers can access everything without password."),
         'isrequired' => 0,
-        'validation' => 'string'        
+        'validation' => 'ifany'        
     ));
 
     $form->add( array(
@@ -201,17 +229,40 @@ function passwordprotectHook() {
 
         $password_protected = false;
 
+        // whole site protected?
         if ($PIVOTX['config']->get('passwordprotect') == 2) {
             $password_protected = true;
             $page = array();
+        // only entries/pages protected
         } else if ($modifier['pagetype'] == "entry" || $modifier['pagetype'] == "page") {
             if ($modifier['pagetype'] == "entry") {
                 $page = $PIVOTX['db']->read_entry($modifier['uri'], $modifier['date']);
             } else {
                 $page = $PIVOTX['pages']->getPageByUri($modifier['uri']);
             }
+            // is page/entry selected for protection?
             if ($page['extrafields']['passwordprotect'] == 1) {
                 $password_protected = true;
+            } elseif (trim($PIVOTX['config']->get('passwordprotect_catlist')) != '' && $modifier['pagetype'] == "entry" ) {
+                // check category list
+                $catprots = explode(',',trim($PIVOTX['config']->get('passwordprotect_catlist')));
+                foreach($catprots as $catprot) {
+                    $catprot = trim($catprot);
+                    if (in_array($catprot,$page['category'])) {
+                        $password_protected = true;
+                        break;
+                    }
+                }
+            } elseif (trim($PIVOTX['config']->get('passwordprotect_chplist')) != '' && $modifier['pagetype'] == "page" ) {
+                // check chapter list
+                $chpprots = explode(',',trim($PIVOTX['config']->get('passwordprotect_chplist')));
+                foreach($chpprots as $chpprot) {
+                    $chpprot = trim($chpprot);
+                    if ($page['chaptername'] == $chpprot) {
+                        $password_protected = true;
+                        break;
+                    }
+                }
             }
         }
         
@@ -243,7 +294,6 @@ function passwordprotectHook() {
                 }
                
                 $template = $PIVOTX['config']->get('passwordprotect_noaccesstemplate');
-                
                 // If the template isn't set, or doesn't exist..
                 if ( ($template == "") || (!file_exists($PIVOTX['paths']['templates_path'].$template)) ) {
                     // .. we guesstimate a template, and show that..
@@ -251,7 +301,8 @@ function passwordprotectHook() {
                 }
                                        
                 // Render and show the template.
-                echo $PIVOTX['template']->fetch($template);
+                //echo $PIVOTX['template']->fetch($template);
+                renderTemplate($template);
                 
                 exit;
             }

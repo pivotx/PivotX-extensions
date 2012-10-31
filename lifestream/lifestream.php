@@ -97,7 +97,7 @@ $count = 0;
  */
 if (!empty($twittername)) {
 
-    $url = "http://twitter.com/statuses/user_timeline/".$twittername.".rss";
+    $url = "http://api.twitter.com/1/statuses/user_timeline.rss?screen_name=".$twittername;
 
     $rss = fetch_rss($url);
 

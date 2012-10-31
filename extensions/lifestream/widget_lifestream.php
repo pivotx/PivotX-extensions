@@ -1,11 +1,11 @@
 <?php
 // - Extension: Lifestream Widget
-// - Version: 1.0
+// - Version: 1.0.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A widget to display your lifestream updates from Twitter, Jaiku and other sources.
-// - Date: 2008-12-06
+// - Date: 2012-10-31
 // - Identifier: lifestream
 // - Required PivotX version: 2.0.2
 

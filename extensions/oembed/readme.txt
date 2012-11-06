@@ -32,8 +32,8 @@ If you set a width and a height it should work, if you don't set them, or only o
 
 Version Information
 -------------------
-  * Version: 0.12
-  * Date: 2011-10-26
+  * Version: 0.13
+  * Date: 2012-11-06
   * Requirements: PivotX 2.2.0 or higher
   * Recommended: mysql, PHP 5.2.0 or higher
   * Includes: jquery-oembed (http://code.google.com/p/jquery-oembed/)

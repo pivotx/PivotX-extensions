@@ -2,6 +2,8 @@
 // default provider
 //$providers['default'] = array('endpoint' => 'http://oohembed.com/oohembed/', 'format' => 'json', 'type' => 'rich');
 $providers['default'] = array('endpoint' => 'http://api.embed.ly/v1/api/oembed', 'format' => 'json', 'type' => 'rich');
+//$providers['default'] = array('endpoint' => 'http://noembed.com/embed', 'format' => 'json', 'type' => 'rich');
+
 
 // specific providers by url pattern
 $providers['nos.nl'] = array(

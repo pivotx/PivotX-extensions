@@ -1,11 +1,11 @@
 <?php
 // - Extension: oEmbed
-// - Version: 0.12
+// - Version: 0.13
 // - Author: Two Kings // Lodewijk Evers
 // - Email: lodewijk@twokings.nl
 // - Site: http://extensions.pivotx.net/entry/5/oembed
 // - Description: Add [[embed]] snippets to your entries and pages
-// - Date: 2011-10-26
+// - Date: 2012-11-06
 // - Identifier: oembed
 // - Required PivotX version: 2.2
 
@@ -178,8 +178,8 @@ function oembedLoadContent($url, $mode='embed', $maxwidth=false, $maxheight=fals
 
                 break;
             case 'photo':
-                $image = '<img src="'.$outputresource->url.'" alt="'.
-                    htmlspecialchars($outputresource->title). '" width="'. 
+                $titleclean = str_replace(array('"', "'"), array('&quot;', '&#039;'), htmlspecialchars($outputresource->title));
+                $image = '<img src="'.$outputresource->url.'" alt="'. $titleclean. '" width="'. 
                     $outputresource->width .'" height="'. $outputresource->height .'" />';
                 if($outputresource->author_url) {
                     $image = '<a href="'. $outputresource->author_url . '">'.$image."</a>";

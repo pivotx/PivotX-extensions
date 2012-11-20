@@ -1,11 +1,11 @@
 <?php
 // - Extension: Hierarchical menus
-// - Version: 1.0.1
+// - Version: 1.0.2
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: Add hierarchical menus to your website
-// - Date: 2012-02-22
+// - Date: 2012-11-20
 // - Required PivotX version: 2.0.2
 // - Identifier: menu
 

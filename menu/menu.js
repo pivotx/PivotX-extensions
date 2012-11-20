@@ -51,8 +51,9 @@ list item.
 
 */
 
+(function($) {
 
-jQuery.fn.initMenu = function() {  
+$.fn.initMenu = function() {  
     return this.each(function(){
         var theMenu = $(this).get(0);
         $('.acitem', this).hide();
@@ -107,4 +108,6 @@ jQuery.fn.initMenu = function() {
 });
 };
 
-$(document).ready(function() {$('.menu').initMenu();});
+})(jQuery);
+
+jQuery(document).ready(function($) {$('.menu').initMenu();});

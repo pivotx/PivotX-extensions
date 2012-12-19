@@ -1,4 +1,4 @@
-/* This is the css standard to PivotX -- buttons are hidden */
+/* This is the slideshow css standard to PivotX */
 
 /*preload classes*/ 
 .svw {width: 50px; height: 20px; background: #fff; } 
@@ -35,8 +35,6 @@
 .stripTransmitter { 
 overflow: auto; 
 width: 1%; 
-display: none; /* Hide the buttons.. */
-visibility: hidden; /* Hide the buttons.. */
 } 
 .stripTransmitter ul { 
 margin: 0; 

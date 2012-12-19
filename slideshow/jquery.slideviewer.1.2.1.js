@@ -11,6 +11,12 @@
  * Requires:
  * jQuery v1.4.1 or later, jquery.easing.1.2
  * 
+ 
+ Version 1.2.1 made by PivotX team - Harm (slideViewer next version is commercial)
+ added uiShow
+ added breaks behind ui
+ added suppress of native tooltip which is shown on top of tooltip (not working in IE9)
+ 
  */
 
 jQuery(function(){
@@ -22,10 +28,13 @@ jQuery.fn.slideView = function(settings) {
     settings = jQuery.extend({
         easeFunc: "easeInOutExpo",
         easeTime: 750,
+        uiShow: false,
         uiBefore: false,
         toolTip: false,
         ttOpacity: 0.9
     }, settings);
+    var uistyle = "style='display: none; visibility: hidden;'";
+    if (settings.uiShow) { uistyle = "style='display: inline; visibility: visible;'"; }
     return this.each(function(){
         var container = jQuery(this);
         container.find("img.ldrgif").remove();
@@ -38,7 +47,8 @@ jQuery.fn.slideView = function(settings) {
         container.css("width" , pictWidth);
         container.css("height" , pictHeight);
         container.each(function(i) {
-    (!settings.uiBefore) ? jQuery(this).after("<div class='stripTransmitter' id='stripTransmitter" + (j) + "'><ul><\/ul><\/div>") : jQuery(this).before("<div class='stripTransmitter' id='stripTransmitter" + (j) + "'><ul><\/ul><\/div>");            
+    (!settings.uiBefore) ? jQuery(this).after("<div class='stripTransmitter' " + uistyle + " id='stripTransmitter" + (j) + "'><ul><\/ul><br style='line-height: 1.75em;'\/><\/div>") 
+                        : jQuery(this).before("<div class='stripTransmitter' " + uistyle + " id='stripTransmitter" + (j) + "'><ul><\/ul><br style='line-height: 1.75em;'\/><\/div>");            
         jQuery(this).find("li").each(function(n) {
         jQuery("div#stripTransmitter" + j + " ul").append("<li><a title='" + jQuery(this).find("img").attr("alt") + "' href='#'>"+(n+1)+"<\/a><\/li>");                                             
         });
@@ -78,10 +88,12 @@ jQuery.fn.slideView = function(settings) {
 
         aref.live('mousemove', function(e) {
         var att = jQuery(this).attr('title');
+		jQuery(this).data('title', jQuery(this).attr('title') );
+        jQuery(this).removeAttr('title');
         posX=e.pageX+10;
         posY=e.pageY+10;
         jQuery('.tooltip').html(att).css({'position': 'absolute', 'top': posY+'px', 'left': posX+'px', 'display': 'block', 'opacity': settings.ttOpacity});
-        });
+		});
         aref.live('mouseout', function() {
         jQuery('.tooltip').hide();
         });             

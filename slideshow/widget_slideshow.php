@@ -1,13 +1,13 @@
 <?php
 // - Extension: Slideshow
-// - Version: 0.9.1
+// - Version: 0.10
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A snippet and widget to add a slideshow to your site or entries/pages/templates.
-// - Date: 2012-05-22
+// - Date: 2012-12-19
 // - Identifier: slideshow
-// - Required PivotX version: 2.0.2
+// - Required PivotX version: 2.3.6
 
 
 global $slideshow_config;
@@ -19,6 +19,7 @@ $slideshow_config = array(
     'slideshow_css' => "slideshow",
     'slideshow_folder' => "slideshow",
     'slideshow_timeout' => "4000",
+    'slideshow_animtime' => "1200",
     'slideshow_limit' => "15",
     'slideshow_orderby' => "date_desc",
     'slideshow_popup' => 'no',
@@ -30,8 +31,8 @@ $slideshow_config = array(
     'slideshow_uibefore' => 0,
     'slideshow_iptcindex' => "",
     'slideshow_iptcencoding' => "",
+    'slideshow_uishow' => 0
 );
-
 
 /**
  * Adds the hook for slideshowAdmin()
@@ -67,7 +68,7 @@ $this->addHook(
     'insert_before_close_head',
     "
     <!-- Includes for slideshow extension -->
-    <script type='text/javascript' src='[[pivotx_dir]]extensions/slideshow/jquery.slideviewer.1.2.js'></script>
+    <script type='text/javascript' src='[[pivotx_dir]]extensions/slideshow/jquery.slideviewer.1.2.1.js'></script>
     <script type='text/javascript' src='[[pivotx_dir]]extensions/slideshow/jquery.easing.1.3.js'></script>
     <script type='text/javascript'>
         var slideshow_pathToImage = '[[pivotx_dir]]extensions/slideshow/spinner.gif';
@@ -99,7 +100,6 @@ function widget_slideshow() {
         $output = "\n<div class='widget-lg'>$output</div>\n"; 
         return $output;
     }
-
 }
 
 /**
@@ -134,48 +134,68 @@ function slideshowGetDirs($dir, $recursion='all') {
  */
 function smarty_slideshow($params) {
     global $PIVOTX, $slideshow_config;
-    
+
     static $slideshowcount = 0;
 
     $js_insert = <<<EOF
 <script type="text/javascript">
+var slideshowtimeout%count% = null;
+var slideNext_%count%_currentslide = -1;
+var realtimeout%count% = %timeout% + %animtime%;
+var currtime%count% = %animtime% / 2; 
+
 jQuery(window).bind("load", function(){
     jQuery("div#pivotx-slideshow-%count%").slideView(%parms%);
-    setTimeout('slideNext_%count%()', %timeout%);
+    slideshowtimeout%count% = window.setTimeout('slideNext_%count%()', realtimeout%count%);
 });
 
-function slideNext_%count%() {
+function slideclick_%count%(clickval%count%) {
+    clickval%count% = clickval%count% - 1;
+    slideNext_%count%_currentslide = clickval%count%; 
+    // reset the running timeout and set a new one
+    window.clearTimeout(slideshowtimeout%count%);
+    slideshowtimeout%count% = setTimeout('slideNext_%count%()', realtimeout%count%);
+    return;
+}
 
-    if( typeof slideNext_%count%.currentslide == 'undefined' ) {
-        slideNext_%count%.currentslide = 0;
+function slideNext_%count%() {
+    if( slideNext_%count%_currentslide == -1 ) {
+        slideNext_%count%_currentslide = 0;
+        jQuery("#stripTransmitter%count% a").click(function() { slideclick_%count%(this.innerHTML) });
     }
 
     var slidewidth = jQuery("div#pivotx-slideshow-%count%").find("li").find("img").width();
     var amountofslides = %amount% - 1; 
 
-    if (amountofslides > slideNext_%count%.currentslide) {
-        slideNext_%count%.currentslide++;
+    if (amountofslides > slideNext_%count%_currentslide) {
+        slideNext_%count%_currentslide++;
     } else {
-        slideNext_%count%.currentslide = 0;
+        slideNext_%count%_currentslide = 0;
     }
-
-    var xpos = (-slidewidth * slideNext_%count%.currentslide);
-    jQuery("div#pivotx-slideshow-%count%").find("ul").animate({ left: xpos}, 1200, "easeInOutExpo");  
-
-    setTimeout('slideNext_%count%()', %timeout%);
-
+    var xpos = (-slidewidth * slideNext_%count%_currentslide);
+    jQuery("div#pivotx-slideshow-%count%").find("ul").animate({ left: xpos}, %animtime%, "easeInOutExpo");
+    // using this construction due to the fact that animate callback does not pick up the jquery elements
+    // and it offers the possibility to time the change during the animation
+    setTimeout(function (){
+        jQuery("#stripTransmitter%count% a").removeClass("current");
+        jQuery("#stripTransmitter%count% a:eq("+slideNext_%count%_currentslide+")").addClass("current");
+    }, currtime%count%); 
+    slideshowtimeout%count% = window.setTimeout('slideNext_%count%()', realtimeout%count%);
 }
 </script>
 EOF;
 
     $params = clean_params($params);
-    foreach(array('timeout','folder','width','height','limit','orderby','popup','recursion','nicenamewithdirs','iptcindex','iptcencoding') as $key) {
+    foreach(array('folder','width','height','timeout','animtime','limit','orderby',
+	'popup','recursion','nicenamewithdirs','zc','tooltip','ttopacity',
+	'uishow','uibefore','iptcindex','iptcencoding') as $key) {
         if (isset($params[$key])) {
             $$key = $params[$key];
         } else {
             $$key = getDefault($PIVOTX['config']->get('slideshow_'.$key), $slideshow_config['slideshow_'.$key]);
         }
     }
+
 
     $imagefolder = addTrailingSlash($PIVOTX['paths']['upload_base_path'].$folder);
     $ok_extensions = explode(",", "jpg,jpeg,png,gif");
@@ -236,10 +256,6 @@ EOF;
     $images = array_slice($images, 0, $limit);
     
     // Built the parms
-    $tooltip = getDefault($PIVOTX['config']->get('slideshow_tooltip'), $slideshow_config['slideshow_tooltip']);
-    $ttopacity = getDefault($PIVOTX['config']->get('slideshow_ttopacity'), $slideshow_config['slideshow_ttopacity']);
-    $uibefore = getDefault($PIVOTX['config']->get('slideshow_uibefore'), $slideshow_config['slideshow_uibefore']);
-    $zc = getDefault($PIVOTX['config']->get('slideshow_zc'), $slideshow_config['slideshow_zc']);
     $zcimg = '';
     if (isset($zc)) {
         $zcimg = '&amp;zc=' . $zc;
@@ -250,6 +266,13 @@ EOF;
         $parms = "{toolTip: false";
     }
     $parms .= ", ttOpacity: " . $ttopacity;
+
+    if ( $uishow == 1) {
+        $parms .= ", uiShow: true";
+    } else {
+        $parms .= ", uiShow: false";
+    }
+
     if ( $uibefore == 1) {
         $parms .= ", uiBefore: true}";
     } else {
@@ -257,6 +280,7 @@ EOF;
     }
 
     $js_insert = str_replace('%timeout%', $timeout, $js_insert);
+    $js_insert = str_replace('%animtime%', $animtime, $js_insert);
     $js_insert = str_replace('%count%', $slideshowcount, $js_insert);
     $js_insert = str_replace('%amount%', count($images), $js_insert);
     $js_insert = str_replace('%parms%', $parms, $js_insert);
@@ -271,7 +295,6 @@ EOF;
             debug("There is no function '$callback' - the popups won't work.");
         }
     }
-
     $output = "\n<div id=\"pivotx-slideshow-$slideshowcount\" class=\"svw\">\n<ul>\n";
 
     foreach ($images as $image) {
@@ -300,9 +323,13 @@ EOF;
             $line .= sprintf("<a href=\"%s%s\" class=\"$popup\" rel=\"slideshow\" title=\"%s\">\n",
                 $PIVOTX['paths']['upload_base_url'], $image, $title);
         }
-        $line .= sprintf("<img src=\"%sincludes/timthumb.php?src=%s&amp;w=%s&amp;h=%s%s\" " .
-                "alt=\"%s\" width=\"%s\" height=\"%s\" />\n",
-            $PIVOTX['paths']['pivotx_url'], rawurlencode($image), $width, $height, $zcimg, $title, $width, $height);
+        $thumbdims = '';
+        $imgdims = '';
+        if ($width > 0) { $thumbdims .= '&amp;w='.$width; $imgdims .= ' width="'.$width.'"'; }
+        if ($height > 0) { $thumbdims .= '&amp;h='.$height; $imgdims .= ' height="'.$height.'"'; }
+        $line .= sprintf("<img src=\"%sincludes/timthumb.php?src=%s%s%s\" " .
+                "alt=\"%s\" title=\"%s\" %s />\n",
+            $PIVOTX['paths']['pivotx_url'], rawurlencode($image), $thumbdims, $zcimg, $title, $title, $imgdims);
         if ($popup != 'no') {
             $line .= "</a>";
         }
@@ -316,11 +343,7 @@ EOF;
     $slideshowcount++;
 
     return $output;
-
-
 }
-
-
 
 /**
  * The configuration screen for slideshow
@@ -361,6 +384,18 @@ function slideshowAdmin(&$form_html) {
 
     $form->add( array(
         'type' => 'text',
+        'name' => 'slideshow_animtime',
+        'label' => __('Default animation time'),
+        'value' => '',
+        'error' => __('Error!'),
+        'text' => __('The time (in milliseconds) for the animation of one image to the next.'),
+        'size' => 6,
+        'isrequired' => 1,
+        'validation' => 'integer|min=1|max=10000'
+    ));
+
+    $form->add( array(
+        'type' => 'text',
         'name' => 'slideshow_width',
         'label' => __('Default width'),
         'value' => '',
@@ -391,8 +426,7 @@ function slideshowAdmin(&$form_html) {
         'value' => '',
         'error' => __('Error!'),
         'text' => __("The zoom crop value to use when creating thumbnails. " .
-            "See includes/timthumb.php for an explanation. Also notice the " . 
-            "potential influence of timhumb_zc setting."),
+            "See includes/timthumb.php for an explanation."),
         'size' => 3,
         'isrequired' => 0,
         'validation' => 'integer|min=0|max=3'
@@ -487,8 +521,7 @@ function slideshowAdmin(&$form_html) {
     $form->add( array(
         'type' => 'custom',
         'text' => sprintf("<tr><td colspan='2'><h3>%s</h3> <em>(%s)</em></td></tr>",
-            __('Buttons'),
-            __('Warning! If you use the default css (slideshow) then the buttons are hidden!') )
+            __('Buttons'))
     ));
     
     $form->add( array(
@@ -509,6 +542,14 @@ function slideshowAdmin(&$form_html) {
         'isrequired' => 1,
         'validation' => 'string|min=0.1|max=1.0'
     )); 
+
+    $form->add( array(
+        'type' => 'checkbox',
+        'name' => 'slideshow_uishow',
+        'label' => __("Show buttons with the slideshow"),
+        'text' => __("Yes, show the buttons to go with the slideshow.")
+    ));
+
     $form->add( array(
         'type' => 'checkbox',
         'name' => 'slideshow_uibefore',

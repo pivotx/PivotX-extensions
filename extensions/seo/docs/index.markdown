@@ -7,9 +7,9 @@ other general pages will have generic tags, while the Entries and Pages will hav
 tags specifically for that page.
 
 This extension will automagically set sensible defaults for the `<meta>`-tags,
-but when you're editing an Entry or Page, you can set the 'keywords' and 'description'
+but when you're editing an Entry or a Page, you can set the 'keywords' and 'description'
 and 'title' manually. You can find the fields below the 'body', when editing an
-Entry or Page.
+Entry or a Page.
 
 Defaults and options can be set in the Administration &raquo; Configure Extensions
  &raquo; SEO screen.  

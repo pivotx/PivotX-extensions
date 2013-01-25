@@ -1,13 +1,13 @@
 <?php
 // - Extension: SEO - Search Engine Optimization
-// - Version: 0.5
+// - Version: 0.6
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: This extension allows you to easily add meta-tags to your entries/pages, to optimize your site for search engines.
-// - Date: 2011-05-13
+// - Date: 2013-01-25
 // - Identifier: seo
-// - Required PivotX version: 2.2.4
+// - Required PivotX version: 2.3.6
 
 
 global $seo_config;
@@ -198,7 +198,7 @@ function seoCallback(&$html) {
     // Use the specific values from the extrafields, or the default values..
     $title = getDefault($content['extrafields']['seotitle'], "");
     $conttitle = getDefault($content['title'], "");
-    $description = getDefault($content['extrafields']['seodescription'], $content['introduction']);
+    $description = getDefault($content['extrafields']['seodescription'], str_replace("&nbsp;", " ", $content['introduction']));
     $keywords = getDefault($content['extrafields']['seokeywords'], $content['keywords']);
     $revised = getDefault($content['edit_date'], "");
     $author = getDefault($content['user'], $users[0]['username']);
@@ -316,7 +316,23 @@ function seoCallback(&$html) {
 
     // replace title tag in output
     if (!empty($title)) {
+        $htmlsave = $html;
         $html = preg_replace("/<title>(.*)<\/title>/msi", "<title>$title</title>", $html);
+        // Sometimes the result of using the /s parm is that the whole html is gone after the preg_replace
+        // The reason for this is still illusive. For now a less elegant way of replacing the title is implemented.
+        if ($html == '') {
+            //debug('seo-html empty after /msi?');
+            $html = $htmlsave;
+            $begpos = strpos($html, '<title>');
+            if ($begpos > 0){
+                $endpos = strpos($html, '</title>', $begpos);
+                $htmlnew = substr($html, 1, $begpos-1);
+                $endpos = $endpos + 8;
+                $htmlnew .= '<title>' . $title . '</title>';
+                $htmlnew .= substr($html, $endpos);
+                $html = $htmlnew;
+            }
+        }
         if ($seo_use_dc_tags == 1) {
             OutputSystem::instance()->addCode('seo-dctitle', OutputSystem::LOC_HEADSTART, 'meta',
                 array('name'=>"dc.title", 'content'=>$title, '_priority'=>OutputSystem::PRI_HIGH)

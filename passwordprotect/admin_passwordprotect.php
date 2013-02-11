@@ -1,11 +1,11 @@
 <?php
 // - Extension: Password Protect
-// - Version: 1.2.2
+// - Version: 1.2.3
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension that makes it possible to protect entries, pages or the complete site with a password. 
-// - Date: 2012-10-31
+// - Date: 2013-02-11
 // - Identifier: passwordprotect
 
 global $passwordprotect_config;
@@ -216,7 +216,7 @@ function passwordprotectAdmin(&$form_html) {
 
 
 $this->addHook(
-    'after_parse',
+    'before_output',
     'callback',
     "passwordprotectHook"
     );

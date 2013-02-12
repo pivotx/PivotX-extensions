@@ -4,6 +4,9 @@ Multi-site Transparent
 This extension makes the links to resources like images and CSS
 files much cleaner for a site that is run by PivotX in multi-site mode.
 
+NB! This extension is incompatible with Minify. If you enable
+"Use Minify in Frontend", this extension will do nothing.
+
 The standard link to an image `file.jpg` on a PivotX site 
 (in multi-site mode) located at example.org is:
 

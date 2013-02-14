@@ -1,13 +1,13 @@
 <?php
 // - Extension: Image Tools
-// - Version: 0.7.1
+// - Version: 0.8
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A collection of small tools to simplify handling images in your content.
-// - Date: 2012-01-23
+// - Date: 2013-02-14
 // - Identifier: imagetools
-// - Required PivotX version: 2.2.4
+// - Required PivotX version: 2.3.6
 
 // Register 'findimages' as a smarty tag.
 $PIVOTX['template']->register_function('findimages', 'smarty_findimages');
@@ -53,12 +53,12 @@ function smarty_thumbnail($params, &$smarty) {
     $whcombined = "";
     if (!empty($params['w'])) {
         $imgparams[] = "w=".$params['w'];
-        $whcombined  = "width=".$params['w'];
+        $whcombined  = "width='".$params['w']."'";
     }
 
     if (!empty($params['h'])) {
         $imgparams[] = "h=".$params['h'];
-        $whcombined  .= " height=".$params['h'];
+        $whcombined  .= " height='".$params['h']."'";
     }
     // if not specified timthumb default will be used (see timthumb-config.php)
     if (!empty($params['zc'])) {
@@ -71,7 +71,13 @@ function smarty_thumbnail($params, &$smarty) {
 
     $url = $url . implode("&amp;", $imgparams);
 
-    $title = getDefault($params['alt'], $params['title']);
+    // keep downward compatibility
+    $title  = getDefault($params['alt'], $params['title']);
+    $alt    = getDefault($params['alt'], "");
+    // but if both are specified use title
+    if (!empty($params['alt']) && !empty($params['title'])) {
+        $title = $params['title'];
+    }
     $target = getDefault($params['target'], "_blank");
 
     if (empty($title)) {
@@ -84,15 +90,28 @@ function smarty_thumbnail($params, &$smarty) {
         $class = "";
     }
 
-    $img = sprintf("<img src=\"%s\" alt=\"%s\" %s %s />",
+    if (!empty($params['id'])) {
+        $id = " id='".$params['id'] ."'";
+    } else {
+        $id = "";
+    }
+    $idsav = "";
+    if (!empty($params['link'])) {
+        $idsav = $id;
+        $id    = "";
+    }
+
+    $img = sprintf("<img %s src=\"%s\" title=\"%s\" alt=\"%s\" %s %s />",
+        $id,
         $url,
         htmlentities($title, ENT_QUOTES),
+        htmlentities($alt, ENT_QUOTES),
         $whcombined,
         $class
     );
 
-
     if (!empty($params['link'])) {
+        $id = $idsav;
         
         $linkmaxsize = getDefault($params['linkmaxsize'], 1000);
         $uplbasepath = $PIVOTX['paths']['upload_base_path'];
@@ -104,6 +123,11 @@ function smarty_thumbnail($params, &$smarty) {
         if (empty($params['htmlwrap']) && empty($params['htmlwrapper'])) {
             $link = $PIVOTX['paths']['pivotx_url'] . "includes/timthumb.php?"; 
         } else {
+            // timwrapper does not work with fancybox
+            if ($params['linkclass'] == 'fancybox') {
+                debug("Imagetools: fancybox and htmlwrap don't go together -- thickbox used instead");
+                $params['linkclass'] = 'thickbox';
+            }
             $link = $PIVOTX['paths']['pivotx_url'] . "includes/timwrapper.php?";
         }
         
@@ -128,8 +152,8 @@ function smarty_thumbnail($params, &$smarty) {
 
         $link = $link . implode("&amp;", $linkparams);
             
-        $link = sprintf("<a href=\"%s\"%s%s title='%s' target='%s'>%s</a>", 
-            $link, $rel, $class, $title, $target, $img);
+        $link = sprintf("<a %s href=\"%s\"%s%s title='%s' target='%s'>%s</a>", 
+            $id, $link, $rel, $class, $title, $target, $img);
         
         return $link;
         

@@ -309,9 +309,11 @@ function passwordprotectHook() {
                     $template = templateGuess('page');
                 }
                                        
+                // Add the 'base part' of the path to the smarty variables as well
+                $PIVOTX['template']->assign('templatedir', dirname($template));
+
                 // Render and show the template.
-                //echo $PIVOTX['template']->fetch($template);
-                renderTemplate($template);
+                echo $PIVOTX['template']->fetch($template);
                 
                 exit;
             }

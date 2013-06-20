@@ -1,11 +1,11 @@
 <?php
 // - Extension: Lifestream Widget
-// - Version: 1.0.1
+// - Version: 1.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A widget to display your lifestream updates from Twitter, Jaiku and other sources.
-// - Date: 2012-10-31
+// - Date: 2013-06-20
 // - Identifier: lifestream
 // - Required PivotX version: 2.0.2
 
@@ -14,9 +14,6 @@ global $lifestream_config;
 
 $lifestream_config = array(
     'lifestream_twitterusername' => "",
-    'lifestream_twitterpassword' => "",
-    'lifestream_jaikuusername' => "",
-    'lifestream_jaikuapikey' => "",
     'lifestream_summize' => "",
     'lifestream_lastfmusername' => "",
     'lifestream_flickrfeed' => "",
@@ -29,17 +26,15 @@ $lifestream_config = array(
     'lifestream_format' => "<li style=\"background-image: url(%icon%);\">\n%title% - \n<span class='date'><a href=\"%link%\" rel=\"nofollow\" target=\"_blank\">%date%</a></span>\n</li>",
 );
 
-
-
 /**
- * Adds the hook for deliciousAdmin()
+ * Adds the hook for lifestreamAdmin()
  *
- * @see deliciousAdmin()
+ * @see lifestreamAdmin()
  */
 $this->addHook(
     'configuration_add',
     'lifestreamupdates',
-    array("lifestreamAdmin", "Lifestream Configuration")
+    array("lifestreamAdmin", "Lifestream")
 );
 
 
@@ -48,7 +43,7 @@ $this->addHook(
  * Adds the hook for the actual widget. We just use the same
  * as the snippet, in this case.
  *
- * @see smarty_delicious()
+ * @see smarty_lifestream()
  */
 $this->addHook(
     'widget',
@@ -59,9 +54,7 @@ $this->addHook(
 // If the hook for the jQuery include in the header was not yet installed, do so now..
 $this->addHook('after_parse', 'callback', 'jqueryIncludeCallback');
 
-
-
-// Register 'delicious' as a smarty tag.
+// Register 'lifestream' as a smarty tag.
 $PIVOTX['template']->register_function('lifestream', 'smarty_lifestream');
 
 /**
@@ -84,12 +77,19 @@ function smarty_lifestream($params) {
 
 
 /**
- * The configuration screen for Del.iciou.us
+ * The configuration screen for the Lifestream Widget
  *
  * @param unknown_type $form_html
  */
 function lifestreamAdmin(&$form_html) {
     global $form_titles, $lifestream_config, $PIVOTX;
+
+    $twitter_api_keys = array(
+        'lifestream_twitter_api_oauth_access_token',
+        'lifestream_twitter_api_oauth_access_token_secret',
+        'lifestream_twitter_api_consumer_key',
+        'lifestream_twitter_api_consumer_secret'
+    );
 
     $form = $PIVOTX['extensions']->getAdminForm('lifestreamupdates');
 
@@ -104,25 +104,25 @@ function lifestreamAdmin(&$form_html) {
         'validation' => 'ifany|string|minlen=3|maxlen=60'
     ));
 
+    $form->add( array(
+        'type' => "hr"
+    ));
 
     $form->add( array(
-        'type' => 'password',
-        'name' => 'lifestream_twitterpassword',
-        'label' => "Twitter password",
+        'type' => 'text',
+        'name' => 'lifestream_summize',
+        'label' => "Summize (Twitter search)",
         'value' => '',
-        'error' => 'That\'s not a proper password!',
-        'text' => "Fill out your <a href='http://twitter.com'>Twitter</a> username and password. If you only want to display Twitter updates in the widget, you can leave the password empty. If you want to post to Twitter from PivotX, you have to give your password as well.",
+        'error' => 'That\'s not a proper keyword!',
+        'text' => "Fill out a <a href='http://search.twitter.com/'>Twitter Search</a> searchterm. This is used get the results from Twitter Search, and displays these in the widget.",
         'size' => 20,
         'isrequired' => 0,
         'validation' => 'ifany|string|minlen=3|maxlen=60'
     ));
 
-
     $form->add( array(
         'type' => "hr"
     ));
-
-
 
     $form->add( array(
         'type' => 'text',
@@ -136,12 +136,9 @@ function lifestreamAdmin(&$form_html) {
         'validation' => 'ifany|string|minlen=3|maxlen=60'
     ));
 
-
     $form->add( array(
         'type' => "hr"
     ));
-
-
 
     $form->add( array(
         'type' => 'text',
@@ -155,32 +152,9 @@ function lifestreamAdmin(&$form_html) {
         'validation' => 'ifany|string|minlen=3|maxlen=100'
     ));
 
-
-
-
     $form->add( array(
         'type' => "hr"
     ));
-
-
-
-    $form->add( array(
-        'type' => 'text',
-        'name' => 'lifestream_summize',
-        'label' => "Summize",
-        'value' => '',
-        'error' => 'That\'s not a proper keyword!',
-        'text' => "Fill out a <a href='http://search.twitter.com/'>Twitter Search</a> searchterm. This is used get the results from Twitter Search, and displays these in the widget.",
-        'size' => 20,
-        'isrequired' => 0,
-        'validation' => 'ifany|string|minlen=3|maxlen=60'
-    ));
-
-
-    $form->add( array(
-        'type' => "hr"
-    ));
-
 
     $form->add( array(
         'type' => 'text',
@@ -194,11 +168,32 @@ function lifestreamAdmin(&$form_html) {
         'validation' => 'ifany|string|minlen=3|maxlen=60'
     ));
 
-
     $form->add( array(
         'type' => "hr"
     ));
 
+    $twitter_api_keys = array(
+        'consumer_key',
+        'consumer_secret',
+        'oauth_access_token',
+        'oauth_access_token_secret',
+    );
+
+    foreach ($twitter_api_keys as $key) {
+        $form->add( array(
+            'type' => 'text',
+            'name' => 'lifestream_twitter_api_' . $key,
+            'label' => 'Twitter API ' . str_replace('_', ' ', $key),
+            'value' => '',
+            'size' => 60,
+            'isrequired' => 0,
+            'validation' => 'ifany|string|minlen=10|maxlen=100'
+        ));
+    }
+
+    $form->add( array(
+        'type' => "hr"
+    ));
 
     $form->add( array(
         'type' => 'text',

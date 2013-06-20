@@ -7,6 +7,11 @@ require_once(dirname(dirname(dirname(__FILE__)))."/lib.php");
 
 initializePivotX();
 
+require_once('TwitterAPIExchange.php');
+
+$max_age = 600;
+$cache_file = $PIVOTX['paths']['cache_path'] . 'lifestream.php';
+
 
 /**
  * Getting some variables from config. If they are not set, revert to the defaults
@@ -14,7 +19,6 @@ initializePivotX();
  *
  */
 $twittername = getDefault($PIVOTX['config']->get('lifestream_twitterusername'), $lifestream_config['lifestream_twitterusername']);
-$twitterpass = getDefault($PIVOTX['config']->get('lifestream_twitterpassword'), $lifestream_config['lifestream_twitterpassword']);
 $summize = getDefault($PIVOTX['config']->get('lifestream_summize'), $lifestream_config['lifestream_summize']);
 $tumblrname = getDefault($PIVOTX['config']->get('lifestream_tumblrusername'), $lifestream_config['lifestream_tumblrusername']);
 $flickrfeed = getDefault($PIVOTX['config']->get('lifestream_flickrfeed'), $lifestream_config['lifestream_flickrfeed']);
@@ -32,44 +36,79 @@ if ( empty($twittername) && empty($summize) && empty($tumblrname) && empty($flic
     die();
 }
 
+// Twitter API setup
+$twitter_api_baseurl = "https://api.twitter.com/1.1/";
+$twitter_api_settings = array();
+$twitter_api_keys = array(
+    'oauth_access_token',
+    'oauth_access_token_secret',
+    'consumer_key',
+    'consumer_secret'
+);
+foreach ($twitter_api_keys as $key) {
+    $value = $PIVOTX['config']->get('lifestream_twitter_api_' . $key);
+    if ($value) {
+        $twitter_api_settings[$key] = $value;
+    } else {
+        debug("Lifestream parser: Incomplete configuration of the Twitter API - $key missing");
+        $twittername = $summize = "";
+        break;
+    }
+}
+if (!empty($twittername) || !empty($summize)) {
+    $twitter_api = new TwitterAPIExchange($twitter_api_settings);
+}
+    
+// Load data from Twitter
+if (file_exists($cache_file)) {
+    $mtime = filemtime($cache_file);
+    $age = time() - $mtime;
+    if ($max_age > $age ) {
+        $twitter_data = loadSerialize($cache_file);
+    }
+} 
+if (empty($twitter_data)) {
+    $twitter_data = array();
+    if (!empty($twittername)) {
+        $url = $twitter_api_baseurl . 'statuses/user_timeline.json';
+        $getfield = '?screen_name=' . $twittername . '&trim_user=true&exclude_replies=true';
+        $twitter_json_data = $twitter_api->setGetfield($getfield)->buildOauth($url, 'GET')->performRequest();
+        $twitter_data['twitter'] = json_decode($twitter_json_data);
+    }
+    if (!empty($summize)) {
+        $url = $twitter_api_baseurl . 'search/tweets.json';
+        $getfield = '?q=' . urlencode($summize);
+        $twitter_json_data = $twitter_api->setGetfield($getfield)->buildOauth($url, 'GET')->performRequest();
+        $twitter_data['summize'] = json_decode($twitter_json_data);
+    }
+    saveSerialize($cache_file, $twitter_data);
+}
 
-define("MAGPIE_CACHE_AGE", 600);
+define("MAGPIE_CACHE_AGE", $max_age);
 include_once($PIVOTX['paths']['pivotx_path'].'includes/magpie/rss_fetch.inc');
-
 
 $iconpath = sprintf("%slifestream/%s", $PIVOTX['paths']['extensions_url'], '%icon%' );
 
 $items = array();
 
 
-$count = 0;
-
 /**
  * First get updates from Summize.. (because these will weigh least heavy, when
  * ordering later on)
  */
 if (!empty($summize)) {
-    $url = "http://search.twitter.com/search.atom?q=". urlencode($summize);
 
-    $rss = fetch_rss($url);
+    $count = 0;
 
-    if ($magpie_error!="") {
-        debug("Lifestream parser / Twitter Search: " . $magpie_error('', true) . "\nurl: " . $url);   
-    }
-
-
-    if (count($rss->items)>0) {
-        foreach($rss->items as $item) {
-
-            // Get the author from the summize feed.
-            $authorname = $item['author'];
-            list($authorname) = explode(" (", $authorname);
-            $authorlink = $item['author_uri'];
+    if (count($twitter_data['summize']) > 0) {
+        foreach($twitter_data['summize']->statuses as $rawtweet) {
+            $authorname = $rawtweet->user->screen_name;
+            $authorlink = "https://twitter.com/" . $authorname;
 
             $tempitem = array();    
-            $tempitem['title'] = sprintf("<a href='%s'>%s</a>: %s", $authorlink, $authorname, $item['title'] );
-            $tempitem['link'] = $item['link'];
-            $tempitem['date_timestamp'] = date("Y-m-d H-i-s", $item['date_timestamp']);
+            $tempitem['title'] = sprintf("<a href='%s'>%s</a>: %s", $authorlink, $authorname, $rawtweet->text );
+            $tempitem['link'] = "https://twitter.com/$authorname/status/" . $rawtweet->id_str;
+            $tempitem['date_timestamp'] = date("Y-m-d H-i-s", strtotime($rawtweet->created_at));
             $tempitem['source'] = "summize";
             $tempitem['icon'] = str_replace("%icon%", "summize.gif", $iconpath);
     
@@ -79,62 +118,45 @@ if (!empty($summize)) {
             if ($count>= $maxperfeed) { break; }
         }
     } else {
-        debug("Twitter search feed contains no data.");
-        debug("feed url: $url");
+        debug("Twitter API 'statuses/user_timeline.json' returned no data.");
     }
 
 }
-
-
-
-$count = 0;
-
-
-
 
 /**
  * Then get the updates from Twitter..
  */
 if (!empty($twittername)) {
 
-    $url = "http://api.twitter.com/1/statuses/user_timeline.rss?screen_name=".$twittername;
+    $count = 0;
 
-    $rss = fetch_rss($url);
-
-    if ($magpie_error!="") {
-        debug("Lifestream parser / Twitter: " . $magpie_error('', true) . "\nurl: " . $url);   
-    }
-
-    if (count($rss->items)>0) {
-        foreach($rss->items as $item) {
-
+    if (count($twitter_data['twitter']) > 0) {
+        foreach($twitter_data['twitter'] as $rawtweet) {
             $tempitem = array();
-            $tempitem['title'] = str_replace($twittername.": ", "", $item['title'] );
-            $tempitem['link'] = $item['link'];
-            $tempitem['date_timestamp'] = date("Y-m-d H-i-s", $item['date_timestamp']);
+            $tempitem['title'] = $rawtweet->text;
+            $tempitem['link'] = "https://twitter.com/$twittername/status/" . $rawtweet->id_str;
+            $tempitem['date_timestamp'] = date("Y-m-d H-i-s", strtotime($rawtweet->created_at));
             $tempitem['source'] = "twitter";
             $tempitem['icon'] = str_replace("%icon%", "twitter.png", $iconpath);
-
             $items[ $tempitem['date_timestamp'] ] = $tempitem;
 
             $count++;
             if ($count>=$maxperfeed) { break; }
         }
+
     } else {
-        debug("Twitter feed contains no data.");
-        debug("feed url: $url");
+        debug("Twitter API 'search/tweets.json' returned no data.");
     }
 
 }
-
-
-$count = 0;
 
 /**
  * Then get updates from Tumblr..
  */
 if (!empty($tumblrname)) {
     
+    $count = 0;
+
     $url = "http://".$tumblrname.".tumblr.com/rss";
 
     $rss = fetch_rss($url);
@@ -165,13 +187,13 @@ if (!empty($tumblrname)) {
 
 }
 
-$count = 0;
-
-
 /**
  * Then get updates from Last.fm..
  */
 if (!empty($lastfmname)) {
+
+    $count = 0;
+
     $url = "http://ws.audioscrobbler.com/1.0/user/". urlencode($lastfmname) . "/recenttracks.rss";
 
     $rss = fetch_rss($url);
@@ -202,13 +224,12 @@ if (!empty($lastfmname)) {
 
 }
 
-
-$count = 0;
-
 /**
  * Then get updates from Flickr..
  */
 if (!empty($flickrfeed)) {
+    $count = 0;
+
     $url = $flickrfeed;
 
     $rss = fetch_rss($url);

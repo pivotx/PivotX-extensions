@@ -1,11 +1,11 @@
 <?php
 // - Extension: Password Protect
-// - Version: 1.2.3
+// - Version: 1.3
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
-// - Description: An extension that makes it possible to protect entries, pages or the complete site with a password. 
-// - Date: 2013-02-11
+// - Description: An extension that makes it possible to protect entries, pages, weblogs, categories, chapters or the complete site with a password. 
+// - Date: 2013-06-27
 // - Identifier: passwordprotect
 
 global $passwordprotect_config;
@@ -17,7 +17,9 @@ $passwordprotect_config = array(
     'passwordprotect_text' => __("This page requires a password to view. Please give the password."),
     'passwordprotect_categories' => '',
     'passwordprotect_chapters' => '',
+    'passwordprotect_weblogs' => '',
     'passwordprotect_noaccesstemplate' => "skinny/page_template.html",
+    'passwordprotect_noaccessweblog' => "",
     'passwordprotect_noaccesstitle' => __("You don't have access to this page"),
     'passwordprotect_noaccesstext' => __("You didn't provide the correct password to access the requested entry. If you've made a typo, go back, and try again. <br /><br />If you don't know the password, you could ask the owner of the website to get access to the entry."),
     'passwordprotect_userlist' => __("# Enter each user with password on a new line.\n# Use a hash to add comments or disable a user\n# Example: password|username\n"),
@@ -146,6 +148,25 @@ function passwordprotectAdmin(&$form_html) {
             __("Chapters to be protected when option 'only pages and entries' is selected."))
     ));
 
+    $allweblogs = $PIVOTX['weblogs']->getWeblogs();
+    $blogoptions = array();
+    foreach($allweblogs as $key => $weblog) {
+        $blogoptions[$key] = $weblog['name'];
+    }
+    
+    asort($blogoptions);
+
+    $form->add( array(
+        'type' => 'select',
+        'name' => 'passwordprotect_weblogs',
+        'label' => __("Protected weblogs"),
+        'value' => '',
+        'options' => $blogoptions,
+        'multiple' => true,
+        'text' => makeJtip(__('Protected weblogs'),
+            __("Weblogs to be protected when option 'only pages and entries' is selected."))
+    ));
+
     $form->add( array(
        'type' => 'custom',
        'text' => "<tr><td colspan='3'><hr size='1' noshade='1' /></td></tr>"
@@ -160,9 +181,24 @@ function passwordprotectAdmin(&$form_html) {
         'text' => "",
         'size' => 40,
         'isrequired' => 1,
-        'validation' => 'ifany|string|minlen=5|maxlen=80'
+        'validation' => 'ifany|string|minlen=5|maxlen=80',
+        'text' => makeJtip(__('No access template'),
+            __("This template will be shown when the user doesn't have access. 
+            Be aware that automatically added resources (like always_jquery and some extensions do) in the header are now absent.
+            You need to add them hard coded in this template if you need them for the display.
+            The directory name of this template will be used as the theme name when using weblog protection."))
     ));    
-
+    
+    $form->add( array(
+        'type' => 'select',
+        'name' => 'passwordprotect_noaccessweblog',
+        'label' => __("'No access' weblog"),
+        'value' => '',
+        'options' => $blogoptions,
+        'multiple' => true,
+        'text' => makeJtip(__('No access weblog'),
+            __("Weblog to be used to display the 'no access' message."))
+    ));
 
     $form->add( array(
         'type' => 'text',
@@ -241,8 +277,10 @@ function passwordprotectHook() {
         }
 
         // Abort here if we only password protect pages/entries and we aren't viewing one 
+        // If weblogs are protected procede
         if (($PIVOTX['config']->get('passwordprotect') == 1) && 
-                ($modifier['pagetype'] != "entry") && ($modifier['pagetype'] != "page")) {
+                ($modifier['pagetype'] != "entry") && ($modifier['pagetype'] != "page")
+                && ($PIVOTX['config']->get('passwordprotect_weblogs') == '')) {
             return;
         }
 
@@ -252,7 +290,7 @@ function passwordprotectHook() {
         if ($PIVOTX['config']->get('passwordprotect') == 2) {
             $password_protected = true;
             $page = array();
-        // only entries/pages protected
+        // check if entry/page is protected
         } else if ($modifier['pagetype'] == "entry" || $modifier['pagetype'] == "page") {
             if ($modifier['pagetype'] == "entry") {
                 $page = $PIVOTX['db']->read_entry($modifier['uri'], $modifier['date']);
@@ -273,11 +311,17 @@ function passwordprotectHook() {
                     $password_protected = true;
                 }
             }
+        } else {
+            // check if weblog is protected
+            $protected_weblogs = explode(',', $PIVOTX['config']->get('passwordprotect_weblogs'));
+            if (in_array($PIVOTX['weblogs']->getCurrent(), $protected_weblogs)) {
+                $password_protected = true;
+            }
         }
         
-        // If the page/entry has passwordprotect enabled..
+        // If the page/entry/weblog has passwordprotect enabled..
         if ($password_protected) {
-            // Display an errorpage if we're not allowed to view the page/entry..
+            // Display an errorpage if we're not allowed to view the page/entry/weblog..
             if (passwordcheck_login($page) == false) {
                 $question = getDefault($PIVOTX['config']->get('passwordprotect_text'), 
                     $passwordprotect_config['passwordprotect_text']);
@@ -288,8 +332,8 @@ function passwordprotectHook() {
                 Header("HTTP/1.0 401 Unauthorized");
         
                 // Make a fake page to show (with all values, but two, empty).
-                foreach ($page as $key=>$value) {
-                    $page[$key] = '';
+                if (is_array($page)) { 
+                    foreach ($page as $key=>$value) { $page[$key] = ''; }
                 }
                 $page['title'] = getDefault($PIVOTX['config']->get('passwordprotect_noaccesstitle'), 
                     $passwordprotect_config['passwordprotect_noaccesstitle']);
@@ -306,14 +350,61 @@ function passwordprotectHook() {
                 // If the template isn't set, or doesn't exist..
                 if ( ($template == "") || (!file_exists($PIVOTX['paths']['templates_path'].$template)) ) {
                     // .. we guesstimate a template, and show that..
-                    $template = templateGuess('page');
+                    $template = templateGuess('page');    // isn't this based on the old naming scheme? and shouldn't it be 'front' now? 
+                    // if not then modifier changes should also be done when this is not a weblog protect
                 }
                                        
                 // Add the 'base part' of the path to the smarty variables as well
                 $PIVOTX['template']->assign('templatedir', dirname($template));
 
+                // Another weblog to be used for the display?
+                $noaccblog = $PIVOTX['config']->get('passwordprotect_noaccessweblog');
+                if ($noaccblog != "") {
+                    $currblog = $PIVOTX['weblogs']->getCurrent();
+                    // change the modifiers to resemble display of a home page
+                    $modifier = $PIVOTX['template']->get_template_vars('modifier');
+                    $modifier['uri'] = $noaccblog;
+                    $modifier['weblog'] = $noaccblog;
+                    $modifier['root'] = '';
+                    $modifier['home'] = 1;
+                    $modifier['action'] = 'weblog';
+                    $modifier['pagetype'] = 'weblog';
+                    $modifier['uid'] = '';
+                    $PIVOTX['template']->assign('modifier', $modifier);
+                    // change template vars
+                    $tplvars = $PIVOTX['template']->get_template_vars('_tpl_vars');
+                    $tplvars['weblogname'] = $noaccblog;
+                    $tplvars['themename'] = dirname($template);
+                    $PIVOTX['template']->assign('_tpl_vars', $tplvars);
+                    // set the new weblog
+                    $PIVOTX['weblogs']->setCurrent($noaccblog);
+                    // change some server vars
+                    $_SERVER['REQUEST_URI'] = str_replace($currblog,$noaccblog,$_SERVER['REQUEST_URI']);
+                    if (!empty($_SERVER['REDIRECT_URL'])) {
+                        $_SERVER['REDIRECT_URL'] = str_replace($currblog,$noaccblog,$_SERVER['REDIRECT_URL']);
+                    }
+                    if (!empty($_SERVER['QUERY_STRING'])) {
+                        parse_str($_SERVER['QUERY_STRING'], $query_array);
+                        $query_array['w'] = $noaccblog;
+                        $_SERVER['QUERY_STRING'] = http_build_query($query_array);
+                    }
+                    if (!empty($_SERVER['REDIRECT_QUERY_STRING'])) {
+                        parse_str($_SERVER['REDIRECT_QUERY_STRING'], $query_array);
+                        $query_array['w'] = $noaccblog;
+                        $_SERVER['REDIRECT_QUERY_STRING'] = http_build_query($query_array);
+                    }
+                    // change some PHP vars
+                    if (!empty($_REQUEST['w'])) {
+                        $_REQUEST['w'] = str_replace($currblog,$noaccblog,$_REQUEST['w']);
+                    }
+                    if (!empty($_GET['w'])) {
+                        $_GET['w'] = str_replace($currblog,$noaccblog,$_GET['w']);
+                    }
+                }
+
                 // Render and show the template.
-                echo $PIVOTX['template']->fetch($template);
+                //echo $PIVOTX['template']->fetch($template);
+                renderTemplate($template);
                 
                 exit;
             }

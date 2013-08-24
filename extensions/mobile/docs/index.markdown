@@ -39,6 +39,11 @@ Usage
 
 After you've set up the subdomain, enable the extension in the Extension pages
 of PivotX and configure it.
+   
+Selecting the option of using the folder name of the active weblog enables you
+to display matching mobile layout templates with each of your weblogs.
+If the template name does not exist in that weblog folder the extension automatically
+switches to the templates you defined in the configuration of the extension itself.
 
 Options
 -------
@@ -47,6 +52,8 @@ You might want to give your visitors the option to switch between the mobile and
 full versions of the website. To do this, you'll need links to the other version
 than the current version of the site, with a special flag that disables the
 automatic detection or redirection for the browser.
+If you use your normal domain also as a mobile domain this link only works for mobile
+visitors.
 
 On the 'normal' site, use this link:
 
@@ -56,6 +63,6 @@ On the mobile site, use this link:
 
     [[mobilelink to=full text="View the full version of this site."]]
 
-If you wish to show these links in another way, feel free to add hardcoded links
+If you wish to show these links in another way, feel free to add hard coded links
 to your templates. The only thing you need is the `mobilecookie=1` and
 `mobilecookie=0` flags on the appropriate links.

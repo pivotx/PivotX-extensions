@@ -1,11 +1,11 @@
 <?php
 // - Extension: Mobile Browser Extension
-// - Version: 0.7.2
+// - Version: 0.8
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A snippet extension to detect mobile browsers, and redirect them to a specific page.
-// - Date: 2012-02-11
+// - Date: 2013-08-24
 // - Identifier: mobile
 // - Required PivotX version: 2.2.3
 
@@ -14,12 +14,15 @@ global $PIVOTX, $mobiledetect_config;
 $mobiledetect_config = array(
     'mobile_detection' => 1,
     'mobile_redirect' => 1,
-    'mobile_redirectlink' => "Click here to visit the mobile version of this site.",
+    'mobile_redirectlink' => __("Click here to visit the mobile version of this site."),
     'mobile_domain' => "m.example.org",
-    'mobile_frontpage' => "mobile/frontpage_template.html",
-    'mobile_entrypage' => "mobile/entrypage_template.html",
-    'mobile_page' => "mobile/page_template.html",
-    'mobile_extrapage' => "mobile/search_template.html",
+    'mobile_frontpage' => "mobile/front.tpl",
+    'mobile_archivepage' => "mobile/archive.tpl",
+    'mobile_entrypage' => "mobile/entry.tpl",
+    'mobile_page' => "mobile/page.tpl",
+    'mobile_extrapage' => "mobile/search.tpl",
+    'mobile_use_weblogdir' => 0,
+    'mobile_cookie_pfx' => '',
     'mobile_treat_tablet_as_mobile' => 0
 );
 
@@ -29,7 +32,6 @@ $this->addHook(
     'callback',
     "mobileHook"
     );
-
 
 /**
  * Adds the hook for mobileAdmin()
@@ -54,14 +56,20 @@ $PIVOTX['template']->register_function('mobiledetect', 'smarty_mobiledetect');
 $PIVOTX['template']->register_function('mobilelink', 'smarty_mobilelink');
 
 // Check if we need to set cookies..
+$mobile_cookiename = 'mobileversion';
+// prefix the cookie name?
+if ($PIVOTX['config']->get('mobile_cookie_pfx')) {
+    $mobile_cookiename = $PIVOTX['config']->get('mobile_cookie_pfx') . $mobile_cookiename;
+}
+
 if (!empty($_GET['mobilecookie'])) {
     $sess = $PIVOTX['session'];
     if ($_GET['mobilecookie']=="1") {
-        setcookie("mobileversion", "full", time() + $sess->cookie_lifespan, $sess->cookie_path, $sess->cookie_domain );
-        $_COOKIE['mobileversion']="full";
+        setcookie($mobile_cookiename, "full", time() + $sess->cookie_lifespan, $sess->cookie_path, $sess->cookie_domain );
+        $_COOKIE[$mobile_cookiename]="full";
     } else {
-        setcookie("mobileversion", "", time() + $sess->cookie_lifespan, $sess->cookie_path, $sess->cookie_domain );
-        unset($_COOKIE['mobileversion']);  
+        setcookie($mobile_cookiename, "", time() + $sess->cookie_lifespan, $sess->cookie_path, $sess->cookie_domain );
+        unset($_COOKIE[$mobile_cookiename]);  
     }
 }
 
@@ -104,7 +112,7 @@ if ( defined('PIVOTX_INWEBLOG') && ($PIVOTX['config']->get('mobile_domain') != $
             $link = "http://" . $PIVOTX['config']->get('mobile_domain') . $_SERVER['REQUEST_URI'];
             $linktext = sprintf("<a href='%s'>%s</a>", $link, $PIVOTX['config']->get('mobile_redirectlink') );
             
-            if ( ($PIVOTX['config']->get('mobile_redirect')==1) && empty($_COOKIE['mobileversion']) ) {
+            if ( ($PIVOTX['config']->get('mobile_redirect')==1) && empty($_COOKIE[$mobile_cookiename]) ) {
                 header("location: " . $link);
                 echo "<script type=\"text/javascript\">window.location=\"".$link."\";</script>\n";
                 echo $linktext;
@@ -132,10 +140,14 @@ function mobileHook(&$params) {
     if (!isMobile() || $allowTablet) {
         return;
     }
- 
+    $mobile_cookiename = 'mobileversion';
+    // prefix the cookie name?
+    if ($PIVOTX['config']->get('mobile_cookie_pfx')) {
+        $mobile_cookiename = $PIVOTX['config']->get('mobile_cookie_pfx') . $mobile_cookiename;
+    } 
     // Only change the templates when we're at the correct (sub)domain or we 
     // haven't chosen to see the full version.
-    if (($PIVOTX['config']->get('mobile_domain') != $_SERVER['HTTP_HOST']) || !empty($_COOKIE['mobileversion'])){
+    if (($PIVOTX['config']->get('mobile_domain') != $_SERVER['HTTP_HOST']) || !empty($_COOKIE[$mobile_cookiename])){
         return;
     }
 
@@ -143,40 +155,87 @@ function mobileHook(&$params) {
     $PIVOTX['config']->set('allow_template_override', 1);
     
     $hostname = $_SERVER['http_host'];
+    $guesser1 = '';
+    $guesser2 = '';
     
     switch ($params['action']) {
         
         case "weblog":
             $params['template'] = $PIVOTX['config']->get('mobile_frontpage');
+            $guesser1 = 'front';
+            $guesser2 = 'weblog';
+            // archive set?
+            if ($params['archive'] != '') {
+                $params['template'] = $PIVOTX['config']->get('mobile_archivepage');
+                $guesser1 = 'archive';
+                if ($params['template'] == '') {
+                    $params['template'] = $PIVOTX['config']->get('mobile_frontpage');
+                    $guesser1 = 'front';
+                }
+            }
             break;
         
         case "entry":
             $params['template'] = $PIVOTX['config']->get('mobile_entrypage');
+            $guesser1 = 'entry';
             break;
                 
         case "page":
             $params['template'] = $PIVOTX['config']->get('mobile_page');
+            $guesser1 = 'page'; 
             break;
 
         case "tag":
         case "search":
             $params['template'] = $PIVOTX['config']->get('mobile_extrapage');
+            $guesser1 = 'search';
+            $guesser2 = 'extra';
             break;
 
         // This default case is needed because of a bug in renderTag in PivotX 
         // before version 2.3.2, that causes the "tag" case above to not work.
         default:
             $params['template'] = $PIVOTX['config']->get('mobile_extrapage');
+            $guesser1 = 'front';
             break;
     }
+    
+    // overwrite or add weblog folder to template name?
+    if ($PIVOTX['config']->get('mobile_use_weblogdir')) {
+        $dirmob = dirname($params['template']);
+        $currblog = $PIVOTX['weblogs']->getCurrent();
+        $weblog = $PIVOTX['weblogs']->getWeblog($currblog);
+        $dirname = dirname($weblog['front_template']);
+        $replcnt = 0;
+        $repltpl = '';
+        if ($dirmob != '' && $dirmob != '.') {
+            $repltpl = preg_replace('#'.$dirmob.'#', $dirname, $params['template'], 1 , $replcnt);
+        }
+        if ($replcnt == 0) {
+            $repltpl = $dirname . '/' . $params['template'];
+        }
+        if (!file_exists($PIVOTX['paths']['templates_path'].$repltpl)) {
+            debug('Mobile template does not exist in weblog folder: ' . $repltpl . ' using extension defined default.');
+        } else {
+            $params['template'] = $repltpl;
+        }       
+    }
+    
+    if (!file_exists($PIVOTX['paths']['templates_path'].$params['template'])) {
+        debug('Your mobile template does not exist: ' . $params['template'] . ' trying to guess a fall-back template.');
+        $params['template'] = templateGuess($params['action']);
+        if ($params['template'] == '' ) { $params['template'] = templateGuess($guesser1); }
+        if ($params['template'] == '' && $guesser2 != '') { $params['template'] = templateGuess($guesser2); }
+        if ($params['template'] == '' ) { $params['template'] = templateGuess('front'); }
+        if ($params['template'] == '' ) { debug('Could not guess the right template!'); }
+    }
 }
-
 
 
 /**
  * Detect a mobile browser, and perhaps redirect them to a different page..
  *
- * Not very useful, since pivotx can do this automatically by checking the option in de 'mobile version'
+ * Not very useful, since pivotx can do this automatically by checking the option in the 'mobile version'
  * configuration screen. If, however, you'd like to redirect people to a specific page, you can use
  * [[ mobiledetect redirect="http://example.org/page/mobile" ]]
  *
@@ -230,11 +289,11 @@ function smarty_mobilelink($params, &$smarty) {
     if ($to != "mobile") {
         $link = $PIVOTX['config']->get('canonical_host');
         $query = 'mobilecookie=1';
-        $text = getDefault($params['text'], "View the full version of this site.");
+        $text = getDefault($params['text'], __("View the full version of this site."));
     } else {
         $link = "http://" . $PIVOTX['config']->get('mobile_domain');
         $query = 'mobilecookie=-1';
-        $text = getDefault($params['text'], "View the mobile version of this site.");   
+        $text = getDefault($params['text'], __("View the mobile version of this site."));   
     }
 
     if (strlen($_SERVER['REQUEST_URI'])>1) {
@@ -282,22 +341,22 @@ function mobileAdmin(&$form_html) {
     $form->add( array(
         'type' => 'checkbox',
         'name' => 'mobile_detection',
-        'label' => "Detect mobile visitors",
-        'text' => "Yes, detect visitors that use a mobile browser."
+        'label' => __("Detect mobile visitors"),
+        'text' => __("Yes, detect visitors that use a mobile browser.")
     ));
 
     $form->add( array(
         'type' => 'text',
         'name' => 'mobile_redirectlink',
-        'label' => "Redirect link",
+        'label' => __("Redirect link"),
         'size' => 60,
     ));
     
     $form->add( array(
         'type' => 'checkbox',
         'name' => 'mobile_redirect',
-        'label' => "Immediate redirect",
-        'text' => "Yes, redirect the visitor to the mobile version immediately. If this is disabled, the user will be presented with a link at the top of the page."
+        'label' => __("Immediate redirect"),
+        'text' => __("Yes, redirect the visitor to the mobile version immediately.<br/>If this is disabled, the user will be presented with a link at the top of the page.")
     ));
 
     $form->add( array(
@@ -309,74 +368,104 @@ function mobileAdmin(&$form_html) {
     $form->add( array(
         'type' => 'text',
         'name' => 'mobile_domain',
-        'label' => "Mobile Domain name",
+        'label' => __("Mobile Domain name"),
         'value' => '',
-        'error' => 'That\'s not a proper domain name!',
-        'text' => "The domain name of the mobile version, for example m.example.org. Do not include the 'http://' part.",
-        'size' => 26,
+        'error' => __('That\'s not a proper domain name!'),
+        'text' => __("The domain name of the mobile version, for example m.example.org.<br/>Do not include the 'http://' part.<br/>
+        You can also use the regular www.example.org to display the mobile layout."),
+        'size' => 40,
         'isrequired' => 1,
         'validation' => 'ifany|string|minlen=5|maxlen=80'
     ));
-
-
 
     $form->add( array(
         'type' => 'text',
         'name' => 'mobile_frontpage',
-        'label' => "Frontpage template",
+        'label' => __("Frontpage Template") . " " . makeJtip(__('Frontpage Template'), 
+        __('The Template which determines the layout of the index page of this weblog.')),
         'value' => '',
-        'error' => 'That\'s not a proper filename!',
+        'error' => __('That\'s not a proper filename!'),
         'text' => "",
         'size' => 40,
         'isrequired' => 1,
         'validation' => 'ifany|string|minlen=5|maxlen=80'
     ));
+
+    $form->add( array(
+        'type' => 'text',
+        'name' => 'mobile_archivepage',
+        'label' => __('Archivepage Template') . " " . makeJtip(__('Archivepage Template'), 
+        __('The Template which determines the layout of your archives. This can be the same as "Frontpage Template".')),
+        'value' => '',
+        'error' => __('That\'s not a proper filename!'),
+        'text'=> "",
+        'size' => 40,
+        'isrequired' => 0,
+        'validation' => 'ifany|string|minlen=5|maxlen=80'));
 
     $form->add( array(
         'type' => 'text',
         'name' => 'mobile_entrypage',
-        'label' => "Entry template",
+        'label' => __("Entry Template") . " " . makeJtip(__('Entrypage Template'), 
+        __('The Template which determines the layout of single entries.')),
         'value' => '',
-        'error' => 'That\'s not a proper filename!',
+        'error' => __('That\'s not a proper filename!'),
         'text' => "",
         'size' => 40,
         'isrequired' => 1,
         'validation' => 'ifany|string|minlen=5|maxlen=80'
     ));
-
-
 
     $form->add( array(
         'type' => 'text',
         'name' => 'mobile_page',
-        'label' => "Page template",
+        'label' => __("Page Template") . " " . makeJtip(__('Page Template'), 
+        __('The Template that defines how a page will look like if you haven\'t specified a template for it.')),
         'value' => '',
-        'error' => 'That\'s not a proper filename!',
+        'error' => __('That\'s not a proper filename!'),
         'text' => "",
         'size' => 40,
         'isrequired' => 1,
         'validation' => 'ifany|string|minlen=5|maxlen=80'
     ));
-
 
     $form->add( array(
         'type' => 'text',
         'name' => 'mobile_extrapage',
-        'label' => "Extra (search) template",
+        'label' => __("Extra Template") . " " . makeJtip(__('Extra Template'), 
+        __('The Template that defines how a search, tag or other special page will look like.')),
         'value' => '',
-        'error' => 'That\'s not a proper filename!',
+        'error' => __('That\'s not a proper filename!'),
         'text' => "",
         'size' => 40,
         'isrequired' => 1,
         'validation' => 'ifany|string|minlen=5|maxlen=80'
     ));
 
+    $form->add( array(
+        'type' => 'checkbox',
+        'name' => 'mobile_use_weblogdir',
+        'label' => __("Use folder name of active weblog"),
+        'text' => __("Yes, use the folder name of the active weblog in stead of the mobile folder name (or add it in front of the template name).")
+    ));
+
+    $form->add( array(
+        'type' => 'text',
+        'name' => 'mobile_cookie_pfx',
+        'label' => __("Mobile cookie prefix"),
+        'value' => '',
+        'error' => __('That\'s not a proper cookie prefix!'),
+        'text' => __("Here you can specify whether you want the cookie name created when linking to the full site to have a prefix."),
+        'size' => 20,
+        'isrequired' => 0,
+        'validation' => 'ifany|string|minlen=5|maxlen=80'
+    ));
 
     $form->add( array(
         'type' => 'checkbox',
         'name' => 'mobile_treat_tablet_as_mobile',
-        'label' => "Use Mobile version for tablets",
-        'text' => "Yes, show the Mobile version of the website to visitors on tablet devices, such as the iPad."
+        'label' => __("Use Mobile version for tablets"),
+        'text' => __("Yes, show the Mobile version of the website to visitors on tablet devices, such as the iPad.")
     ));
 
 

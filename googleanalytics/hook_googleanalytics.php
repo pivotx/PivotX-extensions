@@ -1,11 +1,11 @@
 <?php
 // - Extension: Google Analytics
-// - Version: 0.7.1
-// - Author: Wim Bekkers / Bob den Otter
+// - Version: 0.7.2
+// - Author: Wim Bekkers / Bob den Otter / Harm Kramer
 // - Email: wim@tellertest.com / Bob@pivotx.net
 // - Site: http://tellertest.com/pivotextensions/
 // - Description: Add the Google Analytics code to your PivotX pages with full control over tracking code customization. Display an overview of stats on the Dashboard screen
-// - Date: 2012-01-01
+// - Date: 2013-08-31
 // - Identifier: googleanalytics
 
 
@@ -13,11 +13,13 @@ global $PIVOTX;
 global $googleanalytics_config;
 global $googleanalytics_version;
 
-$googleanalytics_version = "0.7";
+$googleanalytics_version = "0.7.2";
 
 $googleanalytics_config = array(
     'ga_UAcode' => "UA-xxxxxx-x",
     'ga_setDomainName' => "",
+    'ga_setCookiePath' => "",
+    'ga_displayStatsDashboard' => 1,
     'ga_setCampNameKey' => "",
     'ga_setCampMediumKey' => "",
     'ga_setCampSourceKey' => "",
@@ -99,6 +101,8 @@ function googleanalyticsHook(&$html) {
 
 if ($ga_setDomainName != "") $output .= "  _gaq.push(['_setDomainName', '".$ga_setDomainName."']);
 _gaq.push(['_setAllowHash', false]);
+";
+if ($ga_setCookiePath != "") $output .= "  _gaq.push(['_setCookiePath', '".$ga_setCookiePath."']);
 ";
 if ($ga_setCampNameKey != "") $output .= "  _gaq.push(['_setCampNameKey', '".$ga_setCampNameKey."']);
 ";
@@ -182,6 +186,13 @@ function googleanalyticsAdmin(&$form_html) {
     ));
 
     $form->add( array(
+        'type' => 'checkbox',
+        'name' => 'ga_displayStatsDashboard',
+        'label' => __("Display the stats on the Dashboard"),
+        'text' => __("Yes, display the stats on the dashboard.")
+    ));
+
+    $form->add( array(
         'type' => 'text',
         'name' => 'ga_login',
         'label' => __('Google account login'),
@@ -233,6 +244,18 @@ function googleanalyticsAdmin(&$form_html) {
         'value' => '',
         'error' => __('Error - input needs to be text'),
         'text' => __('Sets the domain name for cookies, e.g. .example.com, allows tracking of all subdomains in one profile'),
+        'size' => 40,
+        'isrequired' => 0,
+        'validation' => 'string|minlen=1|maxlen=255'
+    ));
+
+    $form->add( array(
+        'type' => 'text',
+        'name' => 'ga_setCookiePath',
+        'label' => "_setCookiePath",
+        'value' => '',
+        'error' => __('Error - input needs to be text'),
+        'text' => __('Sets the cookie path for cookies, defaults to "/"; <br/>when specified it needs to start and end with a "/".'),
         'size' => 40,
         'isrequired' => 0,
         'validation' => 'string|minlen=1|maxlen=255'
@@ -509,6 +532,9 @@ function googleanalyticsScheduler() {
 function googleanalyticsDashboard() {
     global $PIVOTX;
 
+    if ($PIVOTX['config']->get("ga_displayStatsDashboard") == 0) {
+        return;
+    }
 
     $output = '<div class="news" style="margin-bottom: 16px;">
         <h2><img src="pics/newspaper.png" alt="" height="16" width="16" style="border-width: 0px; margin-bottom: -3px;" />

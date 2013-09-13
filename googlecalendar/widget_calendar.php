@@ -1,11 +1,11 @@
 <?php
 // - Extension: Google Calendar
-// - Version: 1.0.1
+// - Version: 1.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
-// - Description: A widget and snippet to display events from your Google Calendar.
-// - Date: 2010-05-19
+// - Description: A widget and snippet to display events from one or more Google Calendars.
+// - Date: 2013-09-13
 // - Identifier: googlecalendar
 // - Required PivotX version: 2.1.0
 
@@ -121,7 +121,7 @@ function googlecalendarAdmin(&$form_html) {
         'error' => __('That\'s not a proper ID!'),
         'text' => __("The ID of your <a href='http://www.google.com/calendar/'>Google Calendar</a>. This is your Gmail e-mail address or something like ". 
             "<tt>d8a49s3jgekpep0p1eiv7pueo4@group.calendar.google.com</tt>. You'll find the ID in the 'Calendar Address' box on the 'Calendar Details' tab " . 
-            "when you have selected a specific calendar on the settings page."),
+            "when you have selected a specific calendar on the settings page. If you want to merge multiple calendars, just separate the IDs with a comma."),
         'size' => 60,
         'isrequired' => 1,
         'validation' => 'string|minlen=5|maxlen=80'

@@ -28,11 +28,13 @@ The available parameters are:
    `standard` or `tall`. Default is tall.
  - count - deprecated -- use annotation.
  - annotation - specifies where you want additional information to be displayed. 
-   Possible values: `none`, `inline`, `ballon`. Default is none. When size is tall then default is ballon.
+   Possible values: `none`, `inline`, `bubble`. Default is none. When size is tall then default is bubble.
+   (Previous value of ballon is still supported and replaced by bubble)
  - bubble - specifies where the mouse-over bubble will be displayed. 
    Possible values: `top`, `bottom`, `left`, `right`. Default is bottom.
+ - recommend - show recommendations in mouse-over bubble. Values: `true` or `false`. Default false.
  - width - width of the display. Default is 450 (for inline), 120 (for ballon) or not used (for none). Minimum 120 (if specified).
- - align - alignment of the display. Values: left or right. Default left.
+ - align - alignment of the display. Values: `left` or `right`. Default left.
  - lang - set this to the desired language 
    [valid codes](http://code.google.com/intl/nl/apis/+1button/#languages).
    When not set PivotX setting will be used.

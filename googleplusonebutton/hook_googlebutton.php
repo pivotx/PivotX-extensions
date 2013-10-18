@@ -1,11 +1,11 @@
 <?php
 // - Extension: Google 'Plus 1' Button
-// - Version: 1.2
+// - Version: 1.3
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: An extension to place a Google 'Plus 1' button on your entries and pages.
-// - Date: 2012-06-16
+// - Date: 2013-10-17
 // - Identifier: plusonebutton
 
 // Register 'plusonebutton' as a smarty tag.
@@ -48,7 +48,7 @@ function smarty_plusonebutton($params, &$smarty) {
     if (empty($params['annotation'])) {
         $annotation = "none";
         // to keep things downwards compatible
-        if ($size == "tall" || $showcount == "true") { $annotation = "ballon"; }
+        if ($size == "tall" || $showcount == "true") { $annotation = "bubble"; }
     } else {
         $annotation = safe_string($params['annotation']);  
         if ($annotation != "none" && empty($params['count'])) {
@@ -56,18 +56,28 @@ function smarty_plusonebutton($params, &$smarty) {
             if ($params['count'] == 0) { $showcount = "false"; }
         } 
     }
+    // annotation ballon has been replaced by bubble
+    if ($annotation == "ballon") {
+        $annotation = "bubble";
+    }
     // specifies the place the bubble is shown when mouse-over
     if (empty($params['bubble'])) {
         $bubble = "bottom";
     } else {
-        $bubble = safe_string($params['bubble']);    
+        $bubble = safe_string($params['bubble']);
     }
-    // default is 450; when using ballon it's set to 120 and when using none not set
+    // specifies whether the hover bubble should contain recommendations or not
+    if (empty($params['recommend'])) {
+        $recommend = "false";
+    } else {
+        $recommend = safe_string($params['recommend']);
+    }
+    // default is 450; when using bubble it's set to 120 and when using none not set
     // this is all for downward compatibility because Google started to use the width specified
     // if specified the minimum is 120.
     if (empty($params['width'])) {
         $width = "450";
-        if ($annotation == "ballon") {
+        if ($annotation == "bubble") {
             $width = "120";
             if ($size == "tall") { $width = "0"; }
         }
@@ -106,6 +116,7 @@ function smarty_plusonebutton($params, &$smarty) {
     $html = "<div class=\"g-plusone\" data-href=\"{$link}\" " . 
         "data-size=\"{$size}\" " . 
         "data-annotation=\"{$annotation}\" {$htmlwidth} " . 
+        "data-recommendations=\"{$recommend}\" " .
         "data-align=\"{$align}\" data-expandTo=\"{$bubble}\" " . 
         "></div>";
         

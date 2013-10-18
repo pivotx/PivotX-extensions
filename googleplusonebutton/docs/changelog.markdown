@@ -1,5 +1,11 @@
 # Changelog
 
+*   ## Version 1.3: ballon deprecated replace by bubble
+    2013-10-17
+
+    *   Google deprecated the annotation ballon and replaced it with bubble
+    *   Added recommend option to show recommendations from linked site
+    
 *   ## Version 1.2: data-width correction
     2012-06-16
 

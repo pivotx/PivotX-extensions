@@ -49,6 +49,8 @@ for "active" CSS class to expand the (sub) menu that contain the
 active page without using the "expand" CSS class on the parent
 list item.
 
+Comment by Harm Kramer on 21st November 2013: www.i-marco.nl does not exist any more
+
 */
 
 (function($) {

@@ -38,6 +38,7 @@ The snippet takes the following optional parameters
 - **sublevelbegin** - The HTML to insert when the sub level starts.
 - **sublevelitem** - The HTML to insert for a sub level item.
 - **sublevelend** - The HTML to insert when the sub level ends.
+- **topsubinclude** - Adds the page link of the parent also as first link to the list (0 or 1).
 - **isactive** - The HTML to insert for `%active%` in the item that is active.
   There is no default value for **isactive** so if you want some output from
   `%active%` you have to use this parameter.
@@ -71,6 +72,14 @@ You can also use `%counter%` to keep track of the number of menus:
             ...
         ]]
 
+Or `%subcounter%` to keep track of the number of submenus:
+
+        [[ menu
+            ...
+            sublevelitem="<li class='menu-%subcounter% %active%'><a href='%link%'>%title%</a></li>"
+            ...
+        ]]
+
 Example - expandable/collapsible menu
 --------------------------------------
 
@@ -90,3 +99,18 @@ menu code some where in your templates:
 
 You can read more about how to configure the expandable menu (using CSS classes) 
 in the beginning of the file menu.js.
+
+To get an idea on what styling of such a fancy menu can achieve add the following HTML code to the `head` element in your templates:
+
+       <link href="[[extensions_dir]]menu/menu.css" rel="stylesheet" type="text/css" />
+
+and try this code:
+
+        <div id='mainmenu'>
+        [[ menu
+            firstchapter="chaptername"
+            toplevelbegin="<ul id='hmenu' class='menu'>"
+            sublevelbegin="<ul class='acitem'>"
+            isactive="class='active'"
+        ]]
+        </div>

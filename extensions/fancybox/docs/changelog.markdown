@@ -1,5 +1,10 @@
 # Changelog
 
+*   ## Version 0.23: close button config option
+    2014-01-25
+
+    *   Config option to change the default for display of close button (per fb_type)
+
 *   ## Version 0.22: youtube / vimeo corrections
     2012-03-21
 

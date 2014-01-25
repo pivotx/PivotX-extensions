@@ -1,11 +1,11 @@
 <?php
 // - Extension: Media Extension
-// - Version: 0.3
+// - Version: 0.3.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A snippet extension to add degradable audio, video and youtube movies to your pages.
-// - Date: 2009-10-10
+// - Date: 2014-01-25
 // - Identifier: media
 // - Required PivotX version: 2.0.2
 
@@ -41,7 +41,7 @@ $media_config['youtube'] = <<< EOM
 </div>
 <script type="text/javascript">
     var flashvars = { };
-    var params = { wmode: "transparent" }
+    var params = { wmode: "transparent", allowfullscreen: "true" }
     var attributes = { };
     swfobject.embedSWF("%filename%", "youtubeholder%counter%", "%width%", "%height%", "9.0.0", "%mediaplayerpath%expressInstall.swf", flashvars, params, attributes);
 </script>
@@ -55,7 +55,7 @@ $media_config['vimeo'] = <<< EOM
 </div>
 <script type="text/javascript">
     var flashvars = { };
-    var params = { wmode: "transparent" }
+    var params = { wmode: "transparent", allowfullscreen: "true" }
     var attributes = { };
     swfobject.embedSWF("%filename%", "vimeoholder%counter%", "%width%", "%height%", "9.0.0", "%mediaplayerpath%expressInstall.swf", flashvars, params, attributes);
 </script>

@@ -41,7 +41,7 @@ You can add a width and height parameter, like this:
 
 The width and height parameters work for [[vimeo]], [[youtube]], [[video]]
 
-In addition you can spesify a description and if you want to add an infobox 
+In addition you can specify a description and if you want to add an infobox 
 (a div element with CSS class "pivotx-media-MEDIATYPE-infobox") which contains 
 the description. The description is normally only used in the fall back for 
 users that have disabled Javascript. Examples:

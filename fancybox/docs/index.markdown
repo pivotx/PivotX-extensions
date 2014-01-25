@@ -134,7 +134,7 @@ Config options
 
 Use config option 'fancybox\_profile' to choose between different setups for 
 Fancybox. Add this option to your configuration to enable it. The option will 
-only have effect on the display of your images. As of this version you can also 
+only have effect on the display of your images. You can also 
 scroll through your grouped images by using mousescroll!  
 
 Currently these values exist:  
@@ -146,14 +146,16 @@ Currently these values exist:
 
 If you want additional profiles to be created, please let us know!
 
-Option 'fancybox\_thumbnail' can be used to specify the behaviour of the creation of thumbnails
-and the setup of the img tag going with it.
+Config option 'fancybox\_thumbnail' can be used to specify the behaviour of the creation of **thumbnails**
+and the setup of the **img tag** going with it.
 Possible values:
 
-  * **1** - The width/height of the img tag are the same irrelevant of thumbnail size
-            (this means that when thumbnail gets created the upload width/height settings are used)
-  * **2** - (default) If thumbnail already exists always use its dimensions for the img tag
-  * **3** - If thumbnail exists and doesn't adhere to current width/height setting recreate it
+  * **1** - The width/height of the img tag are the same irrelevant of the thumbnail size
+            (this means that when a thumbnail gets created the upload width/height settings are used)
+  * **2** - (default) If a thumbnail already exists always use its dimensions for the img tag
+  * **3** - If a thumbnail exists and doesn't adhere to current width/height setting recreate it
+
+Config option 'fancybox\_button\_default' can be used to specify those fb\_types were you want to change the default for the display of the **close button**. Specify any fb_type separated by a comma to change its default. E.g. "youtube,vimeo".
 
 Warning!
 --------

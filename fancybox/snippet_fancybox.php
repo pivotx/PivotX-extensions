@@ -1,11 +1,11 @@
 <?php
 // - Extension: Fancybox
-// - Version: 0.22
+// - Version: 0.23
 // - Author: PivotX Team / Harm Kramer
 // - Email: admin@pivotx.net / harm.kramer@hccnet.nl
 // - Site: http://www.pivotx.net
 // - Description: Replace boring old Thickbox with a FancyBox!
-// - Date: 2012-03-21
+// - Date: 2014-01-25
 // - Identifier: fancybox 
 // - Required PivotX version: 2.2
 
@@ -525,11 +525,23 @@ function fancyboxIncludeCallback(&$html) {
 
     OutputSystem::instance()->enableCode('jquery');
 
+    // Get config setting for changing the close button default (array)
+    $fbclbutt = explode(",",($PIVOTX['config']->get('fancybox_button_default')));
     // Is config option 'fancybox_profile' added and has an expected value?
     $fbprof = $PIVOTX['config']->get('fancybox_profile');
-    // default profile (downwards compatible)
     // for parms explanation -- see http://www.fancybox.net/api
-    $fbparms = "\t\tjQuery(\"a.fancybox\").fancybox({ padding: 2, 'titlePosition': 'over', 'overlayShow': true, 'overlayOpacity': 0.25, 'opacity': true, 'speedIn': 100, 'speedOut': 100, 'changeSpeed': 100, 'showCloseButton': true });\n";
+    $fbparms = "\t\tjQuery(\"a.fancybox\").fancybox({ ";
+    // default profile (downwards compatible)
+    $fbparms .= "padding: 2, ";
+    $fbparms .= "'titlePosition': 'over', ";
+    $fbparms .= "'overlayShow': true, 'overlayOpacity': 0.25, ";
+    $fbparms .= "'opacity': true, 'speedIn': 100, 'speedOut': 100, 'changeSpeed': 100, ";
+    if (in_array("image", $fbclbutt)) {
+        $fbparms .= "'showCloseButton': false ";
+    } else {
+        $fbparms .= "'showCloseButton': true ";
+    }
+    $fbparms .= "});\n";   
     if ($fbprof == '') {
         // profile will be default = nr. 1
     } elseif ($fbprof == 1) {
@@ -544,7 +556,11 @@ function fancyboxIncludeCallback(&$html) {
         $fbparms .= "'easingIn': 'easeOutBack', 'easingOut': 'easeInBack', "; 
         $fbparms .= "'overlayShow': true, 'overlayOpacity': 0.3, ";
         $fbparms .= "'opacity': true, 'speedIn': 300, 'speedOut': 300, 'changeSpeed': 300, ";
-        $fbparms .= "'showCloseButton': true, 'cyclic': true ";
+        if (in_array("image", $fbclbutt)) {
+            $fbparms .= "'showCloseButton': false, 'cyclic': true ";
+        } else {
+            $fbparms .= "'showCloseButton': true, 'cyclic': true ";
+        }
         $fbparms .= "});\n";           
     } elseif ($fbprof == 3) {
         $fbparms = "\t\tjQuery(\"a.fancybox\").fancybox({ ";
@@ -554,7 +570,11 @@ function fancyboxIncludeCallback(&$html) {
         $fbparms .= "'transitionIn': 'fade', 'transitionOut': 'fade', ";
         $fbparms .= "'overlayShow': true, 'overlayOpacity': 0.25, ";
         $fbparms .= "'opacity': true, 'speedIn': 100, 'speedOut': 100, 'changeSpeed': 100, ";
-        $fbparms .= "'showCloseButton': false, 'cyclic': true, ";
+        if (in_array("image", $fbclbutt)) {
+            $fbparms .= "'showCloseButton': true, 'cyclic': true, ";
+        } else {
+            $fbparms .= "'showCloseButton': false, 'cyclic': true, ";
+        }
         $fbparms .= "'titleFormat': function(title, currentArray, currentIndex, currentOpts) { return '<span id=\"fancybox-title-over\">";
         $fbparms .= __("Image");
         $fbparms .= " ' + (currentIndex + 1) + ' / ' + currentArray.length + (title.length ? ' &nbsp; ' + title : '') + '</span>';}";
@@ -567,20 +587,28 @@ function fancyboxIncludeCallback(&$html) {
         $fbparms .= "'transitionIn': 'fade', 'transitionOut': 'fade', ";
         $fbparms .= "'overlayShow': true, 'overlayOpacity': 0.3, ";
         $fbparms .= "'opacity': false, 'speedIn': 300, 'speedOut': 300, 'changeSpeed': 300, ";
-        $fbparms .= "'showCloseButton': true, 'cyclic': false, ";
+        if (in_array("image", $fbclbutt)) {
+            $fbparms .= "'showCloseButton': false, 'cyclic': false, ";
+        } else {
+            $fbparms .= "'showCloseButton': true, 'cyclic': false, ";
+        }
         $fbparms .= "'titleFormat': null";
         $fbparms .= "});\n";
     } else {              
         debug("Config option fancybox_profile has an incorrect value, profile set to default.");   
     } 
-    // standard fancybox youtube profile   
+    // standard fancybox youtube/vimeo profile   
     $fbytube = "\t\tjQuery(\"a.fancytube\").fancybox({ ";
     $fbytube .= "padding: 0, autoScale: false, centerOnScroll: true, ";
     $fbytube .= "'transitionIn': 'none', 'transitionOut': 'none', ";
     $fbytube .= "'overlayShow': true, 'overlayOpacity': 0.7, "; 
     $fbytube .= "'hideOnContentClick': true, ";     // doesn't work for youtube (yet?)
     $fbytube .= "'titlePosition': 'outside', ";
-    $fbytube .= "'showCloseButton': false ";
+    if (in_array("youtube", $fbclbutt) || in_array("vimeo", $fbclbutt)) {
+        $fbytube .= "'showCloseButton': true ";
+    } else {
+        $fbytube .= "'showCloseButton': false ";
+    }
     $fbytube .= "});\n";    
 
     // standard fancybox text profile   
@@ -589,7 +617,11 @@ function fancyboxIncludeCallback(&$html) {
     $fbtext .= "'transitionIn': 'none', 'transitionOut': 'none', ";
     $fbtext .= "'overlayShow': true, 'overlayOpacity': 0.7, "; 
     $fbtext .= "'titlePosition': 'outside', ";
-    $fbtext .= "'showCloseButton': true, 'cyclic': false ";
+    if (in_array("text", $fbclbutt)) {
+        $fbtext .= "'showCloseButton': false, 'cyclic': false ";
+    } else {
+        $fbtext .= "'showCloseButton': true, 'cyclic': false ";
+    }
     $fbtext .= "});\n"; 
 
     // standard fancybox iframe profile   
@@ -600,14 +632,22 @@ function fancyboxIncludeCallback(&$html) {
     $fbifram .= "'width': '75%', 'height': '75%', ";
     $fbifram .= "'type': 'iframe', ";
     $fbifram .= "'titlePosition': 'outside', ";
-    $fbifram .= "'showCloseButton': true ";
+    if (in_array("iframe", $fbclbutt)) {
+        $fbifram .= "'showCloseButton': false ";
+    } else {
+        $fbifram .= "'showCloseButton': true ";
+    }
     $fbifram .= "});\n";    
 
     // standard fancybox swf/flash profile   
     $fbflash = "\t\tjQuery(\"a.fancyflash\").fancybox({ ";
     $fbflash .= "padding: 0, autoScale: false, ";
     $fbflash .= "'transitionIn': 'none', 'transitionOut': 'none', ";
-    $fbflash .= "'showCloseButton': true ";
+    if (in_array("flash", $fbclbutt)) {
+        $fbflash .= "'showCloseButton': false ";
+    } else {
+        $fbflash .= "'showCloseButton': true ";
+    }
     $fbflash .= "});\n";    
 
     // insert html comment within this script to fool markup validation

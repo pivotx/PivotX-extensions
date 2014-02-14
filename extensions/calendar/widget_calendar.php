@@ -1,11 +1,11 @@
 <?php
 // - Extension: Entry Calendar
-// - Version: 0.10
+// - Version: 0.11
 // - Author: PivotX Team/Khevor/Kay Hermann
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A widget to display a calendar with your PivotX entries.
-// - Date: 2009-11-17
+// - Date: 2014-02-14
 // - Identifier: calendar
 // - Required PivotX version: 2.0.2
 
@@ -152,7 +152,8 @@ function smarty_calendar($params) {
         $aParams['user'] = array_map('trim', explode(",", $params['user']));
     }
 
-    $aListEntries = $PIVOTX['db']->read_entries($aParams);
+    $mydb = new db();
+    $aListEntries = $mydb->read_entries($aParams);
 
     /******************************
      * Start building the calendar *

@@ -1,0 +1,5 @@
+<pre class="brush:xml" title="This is a title, check it out!">
+   <DisplayString ElementID="Subscription1223f83d_335be21470e9">
+       <Name>Send critical alerts as email to our Backoffice group</Name>
+   </DisplayString>
+</pre>

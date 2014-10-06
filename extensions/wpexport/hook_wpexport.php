@@ -10,6 +10,8 @@
 
 
 // You can change things yourself to influence processing. These points are visible by the string @@CHANGE
+// @todo Move this configuration to the beginning of the pivotxWpExport class 
+// as properties so everything is one location.
 
 $this->addHook(
     'configuration_add',

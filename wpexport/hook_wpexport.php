@@ -37,6 +37,9 @@ class pivotxWpExport
     <li><a href="?page=wpexport&type=chapters">
         Export Chapters (as plain pages that can be used to parent the PivotX pages)
     </a></li>
+    <li><a href="?page=wpexport&type=uploads">
+        Export Uploads
+    </a></li>
     <br/>
     <span>With parsing of introduction and body content<span>
     <li><a href="?page=wpexport&type=pages">
@@ -100,6 +103,9 @@ THEEND;
                             break;
                         case 'cdata':
                             $outvalue = '<![CDATA['.$value[1].']]>';
+                            break;
+                        case 'html':
+                            $outvalue = $value[1];
                             break;
                     }
                 }
@@ -175,7 +181,7 @@ THEEND;
                 'title' => $record['chaptername'],
                 'link' => '0',
                 'pubDate' => $chapdate,
-                'dc:creator' => '0',
+                'dc:creator' => 'pivx_chapter',
                 'guid isPermaLink="true"' => '0',
                 'description' => $record['description'],
                 'excerpt:encoded' => array('cdata', ''),
@@ -190,6 +196,48 @@ THEEND;
                 'wp:menu_order' => $record['sortorder'],
                 'wp:post_type' => $record['post_type'],
                 'wp:post_password' => '',
+            ));
+        $output .= '</item>'."\n";
+        $WPEXPORT['itemcnt'] = $WPEXPORT['itemcnt'] + 1;
+
+        return $output;
+    }
+
+    private static function outputWXR_Uploads($upload)
+    {
+        global $WPEXPORT;
+        $record = $upload;
+        $output = '';
+        $output .= '<item>'."\n";
+        $upldate = date('Y-m-d H:i:s');
+        $record['post_id'] = $record['uid'];
+        $output .= '<!-- Item for upload will have id ' . $record['post_id'] . ' -->'."\n";
+        $record['post_parent'] = '0';
+        $attmeta = self::outputMap(array(
+                'wp:meta_key' => '_wp_attached_file',
+                'wp:meta_value' => array('cdata', $record['destfolder'] . '/' . $record['filename']),
+            ));
+        $output .= self::outputMap(array(
+                'title' => file_ext_strip($record['filename']),   // todo: title can be uploaded only once to WP - scan for duplicate
+                'link' => '0',
+                'pubDate' => $upldate,
+                'dc:creator' => 'pivx_upload',
+                'guid isPermaLink="false"' => 'uploads/' . $record['destfolder'] . '/' . $record['filename'],
+                'description' => '',
+                'excerpt:encoded' => '',
+                'content:encoded' => '',
+                'wp:post_id' => $record['post_id'],
+                'wp:post_date' => $upldate,
+                'wp:post_date_gmt' => $upldate,
+                'wp:comment_status' => 'open',
+                'wp:ping_status' => 'open',
+                'wp:status' => 'inherit',
+                'wp:post_parent' => '0',
+                'wp:menu_order' => '0',
+                'wp:post_type' => 'attachment',
+                'wp:post_password' => '',
+                'wp:attachment_url' => $record['inputloc'] . $record['filename'],
+                'wp:postmeta' => array('html', $attmeta),
             ));
         $output .= '</item>'."\n";
         $WPEXPORT['itemcnt'] = $WPEXPORT['itemcnt'] + 1;
@@ -422,6 +470,67 @@ THEEND;
         return $output;
     }
 
+    public static function exportUploads()
+    {
+        global $PIVOTX;
+        global $WPEXPORT;
+
+        $output  = '';
+        $output .= self::outputWXR_Header('uploads');
+
+        $uplfiles = glob_recursive($WPEXPORT['upload_input'] . "*");
+        //print_r($uplfiles); 
+        $uplcounter = $WPEXPORT['addtoupl'];
+        $curryear   = date('Y');
+        $inpurl     = $PIVOTX['paths']['canonical_host'] . $PIVOTX['paths']['site_url'];
+        $toskip     = array("index.html", ".htaccess");      // @@CHANGE
+        foreach ($uplfiles as $uplfile) {
+            if (!is_dir($uplfile)) {
+                $uplcounter  = $uplcounter + 1;
+                $uplfilename = basename($uplfile);
+                // skip specific files
+                if (in_array($uplfilename, $toskip)) {
+                    continue;
+                }
+                // skip thumbnails
+                if (substr(file_ext_strip($uplfilename), -6) == '.thumb') {
+                    continue;
+                }
+                $inpfolder   = substr($uplfile, 0, strlen($uplfile) - strlen($uplfilename));
+                if (substr($inpfolder, 0, 3) == '../') {
+                    $inpfolder = substr($inpfolder, 3);
+                }
+                $yearfolder  = $WPEXPORT['upload_dest_def'];
+                // strip the main input from the total folder to check for yyyy-nn folder
+                if (substr($uplfile, 0, strlen($WPEXPORT['upload_input'])) == $WPEXPORT['upload_input']) {
+                    $yearfolder = substr($inpfolder, strlen($WPEXPORT['upload_input']));
+                    $yearfolder = rtrim($yearfolder,"/");
+                    $regex = '/\d{4}[-]\d{2}/';   //  yyyy-nn format
+                    if (!preg_match($regex, $yearfolder)) {
+                        $yearfolder = $WPEXPORT['upload_dest_def'];
+                    } else {
+                        $yearparts = explode("-",$yearfolder);
+                        if ($yearparts[0] < 1990 || $yearparts[0] > $curryear || $yearparts[1] < 1 || $yearparts[1] > 12) {
+                            $yearfolder = $WPEXPORT['upload_dest_def'];
+                        } else {
+                            $yearfolder = $yearparts[0] . '/' . $yearparts[1];
+                        }
+                    }
+                }
+                //echo $uplcounter . '|' . $uplfilename . '|' . $inpfolder . '|' . $yearfolder . '<br/>';
+                $uplinfo = array('uid' => $uplcounter,
+                            'destfolder' => $yearfolder,
+                            'filename' => $uplfilename,
+                            'inputloc' => $inpurl . $inpfolder);
+                recordId($uplcounter);
+                $output .= self::outputWXR_Uploads($uplinfo);
+            }
+        }
+
+        $output .= self::outputWXR_Footer('uploads');
+        return $output;
+    }
+
     public static function exportPages()
     {
         global $PIVOTX;
@@ -549,20 +658,30 @@ function pageWpexport()
     //       they cannot.
     //       These old and new ids can also be used in the chaparray after importing the chapters and exporting the pages.
     //       Change addtoentry / addtopage / addtochap to accomplish this.
+    //       upload_dest_def is the folder name to use whenever an upload is encountered that is not in a yyyy-nn subfolder (WP only uses that)
+    //       addtoupl generates fixed ids based on the sequence in the total collection of uploads;
+    //       this is necessary to connect an entry or page's image field to the right WP media id
     // todo: write an instruction on how to use these adds; after the import the auto_increment will have to highest value + 1
     //       and this cannot be lowered anymore in all cases.
     $WPEXPORT = array('itemcnt' => 0, 
                 'id_min' => 99999999,
                 'id_max' => 0,
+                'upload_dest_def' => '2010/01',
+                'upload_input' => '../images/',
                 'addtoentry' => 100,
                 'addtopage' => 300,
-                'addtochap' => 500);
+                'addtochap' => 500,
+                'addtoupl' => 550);
     $filename = 'blog.xml';
     if (isset($_GET['type'])) {
         switch ($_GET['type']) {
             case 'categories':
                 $filename = 'categories.xml';
                 $output   = pivotxWpExport::exportCategories();
+                break;
+            case 'uploads':
+                $filename = 'uploads.xml';
+                $output   = pivotxWpExport::exportUploads();
                 break;
             case 'pages':
                 $filename = 'pages.xml';
@@ -600,4 +719,22 @@ function recordId($uid)
     if ($uid < $WPEXPORT['id_min']) { $WPEXPORT['id_min'] = $uid; }
     if ($uid > $WPEXPORT['id_max']) { $WPEXPORT['id_max'] = $uid; }
     return;
+}
+
+function glob_recursive($pattern, $flags = 0) {
+// Does not support flag GLOB_BRACE
+    $files = glob($pattern, $flags);
+    foreach (glob(dirname($pattern).'/*', GLOB_ONLYDIR) as $dir) {
+        $files = array_merge($files, glob_recursive($dir.'/'.basename($pattern), $flags));
+    }
+    return $files;
+}
+// Returns only the file extension (without the period).
+function file_ext($filename) {
+    if( !preg_match('/./', $filename) ) return '';
+    return preg_replace('/^.*./', '', $filename);
+}
+// Returns the file name, less the extension.
+function file_ext_strip($filename){
+    return preg_replace('/.[^.]*$/', '', $filename);
 }

@@ -217,8 +217,9 @@ THEEND;
                 'wp:meta_key' => '_wp_attached_file',
                 'wp:meta_value' => array('cdata', $record['destfolder'] . '/' . $record['filename']),
             ));
+		// todo: check whether extension is a valid one
         $output .= self::outputMap(array(
-                'title' => file_ext_strip($record['filename']),   // todo: title can be uploaded only once to WP - scan for duplicate
+                'title' => $record['title'],
                 'link' => '0',
                 'pubDate' => $upldate,
                 'dc:creator' => 'pivx_upload',
@@ -231,12 +232,13 @@ THEEND;
                 'wp:post_date_gmt' => $upldate,
                 'wp:comment_status' => 'open',
                 'wp:ping_status' => 'open',
+                'wp:post_name' => $record['postname'],
                 'wp:status' => 'inherit',
                 'wp:post_parent' => '0',
                 'wp:menu_order' => '0',
                 'wp:post_type' => 'attachment',
                 'wp:post_password' => '',
-                'wp:attachment_url' => $record['inputloc'] . $record['filename'],
+                'wp:attachment_url' => $record['inputloc'] . rawurlencode($record['filename']),
                 'wp:postmeta' => array('html', $attmeta),
             ));
         $output .= '</item>'."\n";
@@ -414,6 +416,7 @@ THEEND;
                 $categories = $record['category'];
             }
             // harm: image does not get picked up by WP?
+            // todo: hook the image up with the id in the uploads process
             $image = '';
             if (isset($record['extrafields']['image']) && ($record['extrafields']['image'] != '')) {
                 $image = $PIVOTX['paths']['host'].$PIVOTX['paths']['upload_base_url'] . $record['extrafields']['image'];
@@ -478,53 +481,35 @@ THEEND;
         $output  = '';
         $output .= self::outputWXR_Header('uploads');
 
-        $uplfiles = glob_recursive($WPEXPORT['upload_input'] . "*");
-        //print_r($uplfiles); 
-        $uplcounter = $WPEXPORT['addtoupl'];
-        $curryear   = date('Y');
-        $inpurl     = $PIVOTX['paths']['canonical_host'] . $PIVOTX['paths']['site_url'];
-        $toskip     = array("index.html", ".htaccess");      // @@CHANGE
-        foreach ($uplfiles as $uplfile) {
-            if (!is_dir($uplfile)) {
-                $uplcounter  = $uplcounter + 1;
-                $uplfilename = basename($uplfile);
-                // skip specific files
-                if (in_array($uplfilename, $toskip)) {
-                    continue;
-                }
-                // skip thumbnails
-                if (substr(file_ext_strip($uplfilename), -6) == '.thumb') {
-                    continue;
-                }
-                $inpfolder   = substr($uplfile, 0, strlen($uplfile) - strlen($uplfilename));
-                if (substr($inpfolder, 0, 3) == '../') {
-                    $inpfolder = substr($inpfolder, 3);
-                }
-                $yearfolder  = $WPEXPORT['upload_dest_def'];
-                // strip the main input from the total folder to check for yyyy-nn folder
-                if (substr($uplfile, 0, strlen($WPEXPORT['upload_input'])) == $WPEXPORT['upload_input']) {
-                    $yearfolder = substr($inpfolder, strlen($WPEXPORT['upload_input']));
-                    $yearfolder = rtrim($yearfolder,"/");
-                    $regex = '/\d{4}[-]\d{2}/';   //  yyyy-nn format
-                    if (!preg_match($regex, $yearfolder)) {
-                        $yearfolder = $WPEXPORT['upload_dest_def'];
-                    } else {
-                        $yearparts = explode("-",$yearfolder);
-                        if ($yearparts[0] < 1990 || $yearparts[0] > $curryear || $yearparts[1] < 1 || $yearparts[1] > 12) {
-                            $yearfolder = $WPEXPORT['upload_dest_def'];
-                        } else {
-                            $yearfolder = $yearparts[0] . '/' . $yearparts[1];
-                        }
-                    }
-                }
-                //echo $uplcounter . '|' . $uplfilename . '|' . $inpfolder . '|' . $yearfolder . '<br/>';
-                $uplinfo = array('uid' => $uplcounter,
-                            'destfolder' => $yearfolder,
-                            'filename' => $uplfilename,
-                            'inputloc' => $inpurl . $inpfolder);
-                recordId($uplcounter);
-                $output .= self::outputWXR_Uploads($uplinfo);
+        $globfiles = glob_recursive($WPEXPORT['upload_input'] . "*");
+        // loose the directories
+        $uplfiles  = array();
+        foreach ($globfiles as $globfile) {
+            if (!is_dir($globfile)) {
+                $uplfiles[] = $globfile;
             }
+        }
+        $toskip     = array("index.html", ".htaccess");      // @@CHANGE
+        foreach ($uplfiles as $uplindex=>$uplfile) {
+            $uplinfo    = create_uplinfo($uplfile, $uplindex + $WPEXPORT['addtoupl']);
+            $uplinfo['index'] = $uplindex;
+            // skip specific files
+            if (in_array($uplinfo['filename'], $toskip)) { continue; }
+            // skip thumbnails
+            if (substr($uplinfo['postname'], -6) == '.thumb') { continue; }
+            $upldupl = search_upload($uplfiles, $uplinfo['postname'], $uplinfo['index'] - 1, 0);
+            // duplicate file name found?
+            if (isset($upldupl['index']) && $uplinfo['index'] != $upldupl['index']) {
+                //echo ($uplinfo['uid'] . ' duplicate of ' . $upldupl['uid'] . '<br/>');
+                // postname has to be unique always
+                $uplinfo['postname'] .= '_dupl.of_' . $upldupl['uid'];
+                // title has to be unique within same location
+                if ($uplinfo['destfolder'] == $upldupl['destfolder']) {
+                    $uplinfo['title'] .= '_dupl.of_' . $upldupl['uid'];
+                }
+            }
+            recordId($uplinfo['uid']);
+            $output .= self::outputWXR_Uploads($uplinfo);
         }
 
         $output .= self::outputWXR_Footer('uploads');
@@ -707,18 +692,86 @@ function pageWpexport()
     echo $output;
 }
 
-function replaceit($record, $replthis, $replby)
-{
+function replaceit($record, $replthis, $replby) {
     $record['introduction'] = str_replace($replthis, $replby, $record['introduction']);
     $record['body']         = str_replace($replthis, $replby, $record['body']);
     return $record;
 }
-function recordId($uid)
-{
+
+function recordId($uid) {
     global $WPEXPORT;
     if ($uid < $WPEXPORT['id_min']) { $WPEXPORT['id_min'] = $uid; }
     if ($uid > $WPEXPORT['id_max']) { $WPEXPORT['id_max'] = $uid; }
     return;
+}
+
+function create_uplinfo($uplfile, $uplcounter) {
+    global $PIVOTX;
+    global $WPEXPORT;
+    $curryear   = date('Y');
+    $inpurl     = $PIVOTX['paths']['canonical_host'] . $PIVOTX['paths']['site_url'];
+    $uplinfo = array();
+    $uplfilename = basename($uplfile);
+    $inpfolder   = substr($uplfile, 0, strlen($uplfile) - strlen($uplfilename));
+    if (substr($inpfolder, 0, 3) == '../') {
+        $inpfolder = substr($inpfolder, 3);
+    }
+    $yearfolder  = $WPEXPORT['upload_dest_def'];
+    // strip the main input from the total folder to check for yyyy-nn folder
+    if (substr($uplfile, 0, strlen($WPEXPORT['upload_input'])) == $WPEXPORT['upload_input']) {
+        $yearfolder = substr($inpfolder, strlen($WPEXPORT['upload_input']));
+        $yearfolder = rtrim($yearfolder,"/");
+        $regex = '/\d{4}[-]\d{2}/';   //  yyyy-nn format
+        if (!preg_match($regex, $yearfolder)) {
+            $yearfolder = $WPEXPORT['upload_dest_def'];
+        } else {
+            $yearparts = explode("-",$yearfolder);
+            if ($yearparts[0] < 1990 || $yearparts[0] > $curryear || $yearparts[1] < 1 || $yearparts[1] > 12) {
+                $yearfolder = $WPEXPORT['upload_dest_def'];
+            } else {
+                $yearfolder = $yearparts[0] . '/' . $yearparts[1];
+            }
+        }
+    }
+    //echo $uplcounter . '|' . $uplfilename . '|' . $inpfolder . '|' . $yearfolder . '<br/>';
+    $uplinfo = array('uid' => $uplcounter,
+                     'destfolder' => $yearfolder,
+                     'filename' => $uplfilename,
+                     'title' => file_ext_strip($uplfilename),
+                     'postname' => make_postname(file_ext_strip($uplfilename)),
+                     'inputloc' => $inpurl . $inpfolder);
+    return $uplinfo;
+}
+
+function search_upload($uplfiles, $postname, $start, $end) {
+    global $WPEXPORT;
+    $start = $start ?: 0;
+    if (!isset($end)) { $end = (count($uplfiles) - 1); }
+    $uplsrch = array();
+    if ($start < $end) {
+        //echo ('search up for ' . $postname . ' start-end: ' . $start . '-' . $end . '<br/>');
+        for ($i = $start; $i <= $end; $i++) {
+            //print_r($uplfiles[$i] . '<br/>');
+            $uplsrch = create_uplinfo($uplfiles[$i], $i + $WPEXPORT['addtoupl']);
+            if ($postname == $uplsrch['postname']) {
+                //echo ('found it!' . $uplsrch['index'] . '<br/>');
+                $uplsrch['index'] = $i;
+                return $uplsrch;
+            }
+        }
+    } else {
+        //echo ('search down for ' . $postname . ' start-end: ' . $start . '-' . $end . '<br/>');
+        for ($i = $start; $i >= $end; $i--) {
+            //print_r($uplfiles[$i] . '<br/>');
+            $uplsrch = create_uplinfo($uplfiles[$i], $i + $WPEXPORT['addtoupl']);
+            if ($postname == $uplsrch['postname']) {
+                //echo ('found it!' . $uplsrch['index'] . '<br/>');
+                $uplsrch['index'] = $i;
+                return $uplsrch;
+            }
+        }
+    }
+    return $uplsrch;
 }
 
 function glob_recursive($pattern, $flags = 0) {
@@ -729,6 +782,11 @@ function glob_recursive($pattern, $flags = 0) {
     }
     return $files;
 }
+
+function make_postname($name) {
+	return $name = strtolower(str_replace(" ", "-", $name));
+}
+
 // Returns only the file extension (without the period).
 function file_ext($filename) {
     if( !preg_match('/./', $filename) ) return '';

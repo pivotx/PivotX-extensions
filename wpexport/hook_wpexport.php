@@ -40,8 +40,8 @@ class pivotxWpExport
     <li><a href="?page=wpexport&type=uploads">
         Export Uploads
     </a></li>
-    <li><a href="?page=wpexport&type=bonusfields">
-        Export Bonusfields definitions (for use in ACF plugin for WP - galleries will be skipped)
+    <li><a href="?page=wpexport&type=extrafields">
+        Export Extrafields definitions like e.g. Bonusfields extension (for use in ACF plugin for WP - galleries will be skipped)
     </a></li>
     <br/>
     <span>With parsing of introduction and body content<span>
@@ -147,7 +147,7 @@ THEEND;
         return $output;
     }
 
-    private static function outputWXR_Bonusfields()
+    private static function outputWXR_Extrafields()
     {
         global $PIVOTX;
         global $WPEXPORT;
@@ -174,17 +174,17 @@ THEEND;
                     $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
                 } else {
                     $output .= self::outputMap(array(
-                    'title' => 'Post_bffields',
+                    'title' => 'Post_extrafields',
                     'link' => '0',
                     'pubDate' => $bfdate,
-                    'dc:creator' => 'pivx_bffields',
+                    'dc:creator' => 'pivx_extrafields',
                     'guid isPermaLink="false"' => '0',
                     'wp:post_id' => $record['post_id'],
                     'wp:post_date' => $bfdate,
                     'wp:post_date_gmt' => $bfdate,
                     'wp:comment_status' => 'closed',
                     'wp:ping_status' => 'closed',
-                    'wp:post_name' => 'acf_post_bffields',
+                    'wp:post_name' => 'acf_post_extrafields',
                     'wp:status' => 'publish',
                     'wp:post_parent' => '0',
                     'wp:menu_order' => '101',
@@ -207,17 +207,17 @@ THEEND;
                     $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
                 } else {
                     $output .= self::outputMap(array(
-                    'title' => 'Page_bffields',
+                    'title' => 'Page_extrafields',
                     'link' => '0',
                     'pubDate' => $bfdate,
-                    'dc:creator' => 'pivx_bffields',
+                    'dc:creator' => 'pivx_extrafields',
                     'guid isPermaLink="false"' => '0',
                     'wp:post_id' => $record['post_id'],
                     'wp:post_date' => $bfdate,
                     'wp:post_date_gmt' => $bfdate,
                     'wp:comment_status' => 'closed',
                     'wp:ping_status' => 'closed',
-                    'wp:post_name' => 'acf_page_bffields',
+                    'wp:post_name' => 'acf_page_extrafields',
                     'wp:status' => 'publish',
                     'wp:post_parent' => '0',
                     'wp:menu_order' => '102',
@@ -548,7 +548,7 @@ THEEND;
                             || $extrakey == 'passwordprotect') {
                         continue;
                     } else {
-                        // process other bonusfields
+                        // process other extrafields
                         $extrafmeta .= self::process_bfextra($extrakey, $record['pivx_type'], $BFFIELDS, $extrafield, $extrafcnt);
                         $extrafcnt   = $extrafcnt + 1;
                     }
@@ -643,14 +643,14 @@ THEEND;
         return $output;
     }
 
-    public static function exportBonusfields()
+    public static function exportExtrafields()
     {
         global $PIVOTX;
 
         $output  = '';
-        $output .= self::outputWXR_Header('bonusfields');
-        $output .= self::outputWXR_Bonusfields();
-        $output .= self::outputWXR_Footer('bonusfields');
+        $output .= self::outputWXR_Header('extrafields');
+        $output .= self::outputWXR_Extrafields();
+        $output .= self::outputWXR_Footer('extrafields');
 
         return $output;
     }
@@ -969,9 +969,9 @@ function pageWpexport()
                 $UPLFILES = get_uplfiles();
                 $output   = pivotxWpExport::exportUploads();
                 break;
-            case 'bonusfields':
-                $filename = 'bonusfields.xml';
-                $output   = pivotxWpExport::exportBonusfields();
+            case 'extrafields':
+                $filename = 'extrafields.xml';
+                $output   = pivotxWpExport::exportExtrafields();
                 break;
             case 'pages':
                 $filename = 'pages.xml';

@@ -5,7 +5,7 @@
 // - Email: marcel@twokings.nl
 // - Site: http://www.twokings.nl/
 // - Description: Export content to a WordPress-compatible format
-// - Date: 2014-10-19
+// - Date: 2014-12-07
 // - Identifier: wpexport
 
 
@@ -29,8 +29,8 @@ class pivotxWpExport
         $form = $PIVOTX['extensions']->getAdminForm('wpexport');
 
         $output = <<<THEEND
-
 <ul>
+    <span>Optional actions before exporting content<span>
     <li><a href="?page=wpexport&type=categories">
         Export Categories
     </a></li>
@@ -39,6 +39,9 @@ class pivotxWpExport
     </a></li>
     <li><a href="?page=wpexport&type=uploads">
         Export Uploads
+    </a></li>
+    <li><a href="?page=wpexport&type=bonusfields">
+        Export Bonusfields definitions (for use in ACF plugin for WP - galleries will be skipped)
     </a></li>
     <br/>
     <span>With parsing of introduction and body content<span>
@@ -139,6 +142,93 @@ THEEND;
                     $output .= '<category><![CDATA['.$cat['display'].']]></category>'."\n";
                     $output .= '<category domain="category" nicename="'.htmlspecialchars($cat['name']).'"><![CDATA['.$cat['display'].']]></category>'."\n";
                 }
+            }
+        }
+        return $output;
+    }
+
+    private static function outputWXR_Bonusfields()
+    {
+        global $PIVOTX;
+        global $WPEXPORT;
+        $output = '';
+        recordId(0);   // so default of minimum gets overwritten
+
+        $bffields = get_bffields();
+        if ($bffields == false) {
+            $output = '<!-- Warning! you have no Bonusfields extension installed -->'."\n";
+            $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
+        } else {
+            if (!is_array($bffields)) {
+                $output = '<!-- Warning! you have no Bonusfields defined -->'."\n";
+                $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
+            } else {
+                $output .= '<item>'."\n";
+                $record['post_id'] = 0;
+                $bfdate = date('Y-m-d H:i:s', strtotime($bfdate . ' - 1 day'));  // to be sure that imported item will be published
+                $record['post_parent'] = '0';
+
+                $bfmeta = self::build_bfmeta('entry', $bffields);
+                if ($bfmeta == '') {
+                    $output .= '<!-- Warning! you have no Bonusfields for entries defined -->'."\n";
+                    $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
+                } else {
+                    $output .= self::outputMap(array(
+                    'title' => 'Post_bffields',
+                    'link' => '0',
+                    'pubDate' => $bfdate,
+                    'dc:creator' => 'pivx_bffields',
+                    'guid isPermaLink="false"' => '0',
+                    'wp:post_id' => $record['post_id'],
+                    'wp:post_date' => $bfdate,
+                    'wp:post_date_gmt' => $bfdate,
+                    'wp:comment_status' => 'closed',
+                    'wp:ping_status' => 'closed',
+                    'wp:post_name' => 'acf_post_bffields',
+                    'wp:status' => 'publish',
+                    'wp:post_parent' => '0',
+                    'wp:menu_order' => '101',
+                    'wp:post_type' => 'acf',
+                    'wp:post_password' => '',
+                    'wp:postmeta' => array('html', $bfmeta),
+                    ));
+                }
+                $output .= '</item>'."\n";
+                $WPEXPORT['itemcnt'] = $WPEXPORT['itemcnt'] + 1;
+
+                $output .= '<item>'."\n";
+                $record['post_id'] = 0;
+                $bfdate = date('Y-m-d H:i:s', strtotime($bfdate . ' - 1 day'));  // to be sure that imported item will be published
+                $record['post_parent'] = '0';
+
+                $bfmeta = self::build_bfmeta('page', $bffields);
+                if ($bfmeta == '') {
+                    $output .= '<!-- Warning! you have no Bonusfields for pages defined -->'."\n";
+                    $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
+                } else {
+                    $output .= self::outputMap(array(
+                    'title' => 'Page_bffields',
+                    'link' => '0',
+                    'pubDate' => $bfdate,
+                    'dc:creator' => 'pivx_bffields',
+                    'guid isPermaLink="false"' => '0',
+                    'wp:post_id' => $record['post_id'],
+                    'wp:post_date' => $bfdate,
+                    'wp:post_date_gmt' => $bfdate,
+                    'wp:comment_status' => 'closed',
+                    'wp:ping_status' => 'closed',
+                    'wp:post_name' => 'acf_page_bffields',
+                    'wp:status' => 'publish',
+                    'wp:post_parent' => '0',
+                    'wp:menu_order' => '102',
+                    'wp:post_type' => 'acf',
+                    'wp:post_password' => '',
+                    'wp:postmeta' => array('html', $bfmeta),
+                    ));
+                }
+                $output .= '</item>'."\n";
+                $WPEXPORT['itemcnt'] = $WPEXPORT['itemcnt'] + 1;
+
             }
         }
         return $output;
@@ -288,6 +378,7 @@ THEEND;
     {
         global $WPEXPORT;
         $itemcnt = $WPEXPORT['itemcnt'];
+        $warncnt = $WPEXPORT['warncnt'];
         $minid = $WPEXPORT['id_min'];
         $maxid = $WPEXPORT['id_max'];
         return <<<THEEND
@@ -296,6 +387,7 @@ THEEND;
 <!-- This is a WordPress eXtended RSS file generated by PivotX as an export of your site. -->
 <!-- It contains information about your $exporttype -->
 <!-- Number of export items generated: $itemcnt -->
+<!-- Number of warnings generated: $warncnt -->
 <!-- The original ids encountered were: $minid (minimum) and $maxid (maximum) -->
 THEEND;
     }
@@ -312,6 +404,7 @@ THEEND;
         }
         $item['link'] = $PIVOTX['paths']['canonical_host'].makePageLink($page['uri'], $page['title'], $page['uid']);
         $item['post_type'] = 'page';
+        $item['pivx_type'] = 'page';
 
         $item['post_id'] = $item['uid'] + $WPEXPORT['addtopage'];
         if ($item['new_uid'] != '') {
@@ -338,6 +431,7 @@ THEEND;
         }
         $item['link'] = $PIVOTX['paths']['canonical_host'].makeFileLink($entry, '', '');
         $item['post_type'] = 'post';
+        $item['pivx_type'] = 'entry';
 
         $item['post_id'] = $item['uid'] + $WPEXPORT['addtoentry'];
         recordId($item['uid']);
@@ -374,6 +468,7 @@ THEEND;
         global $PIVOTX;
         global $WPEXPORT;
         global $UPLFILES;
+        global $BFFIELDS;
         $output = '';
         $parse = isset( $_GET['parse'] ) ? $_GET['parse'] : '';  
         foreach($data as &$record) {
@@ -382,6 +477,7 @@ THEEND;
             // harm: I tested with comments and all seems to process well?
 
             // harm todo: find a solution for the subtitle
+            // harm todo: scan for image tags in content and replace them
 
 //@@CHANGE REPLACE STRINGS HERE -- start
             // replace some strings in introduction and body before parsing
@@ -415,32 +511,49 @@ THEEND;
             if (isset($record['category'])) {
                 $categories = $record['category'];
             }
-            // harm: image does not get picked up by WP?
-            // todo: hook the image up with the id in the uploads process
             $image = '';
-            $extimage = '';
-            $thumbmeta = '';
-            if (isset($record['extrafields']['image']) && ($record['extrafields']['image'] != '')) {
-                $image = $PIVOTX['paths']['host'].$PIVOTX['paths']['upload_base_url'] . $record['extrafields']['image'];
-                $extimage = $record['extrafields']['image'];
-            }
-            else if (isset($record['extrafields']['afbeelding']) && ($record['extrafields']['afbeelding'] != '')) {
-                $image = $PIVOTX['paths']['host'].$PIVOTX['paths']['upload_base_url'] . $record['extrafields']['afbeelding'];
-                $extimage = $record['extrafields']['afbeelding'];
-            }
-            if ($extimage != '') {
-                $uplinfo = search_upload_filename($UPLFILES, $extimage);
-                // image found?
-                if (isset($uplinfo['index'])) {
-                    $thumbmeta = "\n" . self::outputMap(array(
-                    'wp:meta_key' => '_thumbnail_id',
-                    'wp:meta_value' => array('cdata', $uplinfo['uid']),
-                    ));
-                } else {
-                    $thumbmeta = '<!-- Warning! extrafields image not found! ' . $extimage . ' -->';
+            $extrafmeta = '';
+            $extrafcnt  = 0;
+            // process extrafields
+            if ($record['extrafields'] != '') {
+                foreach($record['extrafields'] as $extrakey=>$extrafield) {
+                    // the "normal" image fields
+                    if ($extrakey == 'image' || $extrakey == 'afbeelding') {
+                        $image = $PIVOTX['paths']['host'].$PIVOTX['paths']['upload_base_url'] . $extrafield;
+                        $uplinfo = search_upload_filename($UPLFILES, $extrafield);
+                        // image found?
+                        if (isset($uplinfo['index'])) {
+                            if ($extrafcnt > 0) {
+                                $extrafmeta .= '</wp:postmeta>' . "\n" . '<wp:postmeta>';
+                            }
+                            $extrafcnt   = $extrafcnt + 1;
+                            $extrafmeta .= "\n" . self::outputMap(array(
+                            'wp:meta_key' => '_thumbnail_id',
+                            'wp:meta_value' => array('cdata', $uplinfo['uid']),
+                            ));
+                        } else {
+                            $extrafmeta .= '<!-- Warning! extrafields image not found! ' . $extrafield . ' -->';
+                            $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
+                        }
+                    // skip these ones   todo: find a solution for them
+                    } elseif ($extrakey == 'image_description'
+                            || $extrakey == 'date_depublish'
+                            || $extrakey == 'seodescription'
+                            || $extrakey == 'seokeywords'
+                            || $extrakey == 'seotitle'
+                            || $extrakey == 'ratings'
+                            || $extrakey == 'ratingaverage'
+                            || $extrakey == 'ratingcount'
+                            || $extrakey == 'password'
+                            || $extrakey == 'passwordprotect') {
+                        continue;
+                    } else {
+                        // process other bonusfields
+                        $extrafmeta .= self::process_bfextra($extrakey, $record['pivx_type'], $BFFIELDS, $extrafield, $extrafcnt);
+                        $extrafcnt   = $extrafcnt + 1;
+                    }
                 }
             }
-
             $output .= '<item>'."\n";
             $output .= '<!-- Item for old id ' . $record['uid'] .  ' to post_id ' . $record['post_id'] . ' -->'."\n";
             //$output .= '<!-- ' . var_export($record, true) . ' -->';
@@ -466,7 +579,7 @@ THEEND;
                 'wp:menu_order' => $record['sortorder'],
                 'wp:post_type' => $record['post_type'],
                 'wp:post_password' => '',
-                'wp:postmeta' => array('html', $thumbmeta),
+                'wp:postmeta' => array('html', $extrafmeta),
             ));
             if ($comments && ($record['comment_count'] > 0)) {
                 // add comments
@@ -527,6 +640,18 @@ THEEND;
         }
 
         $output .= self::outputWXR_Footer('uploads');
+        return $output;
+    }
+
+    public static function exportBonusfields()
+    {
+        global $PIVOTX;
+
+        $output  = '';
+        $output .= self::outputWXR_Header('bonusfields');
+        $output .= self::outputWXR_Bonusfields();
+        $output .= self::outputWXR_Footer('bonusfields');
+
         return $output;
     }
 
@@ -628,6 +753,164 @@ THEEND;
         $output .= self::outputWXR_Footer('entries and their comments');
         return $output;
     }
+
+    public static function build_bfmeta($bfsel, $bffields) {
+        global $WPEXPORT;
+        // first open postmeta will be created when creating item
+        $bfmeta = "\n" . self::outputMap(array(
+            'wp:meta_key' => '_edit_last',
+            'wp:meta_value' => array('cdata', 1),
+        ));
+        $bfmeta .= '</wp:postmeta>';
+        $bfselcnt = -1;
+        foreach($bffields as $bffield) {
+            //echo "bffield: " . $bffield['name'] . "/" . $bffield['contenttype'] . "/" . $bffield['type'] . "<br/>";
+            if ($bffield['contenttype'] == $bfsel) {
+                $bfselcnt = $bfselcnt + 1;
+                // remove leading break (sometimes there to get description below field
+                $bffield['description'] = ltrim($bffield['description'], '<br/>');
+                $bffield['description'] = ltrim($bffield['description'], '<br />');
+                $bffield['description'] = ltrim($bffield['description'], '<br>');
+                // replace CR LF from description (they block the import)
+                $bffield['description'] = preg_replace( "/\r|\n/", " ", $bffield['description'] );
+                // to do: strip other html from description (like <em> <b> <i>)
+
+                $bffieldkey = get_bfkey($bffield['fieldkey'],$bffield['contenttype'],$bffields);
+
+                $bfmetacdata = build_bfmetacdata($bffieldkey, $bfselcnt, $bffield);
+
+                // add warning for checkbox multiple
+                if ($bffield['type'] == 'checkbox_multiple') {
+                    $bfmeta .= "\n" . '<!-- Warning! Bonusfield "' .
+                    $bffield['name'] . '" of contenttype ' . $bffield['contenttype'] .
+                    ' is of type checkbox multiple. This type does not exist as an import type. It has been processed as single checkbox -->';
+                    $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
+                }
+                // add warning for select multiple
+                if ($bffield['type'] == 'select_multiple') {
+                    $bfmeta .= "\n" . '<!-- Warning! Bonusfield "' .
+                    $bffield['name'] . '" of contenttype ' . $bffield['contenttype'] .
+                    ' is of type select multiple. This type does not exist as an import type. It has been processed as single select -->';
+                    $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
+                }
+                // skip gallery
+                if ($bffield['type'] == 'gallery') {
+                    $bfmeta .= "\n" . '<!-- Warning! Bonusfield "' .
+                    $bffield['name'] . '" of contenttype ' . $bffield['contenttype'] .
+                    ' is of type gallery. This type cannot be imported in this way. Use export galleries instead -->';
+                    $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
+                    $bfmetacdata = '';
+                }
+                // add warning for some non processed bonusfield parts
+                if ($bffield['showif_type'] != '' ||
+                    $bffield['showif'] != '') {
+                    $bfmeta .= "\n" . '<!-- Warning! Bonusfield "' .
+                    $bffield['name'] . '" of contenttype ' . $bffield['contenttype'] .
+                    ' has a value for showif_type and/or showif that is not yet processed in this export -->';
+                    $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
+                }
+                if ($bfmetacdata != '') {        
+                    $bfmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
+                    'wp:meta_key' => $bffieldkey,
+                    'wp:meta_value' => array('cdata', $bfmetacdata),
+                    ));
+                    $bfmeta .= '</wp:postmeta>';
+                }
+            }
+        }
+        // rule to only show them for this selection
+        $wpsel = 'post';
+        if ($bfsel == 'entry') { $wpsel = 'post'; }
+        if ($bfsel == 'page') { $wpsel = 'page'; }
+        $bfmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
+            'wp:meta_key' => 'rule',
+            'wp:meta_value' => array('cdata', 'a:5:{s:5:"param";s:9:"post_type";s:8:"operator";s:2:"==";s:5:"value";s:4:"' .
+            $wpsel . '";s:8:"order_no";i:0;s:8:"group_no";i:0;}'),
+        ));
+        $bfmeta .= '</wp:postmeta>';
+        $bfmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
+            'wp:meta_key' => 'position',
+            'wp:meta_value' => array('cdata', 'normal'),
+        ));
+        $bfmeta .= '</wp:postmeta>';
+        $bfmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
+            'wp:meta_key' => 'layout',
+            'wp:meta_value' => array('cdata', 'no_box'),
+        ));
+        $bfmeta .= '</wp:postmeta>';
+        $bfmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
+            'wp:meta_key' => 'hide_on_screen',
+            'wp:meta_value' => array('cdata', ''),
+        ));
+        // last close postmeta will be created when creating item
+
+        if ($bfselcnt == -1) {
+            $bfmeta = '';
+        }
+
+        return $bfmeta;
+    }
+
+    public static function process_bfextra($extrakey, $pivx_type, $bffields, $extrafield, $extrafcnt) {
+        global $PIVOTX;
+        global $WPEXPORT;
+        $bffieldkey = get_bfkey($extrakey, $pivx_type, $bffields);
+        $bfmeta = '';
+        if ($bffieldkey == '0') {
+            $bfmeta .= '<!-- Warning! extrafields key not found! ' . $extrakey . ' -->';
+            $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
+        } else {
+            $bffieldtype = get_bftype($extrakey, $pivx_type, $bffields);
+            if ($bffieldtype == 'gallery') {
+                $bfmeta .= '<!-- Warning! extrafields gallery skipped! ' . $extrakey . ' -->';
+                $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
+            } else {
+            /*
+            Todo: Bonusfield types that have not been covered and/or tested: 'textarea' / 'radio' / 'file'
+                // galleries are separate entities -- so will be created whenever the content contains reference to this bonusfield type
+            */
+                if ($extrafcnt > 0) {
+                    $bfmeta .= '</wp:postmeta>' . "\n" . '<wp:postmeta>';
+                }
+                $extrafcnt   = $extrafcnt + 1;
+                if ($bffieldtype == 'checkbox' || $bffieldtype == 'checkbox_multiple') {
+                    if ($extrafield == 'on') {
+                        $bffielddata = get_bfdata($extrakey, $pivx_type, $bffields, true);
+                        $extrafield = 'a:1:{i:0;s:' . strlen($bffielddata) . ':"' . $bffielddata . '";}';
+                    }
+                }
+                if ($bffieldtype == 'choose_entry') {
+                    $bfentry = $PIVOTX['db']->read_entry($extrafield);
+                    if ($bfentry['uid'] == '') {
+                        $extrafield = 'Warning! extrafields value not found! ' . $extrafield;
+                        $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
+                    } else {
+                        $extrafield = $bfentry['uid'] + $WPEXPORT['addtoentry'];
+                    }
+                }
+                if ($bffieldtype == 'choose_page') {
+                    $bfpage = $PIVOTX['pages']->getPageByUri($extrafield);
+                    if ($bfpage['uid'] == '') {
+                        $extrafield = 'Warning! extrafields value not found! ' . $extrafield;
+                        $WPEXPORT['warncnt'] = $WPEXPORT['warncnt'] + 1;
+                    } else {
+                        $extrafield = $bfpage['uid'] + $WPEXPORT['addtopage'];
+                    }
+                }
+                $bfmeta .= "\n" . self::outputMap(array(
+                    'wp:meta_key' => $extrakey,
+                    'wp:meta_value' => array('cdata', $extrafield),
+                    ));
+                $bfmeta .= '</wp:postmeta>' . "\n" . '<wp:postmeta>';
+                $bfmeta .= "\n" . self::outputMap(array(
+                    'wp:meta_key' => '_' . $extrakey,
+                    'wp:meta_value' => array('cdata', $bffieldkey),
+                    ));
+            }
+        }
+        return $bfmeta;
+    }
+
 }
 
 
@@ -653,6 +936,7 @@ function pageWpexport()
     $output = '';
     global $WPEXPORT;
     global $UPLFILES;
+    global $BFFIELDS;
     // @@CHANGE Harm: if you are importing into an existing WP then you probably want to add some number to the internal ids
     //       so these will be recognisable in future; also ids for pages and entries can be the same in PivotX but in WP
     //       they cannot.
@@ -664,6 +948,7 @@ function pageWpexport()
     // todo: write an instruction on how to use these adds; after the import the auto_increment will have to highest value + 1
     //       and this cannot be lowered anymore in all cases.
     $WPEXPORT = array('itemcnt' => 0, 
+                'warncnt' => 0,
                 'id_min' => 99999999,
                 'id_max' => 0,
                 'upload_dest_def' => '2010/01',
@@ -684,9 +969,14 @@ function pageWpexport()
                 $UPLFILES = get_uplfiles();
                 $output   = pivotxWpExport::exportUploads();
                 break;
+            case 'bonusfields':
+                $filename = 'bonusfields.xml';
+                $output   = pivotxWpExport::exportBonusfields();
+                break;
             case 'pages':
                 $filename = 'pages.xml';
                 $UPLFILES = get_uplfiles();
+                $BFFIELDS = get_bffields();
                 $output   = pivotxWpExport::exportPages();
                 break;
             case 'chapters':
@@ -696,11 +986,13 @@ function pageWpexport()
             case 'entries':
                 $filename = 'entries.xml';
                 $UPLFILES = get_uplfiles();
+                $BFFIELDS = get_bffields();
                 $output   = pivotxWpExport::exportEntries();
                 break;
             case 'entries comments':
                 $filename = 'entries_and_comments.xml';
                 $UPLFILES = get_uplfiles();
+                $BFFIELDS = get_bffields();
                 $output   = pivotxWpExport::exportEntriesWithComments();
                 break;
         }
@@ -709,6 +1001,246 @@ function pageWpexport()
     header('Content-type: text/xml');
     header('Content-disposition: attachment; filename="'.$filename.'"');
     echo $output;
+}
+
+function get_bfkey($bfkey, $bfctype, $bffields) {
+    $bfkeycnt = 0; $bfkeywp = 0;
+    foreach($bffields as $bffield) {
+        $bfkeycnt = $bfkeycnt + 1;
+        if ($bffield['contenttype'] == $bfctype && $bffield['fieldkey'] == $bfkey) {
+            // construct key
+            $bffill = '';
+            if ($bfkeycnt < 100) { $bffill = '000'; }
+            if ($bfkeycnt < 10) { $bffill = '0000'; }
+            $bfkeywp = 'field_20141116' . $bffill . $bfkeycnt;
+        }
+    }
+    return $bfkeywp;
+}
+
+function get_bftype($bfkey, $bfctype, $bffields) {
+    $bftype = 0;
+    foreach($bffields as $bffield) {
+        if ($bffield['contenttype'] == $bfctype && $bffield['fieldkey'] == $bfkey) {
+            $bftype = $bffield['type'];
+        }
+    }
+    return $bftype;
+}
+
+function get_bfdata($bfkey, $bfctype, $bffields, $bffillit) {
+    $bfdata = '';
+    foreach($bffields as $bffield) {
+        if ($bffield['contenttype'] == $bfctype && $bffield['fieldkey'] == $bfkey) {
+            $bfdata = $bffield['data'];
+            if ($bfdata == '' && $bffillit == true) {
+                $bfdata = $bffield['name'];
+            }
+        }
+    }
+    return $bfdata;
+}
+
+function build_bfmetacdata($bfkey, $bfocc, $bffield) {
+    $bfmetacdata = '';
+    // bffield lay-out:
+    //[name] => Bonusfield name 
+    //[fieldkey] => Bonusfield key 
+    //[type] => choose_page 
+    //[location] => page-introduction-before 
+    //[showif_type] => 
+    //[showif] => 
+    //[data] => 
+    //[empty_text] => No link 
+    //[description] => Description shown in editor 
+    //[contenttype] => page
+    switch ($bffield['type']) {
+    case 'input_text':
+    case 'hidden':
+        $numvar = 14;
+        $typtxt = 'text';
+        $part01 = 's:13:"default_value";s:' .
+        strlen($bffield['empty_text']) . ':"' . $bffield['empty_text'] . '"' .
+        ';s:11:"placeholder";s:0:"";s:7:"prepend";s:0:"";s:6:"append";s:0:"";';
+        $part02 = 's:9:"maxlength";s:0:"";';
+        $part03 = 's:10:"formatting";s:4:"html";';
+        break;
+    case 'textarea':
+        $numvar = 13;
+        $typtxt = 'textarea';
+        $part01 = 's:13:"default_value";s:' .
+        strlen($bffield['empty_text']) . ':"' . $bffield['empty_text'] . '"' .
+        ';s:11:"placeholder";s:0:"";s:7:"prepend";s:0:"";s:6:"append";s:0:"";';
+        $part02 = 's:9:"maxlength";s:0:"";s:4:"rows";s:0:"";';
+        $part03 = 's:10:"formatting";s:2:"br";';
+        break;
+    case 'choose_page':
+        $numvar = 11;
+        $typtxt = 'page_link';
+        $part01 = 's:9:"post_type";a:1:{i:0;s:4:"page";}s:10:"allow_null";s:1:"1";s:8:"multiple";s:1:"0";';
+        $part02 = '';
+        $part03 = '';
+        break;
+    case 'choose_entry':
+        $numvar = 11;
+        $typtxt = 'page_link';
+        $part01 = 's:9:"post_type";a:1:{i:0;s:4:"post";}s:10:"allow_null";s:1:"1";s:8:"multiple";s:1:"0";';
+        $part02 = '';
+        $part03 = '';
+        break;
+    case 'select':
+    case 'select_multiple':
+        $numvar = 12;
+        $typtxt = 'select';
+        $part01 = 's:7:"choices";' . build_bfchoices($bffield['data'], $bffield['name']);
+        $part02 = 's:13:"default_value";s:' .
+        strlen($bffield['empty_text']) . ':"' . $bffield['empty_text'] . '";';
+        $part03 = 's:10:"allow_null";s:1:"0";s:8:"multiple";s:1:"0";';
+        if ($bffield['type'] == 'select_multiple') {
+            $part03 = 's:10:"allow_null";s:1:"0";s:8:"multiple";s:1:"1";';
+        }
+        break;
+    case 'radio':
+        $numvar = 13;
+        $typtxt = 'radio';
+        $part01 = 's:7:"choices";' . build_bfchoices($bffield['data'], $bffield['name']) . 's:12:"other_choice";s:1:"0";s:17:"save_other_choice";s:1:"0";';
+        $part02 = 's:13:"default_value";s:' .
+        strlen($bffield['empty_text']) . ':"' . $bffield['empty_text'] . '";';
+        $part03 = 's:6:"layout";s:8:"vertical";';
+        break;
+    case 'checkbox':
+    case 'checkbox_multiple':
+        $numvar = 11;
+        $typtxt = 'checkbox';
+        $part01 = 's:7:"choices";' . build_bfchoices($bffield['data'], $bffield['name']);
+        $part02 = 's:13:"default_value";s:' .
+        strlen($bffield['empty_text']) . ':"' . $bffield['empty_text'] . '";';
+        $part03 = 's:6:"layout";s:8:"vertical";';
+        break;
+    case 'image':
+        $numvar = 11;
+        $typtxt = 'image';
+        $part01 = 's:11:"save_format";s:6:"object";s:12:"preview_size";s:9:"thumbnail";s:7:"library";s:3:"all";';
+        $part02 = '';
+        $part03 = '';
+        break;
+    // galleries are separate entities -- so will be created whenever the content contains reference to this bonusfield type
+    case 'gallery':
+        break;
+    case 'file':
+        $numvar = 10;
+        $typtxt = 'file';
+        $part01 = 's:11:"save_format";s:6:"object";s:7:"library";s:3:"all";';
+        $part02 = '';
+        $part03 = '';
+        break;
+    // bonusfields does not have a type number (but format still coded)
+    case 'number':
+        $numvar = 15;
+        $typtxt = 'number';
+        $part01 = 's:13:"default_value";s:' .
+        strlen($bffield['empty_text']) . ':"' . $bffield['empty_text'] . '"' .
+        ';s:11:"placeholder";s:0:"";s:7:"prepend";s:0:"";s:6:"append";s:0:"";';
+        $part02 = 's:3:"min";s:3:"123";s:3:"max";s:6:"123456";s:4:"step";s:2:"10";';
+        $part03 = 's:10:"formatting";s:4:"html";';
+        break;
+    default:
+        echo "Unknown bonusfields type: " . $bffield['type'] . "<br/>";
+        print_r ($bffield); 
+        $numvar = 14;
+        $typtxt = 'text';
+        $part01 = 's:13:"default_value";s:' .
+        strlen($bffield['empty_text']) . ':"' . $bffield['empty_text'] . '"' .
+        ';s:11:"placeholder";s:0:"";s:7:"prepend";s:0:"";s:6:"append";s:0:"";';
+        $part02 = 's:9:"maxlength";s:0:"";';
+        $part03 = 's:10:"formatting";s:4:"html";';
+}
+
+    $bfmetacdata .= 
+    'a:' . $numvar . ':{s:3:"key";s:' . 
+    strlen($bfkey) . ':"' . $bfkey . '"' .
+    ';s:5:"label";s:' .
+    strlen($bffield['name']) . ':"' . $bffield['name'] . '"' .
+    ';s:4:"name";s:' .
+    strlen($bffield['fieldkey']) . ':"' . $bffield['fieldkey'] . '"';
+                     
+    $bfmetacdata .= ';s:4:"type";s:' . strlen($typtxt) . ':"' . $typtxt . '"';
+                       
+    $bfmetacdata .=
+    ';s:12:"instructions";s:' .
+    strlen($bffield['description']) . ':"' . $bffield['description'] . '"' .
+    ';s:8:"required";s:1:"0";';
+
+    $bfmetacdata .= $part01;
+
+    $bfmetacdata .= $part02;
+
+    $bfmetacdata .= $part03;
+
+    $bfmetacdata .=
+    's:17:"conditional_logic";a:3:{s:6:"status";s:1:"0";' . 
+    's:5:"rules";a:1:{i:0;a:3:{s:5:"field";s:4:"null";s:8:"operator";s:2:"==";s:5:"value";s:0:"";}}' . 
+    //'s:5:"rules";a:1:{i:0;a:2:{s:5:"field";s:4:"null";s:8:"operator";s:2:"==";}}' . 
+    's:8:"allorany";s:3:"all";}';
+                        
+    // seq.number
+    $bfmetacdata .= 
+    's:8:"order_no";i:' . $bfocc . ';}';
+
+    return $bfmetacdata;
+}
+
+function build_bfchoices($bfdata, $bffieldname) {
+    $bfdatapieces = explode("\r\n", $bfdata);
+    if (count($bfdatapieces) == 0 || $bfdata == '') {
+        $bfchoices = 'a:1:{s:' . strlen($bffieldname) . ':"' . $bffieldname . '";';
+        $bfchoices .= 's:' . strlen($bffieldname) . ':"' . $bffieldname . '";';
+        $bfchoices .= '}';
+        return $bfchoices;
+    }
+    $bfchoices = 'a:' . count($bfdatapieces) . ':{';
+    foreach($bfdatapieces as $bfdatapiece) {
+        $bfdataparts = explode("::", $bfdatapiece);
+        if ($bfdataparts[1] == '') {
+            $bfchoices .= 's:' . strlen($bfdatapiece) . ':"' . $bfdatapiece . '";';
+            $bfchoices .= 's:' . strlen($bfdatapiece) . ':"' . $bfdatapiece . '";';
+        } else {
+            $bfchoices .= 's:' . strlen($bfdataparts[0]) . ':"' . $bfdataparts[0] . '";';
+            $bfchoices .= 's:' . strlen($bfdataparts[1]) . ':"' . $bfdataparts[1] . '";';
+        }
+    }
+    $bfchoices .= '}';
+    return $bfchoices;
+}
+
+function get_bffields() {
+    global $PIVOTX;
+    global $WPEXPORT;
+    $bffields = false;
+    if (function_exists('load_serialize')) {
+        $config = load_serialize($PIVOTX['paths']['db_path'].'ser_bonusfields.php', true);
+    } else if (function_exists('loadSerialize')) {
+        $config = loadSerialize($PIVOTX['paths']['db_path'].'ser_bonusfields.php', true);
+    }
+    if ($config == true) {
+        $bffields = array();
+        foreach($config['definition'] as $array_field) {
+            $bffield = new bonusfieldsDefinition();
+            $bffield->importFromArray($array_field);
+            $bffields[] = $bffield;
+        }
+        $bfcount = count($bffields);
+        if ($bfcount < 1) {
+            $bffields = $bfcount;
+        } else {
+            $bffields2 = array();
+            foreach($bffields as $bffield) {
+                $bffields2[] = $bffield->exportToArray();
+            }
+            $bffields = $bffields2;
+        }
+    }
+    return $bffields;
 }
 
 function get_uplfiles() {

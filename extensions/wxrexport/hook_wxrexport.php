@@ -1257,7 +1257,7 @@ function create_uplinfo($uplfile, $uplcounter) {
                      'basefolder' => $basefolder,
                      'fileext' => $path_parts['extension'],
                      'title' => removeExtension($uplfilename),
-                     'postname' => make_postname(removeExtension($uplfilename)),
+                     'postname' => strtolower(str_replace(' ', '-', (removeExtension($uplfilename)))),
                      'inputloc' => $inpurl . $inpfolder);
     return $uplinfo;
 }
@@ -1333,8 +1333,4 @@ function glob_recursive($pattern, $flags = 0) {
         $files = array_merge($files, glob_recursive($dir.'/'.basename($pattern), $flags));
     }
     return $files;
-}
-
-function make_postname($name) {
-    return $name = strtolower(str_replace(" ", "-", $name));
 }

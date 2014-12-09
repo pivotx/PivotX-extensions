@@ -1042,7 +1042,6 @@ function get_bfdata($bfkey, $bfctype, $bffields, $bffillit) {
 }
 
 function build_bfmetacdata($bfkey, $bfocc, $bffield) {
-    $bfmetacdata = '';
     // bffield lay-out:
     //[name] => Bonusfield name 
     //[fieldkey] => Bonusfield key 
@@ -1054,163 +1053,116 @@ function build_bfmetacdata($bfkey, $bfocc, $bffield) {
     //[empty_text] => No link 
     //[description] => Description shown in editor 
     //[contenttype] => page
+
+    $bfmetacdata = array(
+        'key' => $bfkey,
+        'label' => $bffield['name'],
+        'name' => $bffield['fieldkey'],
+        'instructions' => $bffield['description'],
+        'default_value' => $bffield['empty_text'],
+        'required' => 0,
+        'conditional_logic' => array(
+            'status' => 0,
+            'rules' => array(array(
+                'field' => 'null',
+                'operator' => '==',
+                'value' => ''
+                )
+            ),
+            'allorany' => 'all'
+        ),
+        'order_no' => $bfocc
+    );
+
     switch ($bffield['type']) {
-    case 'input_text':
-    case 'hidden':
-        $numvar = 14;
-        $typtxt = 'text';
-        $part01 = 's:13:"default_value";s:' .
-        strlen($bffield['empty_text']) . ':"' . $bffield['empty_text'] . '"' .
-        ';s:11:"placeholder";s:0:"";s:7:"prepend";s:0:"";s:6:"append";s:0:"";';
-        $part02 = 's:9:"maxlength";s:0:"";';
-        $part03 = 's:10:"formatting";s:4:"html";';
-        break;
-    case 'textarea':
-        $numvar = 13;
-        $typtxt = 'textarea';
-        $part01 = 's:13:"default_value";s:' .
-        strlen($bffield['empty_text']) . ':"' . $bffield['empty_text'] . '"' .
-        ';s:11:"placeholder";s:0:"";s:7:"prepend";s:0:"";s:6:"append";s:0:"";';
-        $part02 = 's:9:"maxlength";s:0:"";s:4:"rows";s:0:"";';
-        $part03 = 's:10:"formatting";s:2:"br";';
-        break;
-    case 'choose_page':
-        $numvar = 11;
-        $typtxt = 'page_link';
-        $part01 = 's:9:"post_type";a:1:{i:0;s:4:"page";}s:10:"allow_null";s:1:"1";s:8:"multiple";s:1:"0";';
-        $part02 = '';
-        $part03 = '';
-        break;
-    case 'choose_entry':
-        $numvar = 11;
-        $typtxt = 'page_link';
-        $part01 = 's:9:"post_type";a:1:{i:0;s:4:"post";}s:10:"allow_null";s:1:"1";s:8:"multiple";s:1:"0";';
-        $part02 = '';
-        $part03 = '';
-        break;
-    case 'select':
-    case 'select_multiple':
-        $numvar = 12;
-        $typtxt = 'select';
-        $part01 = 's:7:"choices";' . build_bfchoices($bffield['data'], $bffield['name']);
-        $part02 = 's:13:"default_value";s:' .
-        strlen($bffield['empty_text']) . ':"' . $bffield['empty_text'] . '";';
-        $part03 = 's:10:"allow_null";s:1:"0";s:8:"multiple";s:1:"0";';
-        if ($bffield['type'] == 'select_multiple') {
-            $part03 = 's:10:"allow_null";s:1:"0";s:8:"multiple";s:1:"1";';
-        }
-        break;
-    case 'radio':
-        $numvar = 13;
-        $typtxt = 'radio';
-        $part01 = 's:7:"choices";' . build_bfchoices($bffield['data'], $bffield['name']) . 's:12:"other_choice";s:1:"0";s:17:"save_other_choice";s:1:"0";';
-        $part02 = 's:13:"default_value";s:' .
-        strlen($bffield['empty_text']) . ':"' . $bffield['empty_text'] . '";';
-        $part03 = 's:6:"layout";s:8:"vertical";';
-        break;
-    case 'checkbox':
-    case 'checkbox_multiple':
-        $numvar = 11;
-        $typtxt = 'checkbox';
-        $part01 = 's:7:"choices";' . build_bfchoices($bffield['data'], $bffield['name']);
-        $part02 = 's:13:"default_value";s:' .
-        strlen($bffield['empty_text']) . ':"' . $bffield['empty_text'] . '";';
-        $part03 = 's:6:"layout";s:8:"vertical";';
-        break;
-    case 'image':
-        $numvar = 11;
-        $typtxt = 'image';
-        $part01 = 's:11:"save_format";s:6:"object";s:12:"preview_size";s:9:"thumbnail";s:7:"library";s:3:"all";';
-        $part02 = '';
-        $part03 = '';
-        break;
-    // galleries are separate entities -- so will be created whenever the content contains reference to this bonusfield type
-    case 'gallery':
-        break;
-    case 'file':
-        $numvar = 10;
-        $typtxt = 'file';
-        $part01 = 's:11:"save_format";s:6:"object";s:7:"library";s:3:"all";';
-        $part02 = '';
-        $part03 = '';
-        break;
-    // bonusfields does not have a type number (but format still coded)
-    case 'number':
-        $numvar = 15;
-        $typtxt = 'number';
-        $part01 = 's:13:"default_value";s:' .
-        strlen($bffield['empty_text']) . ':"' . $bffield['empty_text'] . '"' .
-        ';s:11:"placeholder";s:0:"";s:7:"prepend";s:0:"";s:6:"append";s:0:"";';
-        $part02 = 's:3:"min";s:3:"123";s:3:"max";s:6:"123456";s:4:"step";s:2:"10";';
-        $part03 = 's:10:"formatting";s:4:"html";';
-        break;
-    default:
-        echo "Unknown bonusfields type: " . $bffield['type'] . "<br/>";
-        print_r ($bffield); 
-        $numvar = 14;
-        $typtxt = 'text';
-        $part01 = 's:13:"default_value";s:' .
-        strlen($bffield['empty_text']) . ':"' . $bffield['empty_text'] . '"' .
-        ';s:11:"placeholder";s:0:"";s:7:"prepend";s:0:"";s:6:"append";s:0:"";';
-        $part02 = 's:9:"maxlength";s:0:"";';
-        $part03 = 's:10:"formatting";s:4:"html";';
-}
+        case 'input_text':
+        case 'hidden':
+            $bfmetacdata['type'] = 'text';
+            $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
+            $bfmetacdata['maxlength'] = '';
+            $bfmetacdata['formating'] = 'html';
+            break;
+        case 'textarea':
+            $bfmetacdata['type'] = 'textarea';
+            $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
+            $bfmetacdata['maxlength'] = '';
+            $bfmetacdata['rows'] = '';
+            $bfmetacdata['formating'] = 'br';
+            break;
+        case 'choose_page':
+            $bfmetacdata['type'] = 'page_link';
+            $bfmetacdata['post_type'] = array('page');
+            $bfmetacdata['allow_null'] = '1';
+            $bfmetacdata['multiple'] = '0';
+            unset($bfmetacdata['default_value']);
+            break;
+        case 'choose_entry':
+            $bfmetacdata['type'] = 'page_link';
+            $bfmetacdata['post_type'] = array('page');
+            $bfmetacdata['allow_null'] = '1';
+            $bfmetacdata['multiple'] = '0';
+            unset($bfmetacdata['default_value']);
+            break;
+        case 'select':
+        case 'select_multiple':
+            $bfmetacdata['type'] = 'select';
+            $bfmetacdata['choices'] = explode("\r\n", $bffield['data']);
+            if ($bffield['type'] == 'select_multiple') {
+                $bfmetacdata['allow_null'] = '0';
+                $bfmetacdata['multiple'] = '1';
+            } else {
+                $bfmetacdata['allow_null'] = '1';
+                $bfmetacdata['multiple'] = '0';
+            }
+            break;
+        case 'radio':
+            $bfmetacdata['type'] = 'radio';
+            $bfmetacdata['choices'] = explode("\r\n", $bffield['data']);
+            $bfmetacdata['other_choice'] = '0';
+            $bfmetacdata['save_other_choice'] = '0';
+            $bfmetacdata['layout'] = 'vertical';
+            break;
+        case 'checkbox':
+        case 'checkbox_multiple':
+            $bfmetacdata['type'] = 'checkbox';
+            $bfmetacdata['choices'] = explode("\r\n", $bffield['data']);
+            $bfmetacdata['layout'] = 'vertical';
+            break;
+        case 'image':
+            $bfmetacdata['type'] = 'image';
+            $bfmetacdata['save_format'] = 'object';
+            $bfmetacdata['preview_size'] = 'thumbnail';
+            $bfmetacdata['library'] = 'all';
+            unset($bfmetacdata['default_value']);
+            break;
+        // galleries are separate entities -- so will be created whenever the content contains reference to this bonusfield type
+        case 'gallery':
+            break;
+        case 'file':
+            $bfmetacdata['type'] = 'file';
+            $bfmetacdata['save_format'] = 'object';
+            $bfmetacdata['library'] = 'all';
+            unset($bfmetacdata['default_value']);
+            break;
+        // bonusfields does not have a type number (but format still coded)
+        case 'number':
+            $bfmetacdata['type'] = 'number';
+            $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
+            $bfmetacdata['min'] = '123';
+            $bfmetacdata['max'] = '123456';
+            $bfmetacdata['step'] = '10';
+            $bfmetacdata['formating'] = 'html';
+            break;
+        default:
+            echo "Unknown bonusfields type: " . $bffield['type'] . "<br/>";
+            print_r ($bffield); 
+            $bfmetacdata['type'] = 'text';
+            $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
+            $bfmetacdata['maxlength'] = '';
+            $bfmetacdata['formating'] = 'html';
 
-    $bfmetacdata .= 
-    'a:' . $numvar . ':{s:3:"key";s:' . 
-    strlen($bfkey) . ':"' . $bfkey . '"' .
-    ';s:5:"label";s:' .
-    strlen($bffield['name']) . ':"' . $bffield['name'] . '"' .
-    ';s:4:"name";s:' .
-    strlen($bffield['fieldkey']) . ':"' . $bffield['fieldkey'] . '"';
-                     
-    $bfmetacdata .= ';s:4:"type";s:' . strlen($typtxt) . ':"' . $typtxt . '"';
-                       
-    $bfmetacdata .=
-    ';s:12:"instructions";s:' .
-    strlen($bffield['description']) . ':"' . $bffield['description'] . '"' .
-    ';s:8:"required";s:1:"0";';
-
-    $bfmetacdata .= $part01;
-
-    $bfmetacdata .= $part02;
-
-    $bfmetacdata .= $part03;
-
-    $bfmetacdata .=
-    's:17:"conditional_logic";a:3:{s:6:"status";s:1:"0";' . 
-    's:5:"rules";a:1:{i:0;a:3:{s:5:"field";s:4:"null";s:8:"operator";s:2:"==";s:5:"value";s:0:"";}}' . 
-    //'s:5:"rules";a:1:{i:0;a:2:{s:5:"field";s:4:"null";s:8:"operator";s:2:"==";}}' . 
-    's:8:"allorany";s:3:"all";}';
-                        
-    // seq.number
-    $bfmetacdata .= 
-    's:8:"order_no";i:' . $bfocc . ';}';
-
-    return $bfmetacdata;
-}
-
-function build_bfchoices($bfdata, $bffieldname) {
-    $bfdatapieces = explode("\r\n", $bfdata);
-    if (count($bfdatapieces) == 0 || $bfdata == '') {
-        $bfchoices = 'a:1:{s:' . strlen($bffieldname) . ':"' . $bffieldname . '";';
-        $bfchoices .= 's:' . strlen($bffieldname) . ':"' . $bffieldname . '";';
-        $bfchoices .= '}';
-        return $bfchoices;
     }
-    $bfchoices = 'a:' . count($bfdatapieces) . ':{';
-    foreach($bfdatapieces as $bfdatapiece) {
-        $bfdataparts = explode("::", $bfdatapiece);
-        if ($bfdataparts[1] == '') {
-            $bfchoices .= 's:' . strlen($bfdatapiece) . ':"' . $bfdatapiece . '";';
-            $bfchoices .= 's:' . strlen($bfdatapiece) . ':"' . $bfdatapiece . '";';
-        } else {
-            $bfchoices .= 's:' . strlen($bfdataparts[0]) . ':"' . $bfdataparts[0] . '";';
-            $bfchoices .= 's:' . strlen($bfdataparts[1]) . ':"' . $bfdataparts[1] . '";';
-        }
-    }
-    $bfchoices .= '}';
-    return $bfchoices;
+    return serialize($bfmetacdata);
 }
 
 function get_bffields() {

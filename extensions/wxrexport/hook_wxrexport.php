@@ -1013,7 +1013,7 @@ THEEND;
             case 'select':
             case 'select_multiple':
                 $bfmetacdata['type'] = 'select';
-                $bfmetacdata['choices'] = explode("\r\n", $bffield['data']);
+                $bfmetacdata['choices'] = self::getBFChoices($bffield['data']);
                 if ($bffield['type'] == 'select_multiple') {
                     $bfmetacdata['allow_null'] = '0';
                     $bfmetacdata['multiple'] = '1';
@@ -1024,7 +1024,7 @@ THEEND;
                 break;
             case 'radio':
                 $bfmetacdata['type'] = 'radio';
-                $bfmetacdata['choices'] = explode("\r\n", $bffield['data']);
+                $bfmetacdata['choices'] = self::getBFChoices($bffield['data']);
                 $bfmetacdata['other_choice'] = '0';
                 $bfmetacdata['save_other_choice'] = '0';
                 $bfmetacdata['layout'] = 'vertical';
@@ -1032,7 +1032,7 @@ THEEND;
             case 'checkbox':
             case 'checkbox_multiple':
                 $bfmetacdata['type'] = 'checkbox';
-                $bfmetacdata['choices'] = explode("\r\n", $bffield['data']);
+                $bfmetacdata['choices'] = self::getBFChoices($bffield['data']);
                 $bfmetacdata['layout'] = 'vertical';
                 break;
             case 'image':
@@ -1070,6 +1070,16 @@ THEEND;
 
         }
         return serialize($bfmetacdata);
+    }
+
+    private static function getBFChoices($data) {
+        $combined_choices = explode("\r\n", $data);
+        $choices = array();
+        foreach($combined_choices as $elem) {
+            list($key, $value) = explode('::', $elem);
+            $choices[$key] = $value;
+        }
+        return $choices;
     }
 
     private static function getBFFields() {

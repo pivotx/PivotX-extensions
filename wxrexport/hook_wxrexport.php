@@ -21,6 +21,27 @@ $this->addHook(
 
 class pivotxWxrExport
 {
+    // @@CHANGE Harm: if you are importing into an existing WP then you probably want to add some number to the internal ids
+    //       so these will be recognisable in future; also ids for pages and entries can be the same in PivotX but in WP
+    //       they cannot.
+    //       These old and new ids can also be used in the chaparray after importing the chapters and exporting the pages.
+    //       Change addtoentry / addtopage / addtochap to accomplish this.
+    //       upload_dest_def is the folder name to use whenever an upload is encountered that is not in a yyyy-nn subfolder (WP only uses that)
+    //       addtoupl generates fixed ids based on the sequence in the total collection of uploads;
+    //       this is necessary to connect an entry or page's image field to the right WP media id
+    // todo: write an instruction on how to use these adds; after the import the auto_increment will have to highest value + 1
+    //       and this cannot be lowered anymore in all cases.
+    public static $itemcnt = 0;
+    public static $warncnt = 0;
+    public static $id_min = 99999999;
+    public static $id_max = 0;
+    public static $upload_dest_def = '2010/01';
+    public static $upload_input = '../images/';
+    public static $addtoentry = 100;
+    public static $addtopage = 300;
+    public static $addtochap = 500;
+    public static $addtoupl = 550;
+    
     public static function adminTab(&$form_html)
     {
         global $PIVOTX;
@@ -120,12 +141,11 @@ THEEND;
     private static function outputWXR_Categories()
     {
         global $PIVOTX;
-        global $WXREXPORT;
         $output = '';
         self::recordId(0);   // so default of minimum gets overwritten
         foreach($PIVOTX['categories']->data as $cat) {
             $output .= '<wp:category><wp:category_nicename>'.htmlspecialchars($cat['name']).'</wp:category_nicename><wp:category_parent></wp:category_parent><wp:cat_name><![CDATA['.$cat['display'].']]></wp:cat_name></wp:category>'."\n";
-            $WXREXPORT['itemcnt'] = $WXREXPORT['itemcnt'] + 1;
+            self::$itemcnt++;
         }
         return $output;
     }
@@ -149,18 +169,17 @@ THEEND;
     private static function outputWXR_Extrafields()
     {
         global $PIVOTX;
-        global $WXREXPORT;
         $output = '';
         self::recordId(0);   // so default of minimum gets overwritten
 
         $bffields = self::getBFFields();
         if ($bffields == false) {
             $output = '<!-- Warning! you have no Bonusfields extension installed -->'."\n";
-            $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
+            self::$warncnt++;
         } else {
             if (!is_array($bffields)) {
                 $output = '<!-- Warning! you have no Bonusfields defined -->'."\n";
-                $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
+                self::$warncnt++;
             } else {
                 $output .= '<item>'."\n";
                 $record['post_id'] = 0;
@@ -170,7 +189,7 @@ THEEND;
                 $bfmeta = self::buildBFMeta('entry', $bffields);
                 if ($bfmeta == '') {
                     $output .= '<!-- Warning! you have no Bonusfields for entries defined -->'."\n";
-                    $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
+                    self::$warncnt++;
                 } else {
                     $output .= self::outputMap(array(
                     'title' => 'Post_extrafields',
@@ -193,7 +212,7 @@ THEEND;
                     ));
                 }
                 $output .= '</item>'."\n";
-                $WXREXPORT['itemcnt'] = $WXREXPORT['itemcnt'] + 1;
+                self::$itemcnt++;
 
                 $output .= '<item>'."\n";
                 $record['post_id'] = 0;
@@ -203,7 +222,7 @@ THEEND;
                 $bfmeta = self::buildBFMeta('page', $bffields);
                 if ($bfmeta == '') {
                     $output .= '<!-- Warning! you have no Bonusfields for pages defined -->'."\n";
-                    $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
+                    self::$warncnt++;
                 } else {
                     $output .= self::outputMap(array(
                     'title' => 'Page_extrafields',
@@ -226,7 +245,7 @@ THEEND;
                     ));
                 }
                 $output .= '</item>'."\n";
-                $WXREXPORT['itemcnt'] = $WXREXPORT['itemcnt'] + 1;
+                self::$itemcnt++;
 
             }
         }
@@ -256,14 +275,13 @@ THEEND;
 
     private static function outputWXR_Chapters($chapter)
     {
-        global $WXREXPORT;
         $record = $chapter;
         $output = '';
         $output .= '<item>'."\n";
         $chapdate = date('Y-m-d H:i:s', strtotime($chapdate . ' - 1 day'));  // to be sure that imported page will be published
         $record['post_type'] = 'page';
 
-        $record['post_id'] = $record['uid'] + $WXREXPORT['addtochap'];
+        $record['post_id'] = $record['uid'] + self::$addtochap;
         $output .= '<!-- Item for old id ' . $record['uid'] .  ' to post_id ' . $record['post_id'] . ' -->'."\n";
         $record['post_parent'] = '0';
         $output .= self::outputMap(array(
@@ -287,14 +305,13 @@ THEEND;
                 'wp:post_password' => '',
             ));
         $output .= '</item>'."\n";
-        $WXREXPORT['itemcnt'] = $WXREXPORT['itemcnt'] + 1;
+        self::$itemcnt++;
 
         return $output;
     }
 
     private static function outputWXR_Uploads($upload)
     {
-        global $WXREXPORT;
         $record = $upload;
         $output = '';
         $output .= '<item>'."\n";
@@ -330,7 +347,7 @@ THEEND;
                 'wp:postmeta' => array('html', $attmeta),
             ));
         $output .= '</item>'."\n";
-        $WXREXPORT['itemcnt'] = $WXREXPORT['itemcnt'] + 1;
+        self::$itemcnt++;
 
         return $output;
     }
@@ -375,11 +392,10 @@ THEEND;
 
     private static function outputWXR_Footer($exporttype)
     {
-        global $WXREXPORT;
-        $itemcnt = $WXREXPORT['itemcnt'];
-        $warncnt = $WXREXPORT['warncnt'];
-        $minid = $WXREXPORT['id_min'];
-        $maxid = $WXREXPORT['id_max'];
+        $itemcnt = self::$itemcnt;
+        $warncnt = self::$warncnt;
+        $minid = self::$id_min;
+        $maxid = self::$id_max;
         return <<<THEEND
 </channel>
 </rss>
@@ -394,7 +410,6 @@ THEEND;
     private static function convertPageToItem($page, $comments)
     {
         global $PIVOTX;
-        global $WXREXPORT;
         global $chaparray;
         $item = $page;
         if (true) {
@@ -405,7 +420,7 @@ THEEND;
         $item['post_type'] = 'page';
         $item['pivx_type'] = 'page';
 
-        $item['post_id'] = $item['uid'] + $WXREXPORT['addtopage'];
+        $item['post_id'] = $item['uid'] + self::$addtopage;
         if ($item['new_uid'] != '') {
             $item['post_id'] = $item['new_uid'];
         }
@@ -422,7 +437,6 @@ THEEND;
     private static function convertEntryToItem($entry, $comments)
     {
         global $PIVOTX;
-        global $WXREXPORT;
         $item = $entry;
         if ($comments) {
             $PIVOTX['cache']->clear();
@@ -432,7 +446,7 @@ THEEND;
         $item['post_type'] = 'post';
         $item['pivx_type'] = 'entry';
 
-        $item['post_id'] = $item['uid'] + $WXREXPORT['addtoentry'];
+        $item['post_id'] = $item['uid'] + self::$addtoentry;
         self::recordId($item['uid']);
         $item['post_parent'] = '0'; 
         return $item;
@@ -465,7 +479,6 @@ THEEND;
     private static function outputWXR_Items(&$data, $comments, $callback)
     {
         global $PIVOTX;
-        global $WXREXPORT;
         global $UPLFILES;
         global $BFFIELDS;
         $output = '';
@@ -532,7 +545,7 @@ THEEND;
                             ));
                         } else {
                             $extrafmeta .= '<!-- Warning! extrafields image not found! ' . $extrafield . ' -->';
-                            $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
+                            self::$warncnt++;
                         }
                     // skip these ones   todo: find a solution for them
                     } elseif ($extrakey == 'image_description'
@@ -585,7 +598,7 @@ THEEND;
                 $output .= self::outputWXR_Comments($record['comments']);
             }
             $output .= '</item>'."\n";
-            $WXREXPORT['itemcnt'] = $WXREXPORT['itemcnt'] + 1;
+            self::$itemcnt++;
         }
         return $output;
     }
@@ -605,7 +618,6 @@ THEEND;
     public static function exportUploads()
     {
         global $PIVOTX;
-        global $WXREXPORT;
         global $UPLFILES;
 
         $output  = '';
@@ -615,7 +627,7 @@ THEEND;
         $toskipext  = array("xyz", "123");                   // @@CHANGE
 
         foreach ($UPLFILES as $uplindex=>$uplfile) {
-            $uplinfo    = self::createUplinfo($uplfile, $uplindex + $WXREXPORT['addtoupl']);
+            $uplinfo    = self::createUplinfo($uplfile, $uplindex + self::$addtoupl);
             $uplinfo['index'] = $uplindex;
             // skip specific files
             if (in_array($uplinfo['filename'], $toskip)) { continue; }
@@ -657,7 +669,6 @@ THEEND;
     public static function exportPages()
     {
         global $PIVOTX;
-        global $WXREXPORT;
         global $chaparray;
 
         $chapters = $PIVOTX['pages']->getIndex();
@@ -673,7 +684,7 @@ THEEND;
         //$chaparray = array(16 => 1234, 18 => 2345, 17 => 3456);
         // or build the array from the all chapters in the chapters array
         //foreach($chapters as $chapter) { 
-        //    $chaparray[$chapter['uid']] = $chapter['uid']+$WXREXPORT['addtochap'];
+        //    $chaparray[$chapter['uid']] = $chapter['uid']+self::$addtochap;
         //}
 
         foreach($chapters as $chapter) {
@@ -754,7 +765,6 @@ THEEND;
     }
 
     public static function buildBFMeta($bfsel, $bffields) {
-        global $WXREXPORT;
         // first open postmeta will be created when creating item
         $bfmeta = "\n" . self::outputMap(array(
             'wp:meta_key' => '_edit_last',
@@ -783,21 +793,21 @@ THEEND;
                     $bfmeta .= "\n" . '<!-- Warning! Bonusfield "' .
                     $bffield['name'] . '" of contenttype ' . $bffield['contenttype'] .
                     ' is of type checkbox multiple. This type does not exist as an import type. It has been processed as single checkbox -->';
-                    $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
+                    self::$warncnt++;
                 }
                 // add warning for select multiple
                 if ($bffield['type'] == 'select_multiple') {
                     $bfmeta .= "\n" . '<!-- Warning! Bonusfield "' .
                     $bffield['name'] . '" of contenttype ' . $bffield['contenttype'] .
                     ' is of type select multiple. This type does not exist as an import type. It has been processed as single select -->';
-                    $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
+                    self::$warncnt++;
                 }
                 // skip gallery
                 if ($bffield['type'] == 'gallery') {
                     $bfmeta .= "\n" . '<!-- Warning! Bonusfield "' .
                     $bffield['name'] . '" of contenttype ' . $bffield['contenttype'] .
                     ' is of type gallery. This type cannot be imported in this way. Use export galleries instead -->';
-                    $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
+                    self::$warncnt++;
                     $bfmetacdata = '';
                 }
                 // add warning for some non processed bonusfield parts
@@ -806,7 +816,7 @@ THEEND;
                     $bfmeta .= "\n" . '<!-- Warning! Bonusfield "' .
                     $bffield['name'] . '" of contenttype ' . $bffield['contenttype'] .
                     ' has a value for showif_type and/or showif that is not yet processed in this export -->';
-                    $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
+                    self::$warncnt++;
                 }
                 if ($bfmetacdata != '') {        
                     $bfmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
@@ -852,17 +862,16 @@ THEEND;
 
     public static function processBFExtra($extrakey, $pivx_type, $bffields, $extrafield, $extrafcnt) {
         global $PIVOTX;
-        global $WXREXPORT;
         $bffieldkey = self::getBFKey($extrakey, $pivx_type, $bffields);
         $bfmeta = '';
         if ($bffieldkey == '0') {
             $bfmeta .= '<!-- Warning! extrafields key not found! ' . $extrakey . ' -->';
-            $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
+            self::$warncnt++;
         } else {
             $bffieldtype = self::getBFType($extrakey, $pivx_type, $bffields);
             if ($bffieldtype == 'gallery') {
                 $bfmeta .= '<!-- Warning! extrafields gallery skipped! ' . $extrakey . ' -->';
-                $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
+                self::$warncnt++;
             } else {
             /*
             Todo: Bonusfield types that have not been covered and/or tested: 'textarea' / 'radio' / 'file'
@@ -882,18 +891,18 @@ THEEND;
                     $bfentry = $PIVOTX['db']->read_entry($extrafield);
                     if ($bfentry['uid'] == '') {
                         $extrafield = 'Warning! extrafields value not found! ' . $extrafield;
-                        $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
+                        self::$warncnt++;
                     } else {
-                        $extrafield = $bfentry['uid'] + $WXREXPORT['addtoentry'];
+                        $extrafield = $bfentry['uid'] + self::$addtoentry;
                     }
                 }
                 if ($bffieldtype == 'choose_page') {
                     $bfpage = $PIVOTX['pages']->getPageByUri($extrafield);
                     if ($bfpage['uid'] == '') {
                         $extrafield = 'Warning! extrafields value not found! ' . $extrafield;
-                        $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
+                        self::$warncnt++;
                     } else {
-                        $extrafield = $bfpage['uid'] + $WXREXPORT['addtopage'];
+                        $extrafield = $bfpage['uid'] + self::$addtopage;
                     }
                 }
                 $bfmeta .= "\n" . self::outputMap(array(
@@ -1084,7 +1093,6 @@ THEEND;
 
     public static function getBFFields() {
         global $PIVOTX;
-        global $WXREXPORT;
         $bffields = false;
         if (function_exists('load_serialize')) {
             $config = load_serialize($PIVOTX['paths']['db_path'].'ser_bonusfields.php', true);
@@ -1113,8 +1121,7 @@ THEEND;
     }
 
     public static function getUplfiles() {
-        global $WXREXPORT;
-        $globfiles = _wxrexport_glob_recursive($WXREXPORT['upload_input'] . "*");
+        $globfiles = _wxrexport_glob_recursive(self::$upload_input . "*");
         // loose the directories
         $uplfiles  = array();
         foreach ($globfiles as $globfile) {
@@ -1132,34 +1139,32 @@ THEEND;
     }
 
     private static function recordId($uid) {
-        global $WXREXPORT;
-        if ($uid < $WXREXPORT['id_min']) { $WXREXPORT['id_min'] = $uid; }
-        if ($uid > $WXREXPORT['id_max']) { $WXREXPORT['id_max'] = $uid; }
+        if ($uid < self::$id_min) { self::$id_min = $uid; }
+        if ($uid > self::$id_max) { self::$id_max = $uid; }
         return;
     }
 
     private static function createUplinfo($uplfile, $uplcounter) {
         global $PIVOTX;
-        global $WXREXPORT;
         $curryear = date('Y');
         $inpurl   = $PIVOTX['paths']['canonical_host'] . $PIVOTX['paths']['site_url'];
         $uplinfo  = array();
         $path_parts = pathinfo($uplfile);
         $uplfilename = $path_parts['basename'];
         $inpfolder   = $path_parts['dirname'] . '/';
-        $yearfolder  = $WXREXPORT['upload_dest_def'];
+        $yearfolder  = $self::$upload_dest_def;
         $basefolder  = '';
         // strip the main input from the total folder to check for yyyy-nn folder
-        if (substr($uplfile, 0, strlen($WXREXPORT['upload_input'])) == $WXREXPORT['upload_input']) {
-            $basefolder = substr($inpfolder, strlen($WXREXPORT['upload_input']));
+        if (substr($uplfile, 0, strlen(self::$upload_input)) == self::$upload_input) {
+            $basefolder = substr($inpfolder, strlen(self::$upload_input));
             $yearfolder = rtrim($basefolder,"/");
             $regex = '/\d{4}[-]\d{2}/';   //  yyyy-nn format
             if (!preg_match($regex, $yearfolder)) {
-                $yearfolder = $WXREXPORT['upload_dest_def'];
+                $yearfolder = $self::$upload_dest_def;
             } else {
                 $yearparts = explode("-",$yearfolder);
                 if ($yearparts[0] < 1990 || $yearparts[0] > $curryear || $yearparts[1] < 1 || $yearparts[1] > 12) {
-                    $yearfolder = $WXREXPORT['upload_dest_def'];
+                    $yearfolder = $self::$upload_dest_def;
                 } else {
                     $yearfolder = $yearparts[0] . '/' . $yearparts[1];
                 }
@@ -1181,14 +1186,13 @@ THEEND;
     }
 
     private static function searchUploadPostname($uplfiles, $postname, $start, $end) {
-        global $WXREXPORT;
         $start = $start ?: 0;
         if (!isset($end)) { $end = (count($uplfiles) - 1); }
         $uplsrch = array();
         if ($start < $end) {
             //echo ('search up for ' . $postname . ' start-end: ' . $start . '-' . $end . '<br/>');
             for ($i = $start; $i <= $end; $i++) {
-                $uplsrch = self::createUplinfo($uplfiles[$i], $i + $WXREXPORT['addtoupl']);
+                $uplsrch = self::createUplinfo($uplfiles[$i], $i + self::$addtoupl);
                 if ($postname == $uplsrch['postname']) {
                     $uplsrch['index'] = $i;
                     //echo ('found it!' . $uplsrch['index'] . '<br/>');
@@ -1198,7 +1202,7 @@ THEEND;
         } else {
             //echo ('search down for ' . $postname . ' start-end: ' . $start . '-' . $end . '<br/>');
             for ($i = $start; $i >= $end; $i--) {
-                $uplsrch = self::createUplinfo($uplfiles[$i], $i + $WXREXPORT['addtoupl']);
+                $uplsrch = self::createUplinfo($uplfiles[$i], $i + self::$addtoupl);
                 if ($postname == $uplsrch['postname']) {
                     $uplsrch['index'] = $i;
                     //echo ('found it!' . $uplsrch['index'] . '<br/>');
@@ -1210,7 +1214,6 @@ THEEND;
     }
 
     private static function searchUploadFilename($uplfiles, $filename, $start, $end) {
-        global $WXREXPORT;
         $start = $start ?: 0;
         if (!isset($end)) { $end = (count($uplfiles) - 1); }
         $uplsrch = array();
@@ -1223,7 +1226,7 @@ THEEND;
         if ($start < $end) {
             //echo ('search up for ' . $filename . ' start-end: ' . $start . '-' . $end . '<br/>');
             for ($i = $start; $i <= $end; $i++) {
-                $uplsrch = self::createUplinfo($uplfiles[$i], $i + $WXREXPORT['addtoupl']);
+                $uplsrch = self::createUplinfo($uplfiles[$i], $i + self::$addtoupl);
                 if ($filesrch == $uplsrch['filename'] && $filebase == $uplsrch['basefolder']) {
                     $uplsrch['index'] = $i;
                     //echo ('found it!' . $uplsrch['index'] . '<br/>');
@@ -1233,7 +1236,7 @@ THEEND;
         } else {
             //echo ('search down for ' . $filename . ' start-end: ' . $start . '-' . $end . '<br/>');
             for ($i = $start; $i >= $end; $i--) {
-                $uplsrch = self::createUplinfo($uplfiles[$i], $i + $WXREXPORT['addtoupl']);
+                $uplsrch = self::createUplinfo($uplfiles[$i], $i + self::$addtoupl);
                 if ($filesrch == $uplsrch['filename'] && $filebase == $uplsrch['basefolder']) {
                     $uplsrch['index'] = $i;
                     //echo ('found it!' . $uplsrch['index'] . '<br/>');
@@ -1266,29 +1269,8 @@ function functionalCallWxrExportConfigurationAdd(&$form_html)
 function pageWxrexport()
 {
     $output = '';
-    global $WXREXPORT;
     global $UPLFILES;
     global $BFFIELDS;
-    // @@CHANGE Harm: if you are importing into an existing WP then you probably want to add some number to the internal ids
-    //       so these will be recognisable in future; also ids for pages and entries can be the same in PivotX but in WP
-    //       they cannot.
-    //       These old and new ids can also be used in the chaparray after importing the chapters and exporting the pages.
-    //       Change addtoentry / addtopage / addtochap to accomplish this.
-    //       upload_dest_def is the folder name to use whenever an upload is encountered that is not in a yyyy-nn subfolder (WP only uses that)
-    //       addtoupl generates fixed ids based on the sequence in the total collection of uploads;
-    //       this is necessary to connect an entry or page's image field to the right WP media id
-    // todo: write an instruction on how to use these adds; after the import the auto_increment will have to highest value + 1
-    //       and this cannot be lowered anymore in all cases.
-    $WXREXPORT = array('itemcnt' => 0, 
-                'warncnt' => 0,
-                'id_min' => 99999999,
-                'id_max' => 0,
-                'upload_dest_def' => '2010/01',
-                'upload_input' => '../images/',
-                'addtoentry' => 100,
-                'addtopage' => 300,
-                'addtochap' => 500,
-                'addtoupl' => 550);
     $filename = 'blog.xml';
     if (isset($_GET['type'])) {
         switch ($_GET['type']) {

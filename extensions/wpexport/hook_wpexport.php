@@ -1257,8 +1257,8 @@ function create_uplinfo($uplfile, $uplcounter) {
                      'filename' => $uplfilename,
                      'basefolder' => $basefolder,
                      'fileext' => $path_parts['extension'],
-                     'title' => file_ext_strip($uplfilename),
-                     'postname' => make_postname(file_ext_strip($uplfilename)),
+                     'title' => removeExtension($uplfilename),
+                     'postname' => make_postname(removeExtension($uplfilename)),
                      'inputloc' => $inpurl . $inpfolder);
     return $uplinfo;
 }
@@ -1338,14 +1338,4 @@ function glob_recursive($pattern, $flags = 0) {
 
 function make_postname($name) {
     return $name = strtolower(str_replace(" ", "-", $name));
-}
-
-// Returns only the file extension (without the period).
-function file_ext($filename) {
-    if( !preg_match('/./', $filename) ) return '';
-    return preg_replace('/^.*./', '', $filename);
-}
-// Returns the file name, less the extension.
-function file_ext_strip($filename){
-    return preg_replace('/.[^.]*$/', '', $filename);
 }

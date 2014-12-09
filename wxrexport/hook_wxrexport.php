@@ -1082,7 +1082,7 @@ THEEND;
         return $choices;
     }
 
-    private static function getBFFields() {
+    public static function getBFFields() {
         global $PIVOTX;
         global $WXREXPORT;
         $bffields = false;
@@ -1112,7 +1112,7 @@ THEEND;
         return $bffields;
     }
 
-    private static function getUplfiles() {
+    public static function getUplfiles() {
         global $WXREXPORT;
         $globfiles = _wxrexport_glob_recursive($WXREXPORT['upload_input'] . "*");
         // loose the directories

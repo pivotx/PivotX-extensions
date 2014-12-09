@@ -1079,14 +1079,14 @@ function build_bfmetacdata($bfkey, $bfocc, $bffield) {
             $bfmetacdata['type'] = 'text';
             $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
             $bfmetacdata['maxlength'] = '';
-            $bfmetacdata['formating'] = 'html';
+            $bfmetacdata['formatting'] = 'html';
             break;
         case 'textarea':
             $bfmetacdata['type'] = 'textarea';
             $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
             $bfmetacdata['maxlength'] = '';
             $bfmetacdata['rows'] = '';
-            $bfmetacdata['formating'] = 'br';
+            $bfmetacdata['formatting'] = 'br';
             break;
         case 'choose_page':
             $bfmetacdata['type'] = 'page_link';
@@ -1150,7 +1150,7 @@ function build_bfmetacdata($bfkey, $bfocc, $bffield) {
             $bfmetacdata['min'] = '123';
             $bfmetacdata['max'] = '123456';
             $bfmetacdata['step'] = '10';
-            $bfmetacdata['formating'] = 'html';
+            $bfmetacdata['formatting'] = 'html';
             break;
         default:
             echo "Unknown bonusfields type: " . $bffield['type'] . "<br/>";
@@ -1158,7 +1158,7 @@ function build_bfmetacdata($bfkey, $bfocc, $bffield) {
             $bfmetacdata['type'] = 'text';
             $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
             $bfmetacdata['maxlength'] = '';
-            $bfmetacdata['formating'] = 'html';
+            $bfmetacdata['formatting'] = 'html';
 
     }
     return serialize($bfmetacdata);

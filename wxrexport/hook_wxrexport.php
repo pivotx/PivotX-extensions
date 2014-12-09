@@ -122,7 +122,7 @@ THEEND;
         global $PIVOTX;
         global $WXREXPORT;
         $output = '';
-        recordId(0);   // so default of minimum gets overwritten
+        self::recordId(0);   // so default of minimum gets overwritten
         foreach($PIVOTX['categories']->data as $cat) {
             $output .= '<wp:category><wp:category_nicename>'.htmlspecialchars($cat['name']).'</wp:category_nicename><wp:category_parent></wp:category_parent><wp:cat_name><![CDATA['.$cat['display'].']]></wp:cat_name></wp:category>'."\n";
             $WXREXPORT['itemcnt'] = $WXREXPORT['itemcnt'] + 1;
@@ -151,9 +151,9 @@ THEEND;
         global $PIVOTX;
         global $WXREXPORT;
         $output = '';
-        recordId(0);   // so default of minimum gets overwritten
+        self::recordId(0);   // so default of minimum gets overwritten
 
-        $bffields = get_bffields();
+        $bffields = self::getBFFields();
         if ($bffields == false) {
             $output = '<!-- Warning! you have no Bonusfields extension installed -->'."\n";
             $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
@@ -167,7 +167,7 @@ THEEND;
                 $bfdate = date('Y-m-d H:i:s', strtotime($bfdate . ' - 1 day'));  // to be sure that imported item will be published
                 $record['post_parent'] = '0';
 
-                $bfmeta = self::build_bfmeta('entry', $bffields);
+                $bfmeta = self::buildBFMeta('entry', $bffields);
                 if ($bfmeta == '') {
                     $output .= '<!-- Warning! you have no Bonusfields for entries defined -->'."\n";
                     $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
@@ -200,7 +200,7 @@ THEEND;
                 $bfdate = date('Y-m-d H:i:s', strtotime($bfdate . ' - 1 day'));  // to be sure that imported item will be published
                 $record['post_parent'] = '0';
 
-                $bfmeta = self::build_bfmeta('page', $bffields);
+                $bfmeta = self::buildBFMeta('page', $bffields);
                 if ($bfmeta == '') {
                     $output .= '<!-- Warning! you have no Bonusfields for pages defined -->'."\n";
                     $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
@@ -409,7 +409,7 @@ THEEND;
         if ($item['new_uid'] != '') {
             $item['post_id'] = $item['new_uid'];
         }
-        recordId($item['uid']);
+        self::recordId($item['uid']);
 
         if (array_key_exists($item['chapter'], $chaparray)) {
             $item['post_parent'] = $chaparray[$item['chapter']];
@@ -433,7 +433,7 @@ THEEND;
         $item['pivx_type'] = 'entry';
 
         $item['post_id'] = $item['uid'] + $WXREXPORT['addtoentry'];
-        recordId($item['uid']);
+        self::recordId($item['uid']);
         $item['post_parent'] = '0'; 
         return $item;
     }
@@ -484,13 +484,13 @@ THEEND;
             // Warning: files can be included in included files -- these strings cannot be seen from here
 
             // `$templatedir` --> your default weblog
-            $record = replaceit($record, "`\$templatedir`", getcwd() . "/templates/weblog");
+            $record = self::replaceIt($record, "`\$templatedir`", getcwd() . "/templates/weblog");
             // include file="weblog/ 
-            $record = replaceit($record, 'include file="weblog/', 'include file="' . getcwd() . '/templates/weblog/');
+            $record = self::replaceIt($record, 'include file="weblog/', 'include file="' . getcwd() . '/templates/weblog/');
             // &gt; due to editor (or the parsing?)
-            $record = replaceit($record, '&gt;', '>');
+            $record = self::replaceIt($record, '&gt;', '>');
             // &lt; due to editor (or the parsing?)
-            $record = replaceit($record, '&lt;', '<');
+            $record = self::replaceIt($record, '&lt;', '<');
 //@@CHANGE REPLACE STRINGS HERE -- end
 
             $excerpt_encoded = ''; 
@@ -519,7 +519,7 @@ THEEND;
                     // the "normal" image fields
                     if ($extrakey == 'image' || $extrakey == 'afbeelding') {
                         $image = $PIVOTX['paths']['host'].$PIVOTX['paths']['upload_base_url'] . $extrafield;
-                        $uplinfo = search_upload_filename($UPLFILES, $extrafield);
+                        $uplinfo = self::searchUploadFilename($UPLFILES, $extrafield);
                         // image found?
                         if (isset($uplinfo['index'])) {
                             if ($extrafcnt > 0) {
@@ -548,7 +548,7 @@ THEEND;
                         continue;
                     } else {
                         // process other extrafields
-                        $extrafmeta .= self::process_bfextra($extrakey, $record['pivx_type'], $BFFIELDS, $extrafield, $extrafcnt);
+                        $extrafmeta .= self::processBFExtra($extrakey, $record['pivx_type'], $BFFIELDS, $extrafield, $extrafcnt);
                         $extrafcnt   = $extrafcnt + 1;
                     }
                 }
@@ -615,7 +615,7 @@ THEEND;
         $toskipext  = array("xyz", "123");                   // @@CHANGE
 
         foreach ($UPLFILES as $uplindex=>$uplfile) {
-            $uplinfo    = create_uplinfo($uplfile, $uplindex + $WXREXPORT['addtoupl']);
+            $uplinfo    = self::createUplinfo($uplfile, $uplindex + $WXREXPORT['addtoupl']);
             $uplinfo['index'] = $uplindex;
             // skip specific files
             if (in_array($uplinfo['filename'], $toskip)) { continue; }
@@ -623,7 +623,7 @@ THEEND;
             if (in_array($uplinfo['fileext'], $toskipext)) { continue; }
             // skip thumbnails
             if (substr($uplinfo['postname'], -6) == '.thumb') { continue; }
-            $upldupl = search_upload_postname($UPLFILES, $uplinfo['postname'], $uplinfo['index'] - 1, 0);
+            $upldupl = self::searchUploadPostname($UPLFILES, $uplinfo['postname'], $uplinfo['index'] - 1, 0);
             // duplicate file name found?
             if (isset($upldupl['index']) && $uplinfo['index'] != $upldupl['index']) {
                 //echo ($uplinfo['uid'] . ' duplicate of ' . $upldupl['uid'] . '<br/>');
@@ -634,7 +634,7 @@ THEEND;
                     $uplinfo['title'] .= '_dupl.of_' . $upldupl['uid'];
                 }
             }
-            recordId($uplinfo['uid']);
+            self::recordId($uplinfo['uid']);
             $output .= self::outputWXR_Uploads($uplinfo);
         }
 
@@ -708,7 +708,7 @@ THEEND;
                               'description' => $chapter['description'],
                               'sortorder' => $chapter['sortorder']);
             if ($chapter['chaptername'] != '') {
-                recordId($chapter['uid']);
+                self::recordId($chapter['uid']);
                 $output .= self::outputWXR_Chapters($chapinfo);
             }
         }
@@ -753,7 +753,7 @@ THEEND;
         return $output;
     }
 
-    public static function build_bfmeta($bfsel, $bffields) {
+    public static function buildBFMeta($bfsel, $bffields) {
         global $WXREXPORT;
         // first open postmeta will be created when creating item
         $bfmeta = "\n" . self::outputMap(array(
@@ -774,9 +774,9 @@ THEEND;
                 $bffield['description'] = preg_replace( "/\r|\n/", " ", $bffield['description'] );
                 // to do: strip other html from description (like <em> <b> <i>)
 
-                $bffieldkey = get_bfkey($bffield['fieldkey'],$bffield['contenttype'],$bffields);
+                $bffieldkey = self::getBFKey($bffield['fieldkey'],$bffield['contenttype'],$bffields);
 
-                $bfmetacdata = build_bfmetacdata($bffieldkey, $bfselcnt, $bffield);
+                $bfmetacdata = self::buildBFMetacdata($bffieldkey, $bfselcnt, $bffield);
 
                 // add warning for checkbox multiple
                 if ($bffield['type'] == 'checkbox_multiple') {
@@ -850,16 +850,16 @@ THEEND;
         return $bfmeta;
     }
 
-    public static function process_bfextra($extrakey, $pivx_type, $bffields, $extrafield, $extrafcnt) {
+    public static function processBFExtra($extrakey, $pivx_type, $bffields, $extrafield, $extrafcnt) {
         global $PIVOTX;
         global $WXREXPORT;
-        $bffieldkey = get_bfkey($extrakey, $pivx_type, $bffields);
+        $bffieldkey = self::getBFKey($extrakey, $pivx_type, $bffields);
         $bfmeta = '';
         if ($bffieldkey == '0') {
             $bfmeta .= '<!-- Warning! extrafields key not found! ' . $extrakey . ' -->';
             $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
         } else {
-            $bffieldtype = get_bftype($extrakey, $pivx_type, $bffields);
+            $bffieldtype = self::getBFType($extrakey, $pivx_type, $bffields);
             if ($bffieldtype == 'gallery') {
                 $bfmeta .= '<!-- Warning! extrafields gallery skipped! ' . $extrakey . ' -->';
                 $WXREXPORT['warncnt'] = $WXREXPORT['warncnt'] + 1;
@@ -874,7 +874,7 @@ THEEND;
                 $extrafcnt   = $extrafcnt + 1;
                 if ($bffieldtype == 'checkbox' || $bffieldtype == 'checkbox_multiple') {
                     if ($extrafield == 'on') {
-                        $bffielddata = get_bfdata($extrakey, $pivx_type, $bffields, true);
+                        $bffielddata = self::getBFData($extrakey, $pivx_type, $bffields, true);
                         $extrafield = 'a:1:{i:0;s:' . strlen($bffielddata) . ':"' . $bffielddata . '";}';
                     }
                 }
@@ -910,6 +910,329 @@ THEEND;
         return $bfmeta;
     }
 
+    private static function getBFKey($bfkey, $bfctype, $bffields) {
+        $bfkeycnt = 0; $bfkeywp = 0;
+        foreach($bffields as $bffield) {
+            $bfkeycnt = $bfkeycnt + 1;
+            if ($bffield['contenttype'] == $bfctype && $bffield['fieldkey'] == $bfkey) {
+                // construct key
+                $bffill = '';
+                if ($bfkeycnt < 100) { $bffill = '000'; }
+                if ($bfkeycnt < 10) { $bffill = '0000'; }
+                $bfkeywp = 'field_20141116' . $bffill . $bfkeycnt;
+            }
+        }
+        return $bfkeywp;
+    }
+
+    private static function getBFType($bfkey, $bfctype, $bffields) {
+        $bftype = 0;
+        foreach($bffields as $bffield) {
+            if ($bffield['contenttype'] == $bfctype && $bffield['fieldkey'] == $bfkey) {
+                $bftype = $bffield['type'];
+            }
+        }
+        return $bftype;
+    }
+
+    private static function getBFData($bfkey, $bfctype, $bffields, $bffillit) {
+        $bfdata = '';
+        foreach($bffields as $bffield) {
+            if ($bffield['contenttype'] == $bfctype && $bffield['fieldkey'] == $bfkey) {
+                $bfdata = $bffield['data'];
+                if ($bfdata == '' && $bffillit == true) {
+                    $bfdata = $bffield['name'];
+                }
+            }
+        }
+        return $bfdata;
+    }
+
+    private static function buildBFMetacdata($bfkey, $bfocc, $bffield) {
+        // bffield lay-out:
+        //[name] => Bonusfield name 
+        //[fieldkey] => Bonusfield key 
+        //[type] => choose_page 
+        //[location] => page-introduction-before 
+        //[showif_type] => 
+        //[showif] => 
+        //[data] => 
+        //[empty_text] => No link 
+        //[description] => Description shown in editor 
+        //[contenttype] => page
+
+        $bfmetacdata = array(
+            'key' => $bfkey,
+            'label' => $bffield['name'],
+            'name' => $bffield['fieldkey'],
+            'instructions' => $bffield['description'],
+            'default_value' => $bffield['empty_text'],
+            'required' => 0,
+            'conditional_logic' => array(
+                'status' => 0,
+                'rules' => array(array(
+                    'field' => 'null',
+                    'operator' => '==',
+                    'value' => ''
+                    )
+                ),
+                'allorany' => 'all'
+            ),
+            'order_no' => $bfocc
+        );
+
+        switch ($bffield['type']) {
+            case 'input_text':
+            case 'hidden':
+                $bfmetacdata['type'] = 'text';
+                $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
+                $bfmetacdata['maxlength'] = '';
+                $bfmetacdata['formatting'] = 'html';
+                break;
+            case 'textarea':
+                $bfmetacdata['type'] = 'textarea';
+                $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
+                $bfmetacdata['maxlength'] = '';
+                $bfmetacdata['rows'] = '';
+                $bfmetacdata['formatting'] = 'br';
+                break;
+            case 'choose_page':
+                $bfmetacdata['type'] = 'page_link';
+                $bfmetacdata['post_type'] = array('page');
+                $bfmetacdata['allow_null'] = '1';
+                $bfmetacdata['multiple'] = '0';
+                unset($bfmetacdata['default_value']);
+                break;
+            case 'choose_entry':
+                $bfmetacdata['type'] = 'page_link';
+                $bfmetacdata['post_type'] = array('page');
+                $bfmetacdata['allow_null'] = '1';
+                $bfmetacdata['multiple'] = '0';
+                unset($bfmetacdata['default_value']);
+                break;
+            case 'select':
+            case 'select_multiple':
+                $bfmetacdata['type'] = 'select';
+                $bfmetacdata['choices'] = explode("\r\n", $bffield['data']);
+                if ($bffield['type'] == 'select_multiple') {
+                    $bfmetacdata['allow_null'] = '0';
+                    $bfmetacdata['multiple'] = '1';
+                } else {
+                    $bfmetacdata['allow_null'] = '1';
+                    $bfmetacdata['multiple'] = '0';
+                }
+                break;
+            case 'radio':
+                $bfmetacdata['type'] = 'radio';
+                $bfmetacdata['choices'] = explode("\r\n", $bffield['data']);
+                $bfmetacdata['other_choice'] = '0';
+                $bfmetacdata['save_other_choice'] = '0';
+                $bfmetacdata['layout'] = 'vertical';
+                break;
+            case 'checkbox':
+            case 'checkbox_multiple':
+                $bfmetacdata['type'] = 'checkbox';
+                $bfmetacdata['choices'] = explode("\r\n", $bffield['data']);
+                $bfmetacdata['layout'] = 'vertical';
+                break;
+            case 'image':
+                $bfmetacdata['type'] = 'image';
+                $bfmetacdata['save_format'] = 'object';
+                $bfmetacdata['preview_size'] = 'thumbnail';
+                $bfmetacdata['library'] = 'all';
+                unset($bfmetacdata['default_value']);
+                break;
+            // galleries are separate entities -- so will be created whenever the content contains reference to this bonusfield type
+            case 'gallery':
+                break;
+            case 'file':
+                $bfmetacdata['type'] = 'file';
+                $bfmetacdata['save_format'] = 'object';
+                $bfmetacdata['library'] = 'all';
+                unset($bfmetacdata['default_value']);
+                break;
+            // bonusfields does not have a type number (but format still coded)
+            case 'number':
+                $bfmetacdata['type'] = 'number';
+                $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
+                $bfmetacdata['min'] = '123';
+                $bfmetacdata['max'] = '123456';
+                $bfmetacdata['step'] = '10';
+                $bfmetacdata['formatting'] = 'html';
+                break;
+            default:
+                echo "Unknown bonusfields type: " . $bffield['type'] . "<br/>";
+                print_r ($bffield); 
+                $bfmetacdata['type'] = 'text';
+                $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
+                $bfmetacdata['maxlength'] = '';
+                $bfmetacdata['formatting'] = 'html';
+
+        }
+        return serialize($bfmetacdata);
+    }
+
+    private static function getBFFields() {
+        global $PIVOTX;
+        global $WXREXPORT;
+        $bffields = false;
+        if (function_exists('load_serialize')) {
+            $config = load_serialize($PIVOTX['paths']['db_path'].'ser_bonusfields.php', true);
+        } else if (function_exists('loadSerialize')) {
+            $config = loadSerialize($PIVOTX['paths']['db_path'].'ser_bonusfields.php', true);
+        }
+        if ($config == true) {
+            $bffields = array();
+            foreach($config['definition'] as $array_field) {
+                $bffield = new bonusfieldsDefinition();
+                $bffield->importFromArray($array_field);
+                $bffields[] = $bffield;
+            }
+            $bfcount = count($bffields);
+            if ($bfcount < 1) {
+                $bffields = $bfcount;
+            } else {
+                $bffields2 = array();
+                foreach($bffields as $bffield) {
+                    $bffields2[] = $bffield->exportToArray();
+                }
+                $bffields = $bffields2;
+            }
+        }
+        return $bffields;
+    }
+
+    private static function getUplfiles() {
+        global $WXREXPORT;
+        $globfiles = _wxrexport_glob_recursive($WXREXPORT['upload_input'] . "*");
+        // loose the directories
+        $uplfiles  = array();
+        foreach ($globfiles as $globfile) {
+            if (!is_dir($globfile)) {
+                $uplfiles[] = $globfile;
+            }
+        }
+        return $uplfiles;
+    }
+
+    private static function replaceIt($record, $replthis, $replby) {
+        $record['introduction'] = str_replace($replthis, $replby, $record['introduction']);
+        $record['body']         = str_replace($replthis, $replby, $record['body']);
+        return $record;
+    }
+
+    private static function recordId($uid) {
+        global $WXREXPORT;
+        if ($uid < $WXREXPORT['id_min']) { $WXREXPORT['id_min'] = $uid; }
+        if ($uid > $WXREXPORT['id_max']) { $WXREXPORT['id_max'] = $uid; }
+        return;
+    }
+
+    private static function createUplinfo($uplfile, $uplcounter) {
+        global $PIVOTX;
+        global $WXREXPORT;
+        $curryear = date('Y');
+        $inpurl   = $PIVOTX['paths']['canonical_host'] . $PIVOTX['paths']['site_url'];
+        $uplinfo  = array();
+        $path_parts = pathinfo($uplfile);
+        $uplfilename = $path_parts['basename'];
+        $inpfolder   = $path_parts['dirname'] . '/';
+        $yearfolder  = $WXREXPORT['upload_dest_def'];
+        $basefolder  = '';
+        // strip the main input from the total folder to check for yyyy-nn folder
+        if (substr($uplfile, 0, strlen($WXREXPORT['upload_input'])) == $WXREXPORT['upload_input']) {
+            $basefolder = substr($inpfolder, strlen($WXREXPORT['upload_input']));
+            $yearfolder = rtrim($basefolder,"/");
+            $regex = '/\d{4}[-]\d{2}/';   //  yyyy-nn format
+            if (!preg_match($regex, $yearfolder)) {
+                $yearfolder = $WXREXPORT['upload_dest_def'];
+            } else {
+                $yearparts = explode("-",$yearfolder);
+                if ($yearparts[0] < 1990 || $yearparts[0] > $curryear || $yearparts[1] < 1 || $yearparts[1] > 12) {
+                    $yearfolder = $WXREXPORT['upload_dest_def'];
+                } else {
+                    $yearfolder = $yearparts[0] . '/' . $yearparts[1];
+                }
+            }
+        }
+        if (substr($inpfolder, 0, 3) == '../') {
+            $inpfolder = substr($inpfolder, 3);
+        }
+        //echo $uplcounter . '|' . $uplfilename . '|' . $yearfolder . '|' . $inpurl . $inpfolder . '|' . $basefolder . '<br/>';
+        $uplinfo = array('uid' => $uplcounter,
+                         'destfolder' => $yearfolder,
+                         'filename' => $uplfilename,
+                         'basefolder' => $basefolder,
+                         'fileext' => $path_parts['extension'],
+                         'title' => removeExtension($uplfilename),
+                         'postname' => strtolower(str_replace(' ', '-', (removeExtension($uplfilename)))),
+                         'inputloc' => $inpurl . $inpfolder);
+        return $uplinfo;
+    }
+
+    private static function searchUploadPostname($uplfiles, $postname, $start, $end) {
+        global $WXREXPORT;
+        $start = $start ?: 0;
+        if (!isset($end)) { $end = (count($uplfiles) - 1); }
+        $uplsrch = array();
+        if ($start < $end) {
+            //echo ('search up for ' . $postname . ' start-end: ' . $start . '-' . $end . '<br/>');
+            for ($i = $start; $i <= $end; $i++) {
+                $uplsrch = self::createUplinfo($uplfiles[$i], $i + $WXREXPORT['addtoupl']);
+                if ($postname == $uplsrch['postname']) {
+                    $uplsrch['index'] = $i;
+                    //echo ('found it!' . $uplsrch['index'] . '<br/>');
+                    return $uplsrch;
+                }
+            }
+        } else {
+            //echo ('search down for ' . $postname . ' start-end: ' . $start . '-' . $end . '<br/>');
+            for ($i = $start; $i >= $end; $i--) {
+                $uplsrch = self::createUplinfo($uplfiles[$i], $i + $WXREXPORT['addtoupl']);
+                if ($postname == $uplsrch['postname']) {
+                    $uplsrch['index'] = $i;
+                    //echo ('found it!' . $uplsrch['index'] . '<br/>');
+                    return $uplsrch;
+                }
+            }
+        }
+        return $uplsrch;
+    }
+
+    private static function searchUploadFilename($uplfiles, $filename, $start, $end) {
+        global $WXREXPORT;
+        $start = $start ?: 0;
+        if (!isset($end)) { $end = (count($uplfiles) - 1); }
+        $uplsrch = array();
+        $path_parts = pathinfo($filename);
+        $filesrch = $path_parts['basename'];
+        $filebase = '';
+        if ($path_parts['dirname'] != '.') {
+            $filebase = $path_parts['dirname'] . '/';
+        }
+        if ($start < $end) {
+            //echo ('search up for ' . $filename . ' start-end: ' . $start . '-' . $end . '<br/>');
+            for ($i = $start; $i <= $end; $i++) {
+                $uplsrch = self::createUplinfo($uplfiles[$i], $i + $WXREXPORT['addtoupl']);
+                if ($filesrch == $uplsrch['filename'] && $filebase == $uplsrch['basefolder']) {
+                    $uplsrch['index'] = $i;
+                    //echo ('found it!' . $uplsrch['index'] . '<br/>');
+                    return $uplsrch;
+                }
+            }
+        } else {
+            //echo ('search down for ' . $filename . ' start-end: ' . $start . '-' . $end . '<br/>');
+            for ($i = $start; $i >= $end; $i--) {
+                $uplsrch = self::createUplinfo($uplfiles[$i], $i + $WXREXPORT['addtoupl']);
+                if ($filesrch == $uplsrch['filename'] && $filebase == $uplsrch['basefolder']) {
+                    $uplsrch['index'] = $i;
+                    //echo ('found it!' . $uplsrch['index'] . '<br/>');
+                    return $uplsrch;
+                }
+            }
+        }
+        return $uplsrch;
+    }
 }
 
 
@@ -965,7 +1288,7 @@ function pageWxrexport()
                 break;
             case 'uploads':
                 $filename = 'uploads.xml';
-                $UPLFILES = get_uplfiles();
+                $UPLFILES = pivotxWxrExport::getUplfiles();
                 $output   = pivotxWxrExport::exportUploads();
                 break;
             case 'extrafields':
@@ -974,8 +1297,8 @@ function pageWxrexport()
                 break;
             case 'pages':
                 $filename = 'pages.xml';
-                $UPLFILES = get_uplfiles();
-                $BFFIELDS = get_bffields();
+                $UPLFILES = pivotxWxrExport::getUplfiles();
+                $BFFIELDS = pivotxWxrExport::getBFFields();
                 $output   = pivotxWxrExport::exportPages();
                 break;
             case 'chapters':
@@ -984,14 +1307,14 @@ function pageWxrexport()
                 break;
             case 'entries':
                 $filename = 'entries.xml';
-                $UPLFILES = get_uplfiles();
-                $BFFIELDS = get_bffields();
+                $UPLFILES = pivotxWxrExport::getUplfiles();
+                $BFFIELDS = pivotxWxrExport::getBFFields();
                 $output   = pivotxWxrExport::exportEntries();
                 break;
             case 'entries comments':
                 $filename = 'entries_and_comments.xml';
-                $UPLFILES = get_uplfiles();
-                $BFFIELDS = get_bffields();
+                $UPLFILES = pivotxWxrExport::getUplfiles();
+                $BFFIELDS = pivotxWxrExport::getBFFields();
                 $output   = pivotxWxrExport::exportEntriesWithComments();
                 break;
         }
@@ -1000,330 +1323,6 @@ function pageWxrexport()
     header('Content-type: text/xml');
     header('Content-disposition: attachment; filename="'.$filename.'"');
     echo $output;
-}
-
-function get_bfkey($bfkey, $bfctype, $bffields) {
-    $bfkeycnt = 0; $bfkeywp = 0;
-    foreach($bffields as $bffield) {
-        $bfkeycnt = $bfkeycnt + 1;
-        if ($bffield['contenttype'] == $bfctype && $bffield['fieldkey'] == $bfkey) {
-            // construct key
-            $bffill = '';
-            if ($bfkeycnt < 100) { $bffill = '000'; }
-            if ($bfkeycnt < 10) { $bffill = '0000'; }
-            $bfkeywp = 'field_20141116' . $bffill . $bfkeycnt;
-        }
-    }
-    return $bfkeywp;
-}
-
-function get_bftype($bfkey, $bfctype, $bffields) {
-    $bftype = 0;
-    foreach($bffields as $bffield) {
-        if ($bffield['contenttype'] == $bfctype && $bffield['fieldkey'] == $bfkey) {
-            $bftype = $bffield['type'];
-        }
-    }
-    return $bftype;
-}
-
-function get_bfdata($bfkey, $bfctype, $bffields, $bffillit) {
-    $bfdata = '';
-    foreach($bffields as $bffield) {
-        if ($bffield['contenttype'] == $bfctype && $bffield['fieldkey'] == $bfkey) {
-            $bfdata = $bffield['data'];
-            if ($bfdata == '' && $bffillit == true) {
-                $bfdata = $bffield['name'];
-            }
-        }
-    }
-    return $bfdata;
-}
-
-function build_bfmetacdata($bfkey, $bfocc, $bffield) {
-    // bffield lay-out:
-    //[name] => Bonusfield name 
-    //[fieldkey] => Bonusfield key 
-    //[type] => choose_page 
-    //[location] => page-introduction-before 
-    //[showif_type] => 
-    //[showif] => 
-    //[data] => 
-    //[empty_text] => No link 
-    //[description] => Description shown in editor 
-    //[contenttype] => page
-
-    $bfmetacdata = array(
-        'key' => $bfkey,
-        'label' => $bffield['name'],
-        'name' => $bffield['fieldkey'],
-        'instructions' => $bffield['description'],
-        'default_value' => $bffield['empty_text'],
-        'required' => 0,
-        'conditional_logic' => array(
-            'status' => 0,
-            'rules' => array(array(
-                'field' => 'null',
-                'operator' => '==',
-                'value' => ''
-                )
-            ),
-            'allorany' => 'all'
-        ),
-        'order_no' => $bfocc
-    );
-
-    switch ($bffield['type']) {
-        case 'input_text':
-        case 'hidden':
-            $bfmetacdata['type'] = 'text';
-            $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
-            $bfmetacdata['maxlength'] = '';
-            $bfmetacdata['formatting'] = 'html';
-            break;
-        case 'textarea':
-            $bfmetacdata['type'] = 'textarea';
-            $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
-            $bfmetacdata['maxlength'] = '';
-            $bfmetacdata['rows'] = '';
-            $bfmetacdata['formatting'] = 'br';
-            break;
-        case 'choose_page':
-            $bfmetacdata['type'] = 'page_link';
-            $bfmetacdata['post_type'] = array('page');
-            $bfmetacdata['allow_null'] = '1';
-            $bfmetacdata['multiple'] = '0';
-            unset($bfmetacdata['default_value']);
-            break;
-        case 'choose_entry':
-            $bfmetacdata['type'] = 'page_link';
-            $bfmetacdata['post_type'] = array('page');
-            $bfmetacdata['allow_null'] = '1';
-            $bfmetacdata['multiple'] = '0';
-            unset($bfmetacdata['default_value']);
-            break;
-        case 'select':
-        case 'select_multiple':
-            $bfmetacdata['type'] = 'select';
-            $bfmetacdata['choices'] = explode("\r\n", $bffield['data']);
-            if ($bffield['type'] == 'select_multiple') {
-                $bfmetacdata['allow_null'] = '0';
-                $bfmetacdata['multiple'] = '1';
-            } else {
-                $bfmetacdata['allow_null'] = '1';
-                $bfmetacdata['multiple'] = '0';
-            }
-            break;
-        case 'radio':
-            $bfmetacdata['type'] = 'radio';
-            $bfmetacdata['choices'] = explode("\r\n", $bffield['data']);
-            $bfmetacdata['other_choice'] = '0';
-            $bfmetacdata['save_other_choice'] = '0';
-            $bfmetacdata['layout'] = 'vertical';
-            break;
-        case 'checkbox':
-        case 'checkbox_multiple':
-            $bfmetacdata['type'] = 'checkbox';
-            $bfmetacdata['choices'] = explode("\r\n", $bffield['data']);
-            $bfmetacdata['layout'] = 'vertical';
-            break;
-        case 'image':
-            $bfmetacdata['type'] = 'image';
-            $bfmetacdata['save_format'] = 'object';
-            $bfmetacdata['preview_size'] = 'thumbnail';
-            $bfmetacdata['library'] = 'all';
-            unset($bfmetacdata['default_value']);
-            break;
-        // galleries are separate entities -- so will be created whenever the content contains reference to this bonusfield type
-        case 'gallery':
-            break;
-        case 'file':
-            $bfmetacdata['type'] = 'file';
-            $bfmetacdata['save_format'] = 'object';
-            $bfmetacdata['library'] = 'all';
-            unset($bfmetacdata['default_value']);
-            break;
-        // bonusfields does not have a type number (but format still coded)
-        case 'number':
-            $bfmetacdata['type'] = 'number';
-            $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
-            $bfmetacdata['min'] = '123';
-            $bfmetacdata['max'] = '123456';
-            $bfmetacdata['step'] = '10';
-            $bfmetacdata['formatting'] = 'html';
-            break;
-        default:
-            echo "Unknown bonusfields type: " . $bffield['type'] . "<br/>";
-            print_r ($bffield); 
-            $bfmetacdata['type'] = 'text';
-            $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
-            $bfmetacdata['maxlength'] = '';
-            $bfmetacdata['formatting'] = 'html';
-
-    }
-    return serialize($bfmetacdata);
-}
-
-function get_bffields() {
-    global $PIVOTX;
-    global $WXREXPORT;
-    $bffields = false;
-    if (function_exists('load_serialize')) {
-        $config = load_serialize($PIVOTX['paths']['db_path'].'ser_bonusfields.php', true);
-    } else if (function_exists('loadSerialize')) {
-        $config = loadSerialize($PIVOTX['paths']['db_path'].'ser_bonusfields.php', true);
-    }
-    if ($config == true) {
-        $bffields = array();
-        foreach($config['definition'] as $array_field) {
-            $bffield = new bonusfieldsDefinition();
-            $bffield->importFromArray($array_field);
-            $bffields[] = $bffield;
-        }
-        $bfcount = count($bffields);
-        if ($bfcount < 1) {
-            $bffields = $bfcount;
-        } else {
-            $bffields2 = array();
-            foreach($bffields as $bffield) {
-                $bffields2[] = $bffield->exportToArray();
-            }
-            $bffields = $bffields2;
-        }
-    }
-    return $bffields;
-}
-
-function get_uplfiles() {
-    global $WXREXPORT;
-    $globfiles = _wxrexport_glob_recursive($WXREXPORT['upload_input'] . "*");
-    // loose the directories
-    $uplfiles  = array();
-    foreach ($globfiles as $globfile) {
-        if (!is_dir($globfile)) {
-            $uplfiles[] = $globfile;
-        }
-    }
-    return $uplfiles;
-}
-
-function replaceit($record, $replthis, $replby) {
-    $record['introduction'] = str_replace($replthis, $replby, $record['introduction']);
-    $record['body']         = str_replace($replthis, $replby, $record['body']);
-    return $record;
-}
-
-function recordId($uid) {
-    global $WXREXPORT;
-    if ($uid < $WXREXPORT['id_min']) { $WXREXPORT['id_min'] = $uid; }
-    if ($uid > $WXREXPORT['id_max']) { $WXREXPORT['id_max'] = $uid; }
-    return;
-}
-
-function create_uplinfo($uplfile, $uplcounter) {
-    global $PIVOTX;
-    global $WXREXPORT;
-    $curryear = date('Y');
-    $inpurl   = $PIVOTX['paths']['canonical_host'] . $PIVOTX['paths']['site_url'];
-    $uplinfo  = array();
-    $path_parts = pathinfo($uplfile);
-    $uplfilename = $path_parts['basename'];
-    $inpfolder   = $path_parts['dirname'] . '/';
-    $yearfolder  = $WXREXPORT['upload_dest_def'];
-    $basefolder  = '';
-    // strip the main input from the total folder to check for yyyy-nn folder
-    if (substr($uplfile, 0, strlen($WXREXPORT['upload_input'])) == $WXREXPORT['upload_input']) {
-        $basefolder = substr($inpfolder, strlen($WXREXPORT['upload_input']));
-        $yearfolder = rtrim($basefolder,"/");
-        $regex = '/\d{4}[-]\d{2}/';   //  yyyy-nn format
-        if (!preg_match($regex, $yearfolder)) {
-            $yearfolder = $WXREXPORT['upload_dest_def'];
-        } else {
-            $yearparts = explode("-",$yearfolder);
-            if ($yearparts[0] < 1990 || $yearparts[0] > $curryear || $yearparts[1] < 1 || $yearparts[1] > 12) {
-                $yearfolder = $WXREXPORT['upload_dest_def'];
-            } else {
-                $yearfolder = $yearparts[0] . '/' . $yearparts[1];
-            }
-        }
-    }
-    if (substr($inpfolder, 0, 3) == '../') {
-        $inpfolder = substr($inpfolder, 3);
-    }
-    //echo $uplcounter . '|' . $uplfilename . '|' . $yearfolder . '|' . $inpurl . $inpfolder . '|' . $basefolder . '<br/>';
-    $uplinfo = array('uid' => $uplcounter,
-                     'destfolder' => $yearfolder,
-                     'filename' => $uplfilename,
-                     'basefolder' => $basefolder,
-                     'fileext' => $path_parts['extension'],
-                     'title' => removeExtension($uplfilename),
-                     'postname' => strtolower(str_replace(' ', '-', (removeExtension($uplfilename)))),
-                     'inputloc' => $inpurl . $inpfolder);
-    return $uplinfo;
-}
-
-function search_upload_postname($uplfiles, $postname, $start, $end) {
-    global $WXREXPORT;
-    $start = $start ?: 0;
-    if (!isset($end)) { $end = (count($uplfiles) - 1); }
-    $uplsrch = array();
-    if ($start < $end) {
-        //echo ('search up for ' . $postname . ' start-end: ' . $start . '-' . $end . '<br/>');
-        for ($i = $start; $i <= $end; $i++) {
-            $uplsrch = create_uplinfo($uplfiles[$i], $i + $WXREXPORT['addtoupl']);
-            if ($postname == $uplsrch['postname']) {
-                $uplsrch['index'] = $i;
-                //echo ('found it!' . $uplsrch['index'] . '<br/>');
-                return $uplsrch;
-            }
-        }
-    } else {
-        //echo ('search down for ' . $postname . ' start-end: ' . $start . '-' . $end . '<br/>');
-        for ($i = $start; $i >= $end; $i--) {
-            $uplsrch = create_uplinfo($uplfiles[$i], $i + $WXREXPORT['addtoupl']);
-            if ($postname == $uplsrch['postname']) {
-                $uplsrch['index'] = $i;
-                //echo ('found it!' . $uplsrch['index'] . '<br/>');
-                return $uplsrch;
-            }
-        }
-    }
-    return $uplsrch;
-}
-
-function search_upload_filename($uplfiles, $filename, $start, $end) {
-    global $WXREXPORT;
-    $start = $start ?: 0;
-    if (!isset($end)) { $end = (count($uplfiles) - 1); }
-    $uplsrch = array();
-    $path_parts = pathinfo($filename);
-    $filesrch = $path_parts['basename'];
-    $filebase = '';
-    if ($path_parts['dirname'] != '.') {
-        $filebase = $path_parts['dirname'] . '/';
-    }
-    if ($start < $end) {
-        //echo ('search up for ' . $filename . ' start-end: ' . $start . '-' . $end . '<br/>');
-        for ($i = $start; $i <= $end; $i++) {
-            $uplsrch = create_uplinfo($uplfiles[$i], $i + $WXREXPORT['addtoupl']);
-            if ($filesrch == $uplsrch['filename'] && $filebase == $uplsrch['basefolder']) {
-                $uplsrch['index'] = $i;
-                //echo ('found it!' . $uplsrch['index'] . '<br/>');
-                return $uplsrch;
-            }
-        }
-    } else {
-        //echo ('search down for ' . $filename . ' start-end: ' . $start . '-' . $end . '<br/>');
-        for ($i = $start; $i >= $end; $i--) {
-            $uplsrch = create_uplinfo($uplfiles[$i], $i + $WXREXPORT['addtoupl']);
-            if ($filesrch == $uplsrch['filename'] && $filebase == $uplsrch['basefolder']) {
-                $uplsrch['index'] = $i;
-                //echo ('found it!' . $uplsrch['index'] . '<br/>');
-                return $uplsrch;
-            }
-        }
-    }
-    return $uplsrch;
 }
 
 function _wxrexport_glob_recursive($pattern, $flags = 0) {

@@ -1,9 +1,8 @@
 <?php
 // - Extension: WXR Export
 // - Version: 0.2
-// - Author: Two Kings // Marcel Wouters (updated by Harm Kramer)
-// - Email: marcel@twokings.nl
-// - Site: http://www.twokings.nl/
+// - Author: PivotX team 
+// - Site: http://www.pivotx.net
 // - Description: Export content in WXR (WordPress eXtended RSS) format.
 // - Date: 2014-12-07
 // - Identifier: wxrexport

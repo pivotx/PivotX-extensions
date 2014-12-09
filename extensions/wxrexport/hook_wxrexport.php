@@ -1196,7 +1196,7 @@ function get_bffields() {
 
 function get_uplfiles() {
     global $WXREXPORT;
-    $globfiles = glob_recursive($WXREXPORT['upload_input'] . "*");
+    $globfiles = _wxrexport_glob_recursive($WXREXPORT['upload_input'] . "*");
     // loose the directories
     $uplfiles  = array();
     foreach ($globfiles as $globfile) {
@@ -1326,11 +1326,11 @@ function search_upload_filename($uplfiles, $filename, $start, $end) {
     return $uplsrch;
 }
 
-function glob_recursive($pattern, $flags = 0) {
+function _wxrexport_glob_recursive($pattern, $flags = 0) {
 // Does not support flag GLOB_BRACE
     $files = glob($pattern, $flags);
     foreach (glob(dirname($pattern).'/*', GLOB_ONLYDIR) as $dir) {
-        $files = array_merge($files, glob_recursive($dir.'/'.basename($pattern), $flags));
+        $files = array_merge($files, _wxrexport_glob_recursive($dir.'/'.basename($pattern), $flags));
     }
     return $files;
 }

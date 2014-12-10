@@ -49,49 +49,52 @@ class pivotxWxrExport
         $form = $PIVOTX['extensions']->getAdminForm('wxrexport');
 
         $output = <<<THEEND
-<span>Optional actions before exporting content<span>
+<tr>
+<td>  
+<p>Optional actions before exporting content</p>
 <ol>
-    <li><a href="?page=wxrexport&type=categories">
+    <li><a href="?page=wxrexport&amp;type=categories">
         Export Categories
     </a></li>
-    <li><a href="?page=wxrexport&type=chapters">
+    <li><a href="?page=wxrexport&amp;type=chapters">
         Export Chapters (as plain pages that can be used to parent the PivotX pages)
     </a></li>
-    <li><a href="?page=wxrexport&type=uploads">
+    <li><a href="?page=wxrexport&amp;type=uploads">
         Export Uploads
     </a></li>
-    <li><a href="?page=wxrexport&type=extrafields">
+    <li><a href="?page=wxrexport&amp;type=extrafields">
         Export Extrafields definitions like e.g. Bonusfields extension (for use in ACF plugin for WP - galleries will be skipped)
     </a></li>
-    <li><!--<a href="?page=wpexport&type=galleries">-->
+    <li><!-- <a href="?page=wxrexport&amp;type=galleries"> -->
         Export Extrafields galleries (for use in Envira plugin for WP) - not active yet
-    <!--</a>--></li>
+    <!-- </a> --></li>
 </ol>
-<span>With parsing of introduction and body content<span>
+<p>With parsing of introduction and body content</p>
 <ol>
-    <li><a href="?page=wxrexport&type=pages">
+    <li><a href="?page=wxrexport&amp;type=pages">
         Export Pages
     </a></li>
-    <li>a. <a href="?page=wxrexport&type=entries">
+    <li>a. <a href="?page=wxrexport&amp;type=entries">
         Export Entries (without comments)
     </a></li>
-    <li>b. <a href="?page=wxrexport&type=entries+comments">
+    <li>b. <a href="?page=wxrexport&amp;type=entries+comments">
         Export Entries (including comments)
     </a></li>
 </ol>
-<span>Without parsing of introduction and body content<span>
+<p>Without parsing of introduction and body content</p>
 <ol>
-    <li><a href="?page=wxrexport&type=pages&parse=no">
+    <li><a href="?page=wxrexport&amp;type=pages&amp;parse=no">
         Export Pages
     </a></li>
-    <li>a. <a href="?page=wxrexport&type=entries&parse=no">
+    <li>a. <a href="?page=wxrexport&amp;type=entries&amp;parse=no">
         Export Entries (without comments)
     </a></li>
-    <li>b. <a href="?page=wxrexport&type=entries+comments&parse=no">
+    <li>b. <a href="?page=wxrexport&amp;type=entries+comments&amp;parse=no">
         Export Entries (including comments)
     </a></li>
 </ol>
-
+</td>
+</tr>
 THEEND;
 
         $form->add(array(

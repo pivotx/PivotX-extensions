@@ -49,8 +49,8 @@ class pivotxWxrExport
         $form = $PIVOTX['extensions']->getAdminForm('wxrexport');
 
         $output = <<<THEEND
-<ul>
-    <span>Optional actions before exporting content<span>
+<span>Optional actions before exporting content<span>
+<ol>
     <li><a href="?page=wxrexport&type=categories">
         Export Categories
     </a></li>
@@ -63,29 +63,34 @@ class pivotxWxrExport
     <li><a href="?page=wxrexport&type=extrafields">
         Export Extrafields definitions like e.g. Bonusfields extension (for use in ACF plugin for WP - galleries will be skipped)
     </a></li>
-    <br/>
-    <span>With parsing of introduction and body content<span>
+    <li><!--<a href="?page=wpexport&type=galleries">-->
+        Export Extrafields galleries (for use in Envira plugin for WP) - not active yet
+    <!--</a>--></li>
+</ol>
+<span>With parsing of introduction and body content<span>
+<ol>
     <li><a href="?page=wxrexport&type=pages">
         Export Pages
     </a></li>
-    <li><a href="?page=wxrexport&type=entries">
+    <li>a. <a href="?page=wxrexport&type=entries">
         Export Entries (without comments)
     </a></li>
-    <li><a href="?page=wxrexport&type=entries+comments">
+    <li>b. <a href="?page=wxrexport&type=entries+comments">
         Export Entries (including comments)
     </a></li>
-    <br/>
-    <span>Without parsing of introduction and body content<span>
+</ol>
+<span>Without parsing of introduction and body content<span>
+<ol>
     <li><a href="?page=wxrexport&type=pages&parse=no">
         Export Pages
     </a></li>
-    <li><a href="?page=wxrexport&type=entries&parse=no">
+    <li>a. <a href="?page=wxrexport&type=entries&parse=no">
         Export Entries (without comments)
     </a></li>
-    <li><a href="?page=wxrexport&type=entries+comments&parse=no">
+    <li>b. <a href="?page=wxrexport&type=entries+comments&parse=no">
         Export Entries (including comments)
     </a></li>
-</ul>
+</ol>
 
 THEEND;
 
@@ -874,7 +879,7 @@ THEEND;
                 self::$warncnt++;
             } else {
             /*
-            Todo: Bonusfield types that have not been covered and/or tested: 'textarea' / 'radio' / 'file'
+            Todo: Bonusfield types that have not been covered and/or tested: 'textarea' / 'radio' / 'file' / 'image'
                 // galleries are separate entities -- so will be created whenever the content contains reference to this bonusfield type
             */
                 if ($extrafcnt > 0) {
@@ -1014,7 +1019,7 @@ THEEND;
                 break;
             case 'choose_entry':
                 $bfmetacdata['type'] = 'page_link';
-                $bfmetacdata['post_type'] = array('page');
+                $bfmetacdata['post_type'] = array('post');
                 $bfmetacdata['allow_null'] = '1';
                 $bfmetacdata['multiple'] = '0';
                 unset($bfmetacdata['default_value']);
@@ -1022,7 +1027,7 @@ THEEND;
             case 'select':
             case 'select_multiple':
                 $bfmetacdata['type'] = 'select';
-                $bfmetacdata['choices'] = self::getBFChoices($bffield['data']);
+                $bfmetacdata['choices'] = self::getBFChoices($bffield['data'], $bffield['name']);
                 if ($bffield['type'] == 'select_multiple') {
                     $bfmetacdata['allow_null'] = '0';
                     $bfmetacdata['multiple'] = '1';
@@ -1033,7 +1038,7 @@ THEEND;
                 break;
             case 'radio':
                 $bfmetacdata['type'] = 'radio';
-                $bfmetacdata['choices'] = self::getBFChoices($bffield['data']);
+                $bfmetacdata['choices'] = self::getBFChoices($bffield['data'], $bffield['name']);
                 $bfmetacdata['other_choice'] = '0';
                 $bfmetacdata['save_other_choice'] = '0';
                 $bfmetacdata['layout'] = 'vertical';
@@ -1041,7 +1046,7 @@ THEEND;
             case 'checkbox':
             case 'checkbox_multiple':
                 $bfmetacdata['type'] = 'checkbox';
-                $bfmetacdata['choices'] = self::getBFChoices($bffield['data']);
+                $bfmetacdata['choices'] = self::getBFChoices($bffield['data'], $bffield['name']);
                 $bfmetacdata['layout'] = 'vertical';
                 break;
             case 'image':
@@ -1081,12 +1086,16 @@ THEEND;
         return serialize($bfmetacdata);
     }
 
-    private static function getBFChoices($data) {
+    private static function getBFChoices($data, $name) {
         $combined_choices = explode("\r\n", $data);
         $choices = array();
-        foreach($combined_choices as $elem) {
-            list($key, $value) = explode('::', $elem);
-            $choices[$key] = $value;
+        if (count($combined_choices) == 0 || $data == '') {
+            $choices[$name] = $name;
+        } else {
+            foreach($combined_choices as $elem) {
+                list($key, $value) = explode('::', $elem);
+                $choices[$key] = $value;
+            }
         }
         return $choices;
     }
@@ -1152,7 +1161,7 @@ THEEND;
         $path_parts = pathinfo($uplfile);
         $uplfilename = $path_parts['basename'];
         $inpfolder   = $path_parts['dirname'] . '/';
-        $yearfolder  = $self::$upload_dest_def;
+        $yearfolder  = self::$upload_dest_def;
         $basefolder  = '';
         // strip the main input from the total folder to check for yyyy-nn folder
         if (substr($uplfile, 0, strlen(self::$upload_input)) == self::$upload_input) {
@@ -1160,11 +1169,11 @@ THEEND;
             $yearfolder = rtrim($basefolder,"/");
             $regex = '/\d{4}[-]\d{2}/';   //  yyyy-nn format
             if (!preg_match($regex, $yearfolder)) {
-                $yearfolder = $self::$upload_dest_def;
+                $yearfolder = self::$upload_dest_def;
             } else {
                 $yearparts = explode("-",$yearfolder);
                 if ($yearparts[0] < 1990 || $yearparts[0] > $curryear || $yearparts[1] < 1 || $yearparts[1] > 12) {
-                    $yearfolder = $self::$upload_dest_def;
+                    $yearfolder = self::$upload_dest_def;
                 } else {
                     $yearfolder = $yearparts[0] . '/' . $yearparts[1];
                 }

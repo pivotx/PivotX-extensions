@@ -21,26 +21,43 @@ $this->addHook(
 
 class pivotxWxrExport
 {
-    // @@CHANGE Harm: if you are importing into an existing WP then you probably want to add some number to the internal ids
-    //       so these will be recognisable in future; also ids for pages and entries can be the same in PivotX but in WP
-    //       they cannot.
-    //       These old and new ids can also be used in the chaparray after importing the chapters and exporting the pages.
-    //       Change addtoentry / addtopage / addtochap to accomplish this.
-    //       upload_dest_def is the folder name to use whenever an upload is encountered that is not in a yyyy-nn subfolder (WP only uses that)
-    //       addtoupl generates fixed ids based on the sequence in the total collection of uploads;
-    //       this is necessary to connect an entry or page's image field to the right WP media id
-    // todo: write an instruction on how to use these adds; after the import the auto_increment will have to highest value + 1
-    //       and this cannot be lowered anymore in all cases.
     public static $itemcnt = 0;
     public static $warncnt = 0;
     public static $id_min = 99999999;
     public static $id_max = 0;
+    // @@CHANGE 
+    // If you are importing into an existing WP then you probably want to add some number to the internal ids
+    // so these will be recognisable in future; also ids for pages and entries can be the same in PivotX but in WP
+    // they cannot.
+    // These old and new ids can also be used in the chaparray after importing the chapters and exporting the pages.
+    // Vars addtoentry / addtopage / addtochap are meant to accomplish this.
+    // 
+    // upload_dest_def is the folder name to set in the export whenever an upload is encountered that is not in a yyyy-nn
+    // subfolder (WP only uses that structure)
+    //
+    // addtoupl generates fixed ids based on the sequence in the total collection of uploads;
+    // this is necessary to connect an entry or page's image field to the right WP media id
+    //
+    // efprefix is the prefix put in front of the exported extrafield field names
+    //
+    // entrysel gives you the option to only select specific categories or uids
+    //
+    // defweblog is meant to specify the name of your default weblog
+    //
+    // todo: write an instruction on how to use these adds; after the import the auto_increment will have to highest value + 1
+    //       and this cannot be lowered anymore in all cases.
+    // @@CHANGE
     public static $upload_dest_def = '2010/01';
     public static $upload_input = '../images/';
     public static $addtoentry = 100;
     public static $addtopage = 300;
     public static $addtochap = 500;
     public static $addtoupl = 550;
+    public static $efprefix = '';   // only lower case!
+    public static $entrysel = array('show'=>20000);   //  all categories are selected
+    //public static $entrysel = array('cats'=>array('default', 'linkdump'),'show'=>20000);   // only specific categories
+    //public static $entrysel = array('uid'=>array(75,85),'show'=>20000);   // only specific uids
+    public static $defweblog = 'weblog';
     
     public static function adminTab(&$form_html)
     {
@@ -502,12 +519,14 @@ THEEND;
 //@@CHANGE REPLACE STRINGS HERE -- start
             // replace some strings in introduction and body before parsing
             // Scan your xml output for message "Smarty error:"
+            // Also the string Unrecognized template code:  means a template tag was not translated
+
             // Warning: files can be included in included files -- these strings cannot be seen from here
 
             // `$templatedir` --> your default weblog
-            $record = self::replaceIt($record, "`\$templatedir`", getcwd() . "/templates/weblog");
+            $record = self::replaceIt($record, "`\$templatedir`", getcwd() . "/templates/" . self::$defweblog);
             // include file="weblog/ 
-            $record = self::replaceIt($record, 'include file="weblog/', 'include file="' . getcwd() . '/templates/weblog/');
+            $record = self::replaceIt($record, 'include file="'.self::$defweblog.'/', 'include file="' . getcwd() . '/templates/'.self::$defweblog.'/');
             // &gt; due to editor (or the parsing?)
             $record = self::replaceIt($record, '&gt;', '>');
             // &lt; due to editor (or the parsing?)
@@ -744,15 +763,7 @@ THEEND;
         $output .= self::outputWXR_Header('entries');
         //$output .= self::outputWXR_Categories();   // Harm: not needed -- categories can be exported separately.
         $output .= self::outputWXR_Tags();
-        $output .= self::outputWXR_Items($PIVOTX['db']->read_entries(array('show'=>20000)), false, array('pivotxWxrExport','convertEntryToItem'));
-        
-        // example of one separate entry
-        //$output .= self::outputWXR_Items($PIVOTX['db']->read_entries(array('uid'=>151,'show'=>20000)), false, array('pivotxWxrExport','convertEntryToItem'));
-        // example of several categories
-        //$output .= self::outputWXR_Items($PIVOTX['db']->read_entries(array('cats'=>array('default', 'linkdump'),'show'=>20000)), false, array('pivotxWxrExport','convertEntryToItem'));
-        // example of several entries on uid
-        //$output .= self::outputWXR_Items($PIVOTX['db']->read_entries(array('uid'=>array(75,85),'show'=>20000)), false, array('pivotxWxrExport','convertEntryToItem'));
-        
+        $output .= self::outputWXR_Items($PIVOTX['db']->read_entries(self::$entrysel), false, array('pivotxWxrExport','convertEntryToItem'));
         $output .= self::outputWXR_Footer('entries');
         return $output;
     }
@@ -766,7 +777,7 @@ THEEND;
         //$output .= self::outputWXR_Categories();    // Harm: not needed -- categories can be exported separately.
         $output .= self::outputWXR_Tags();
 
-        $output .= self::outputWXR_Items($PIVOTX['db']->read_entries(array('show'=>20000)), true, array('pivotxWxrExport','convertEntryToItem'));
+        $output .= self::outputWXR_Items($PIVOTX['db']->read_entries(self::$entrysel), true, array('pivotxWxrExport','convertEntryToItem'));
 
         $output .= self::outputWXR_Footer('entries and their comments');
         return $output;
@@ -914,12 +925,12 @@ THEEND;
                     }
                 }
                 $bfmeta .= "\n" . self::outputMap(array(
-                    'wp:meta_key' => $extrakey,
+                    'wp:meta_key' => self::$efprefix . $extrakey,
                     'wp:meta_value' => array('cdata', $extrafield),
                     ));
                 $bfmeta .= '</wp:postmeta>' . "\n" . '<wp:postmeta>';
                 $bfmeta .= "\n" . self::outputMap(array(
-                    'wp:meta_key' => '_' . $extrakey,
+                    'wp:meta_key' => '_' . self::$efprefix . $extrakey,
                     'wp:meta_value' => array('cdata', $bffieldkey),
                     ));
             }
@@ -980,8 +991,8 @@ THEEND;
 
         $bfmetacdata = array(
             'key' => $bfkey,
-            'label' => $bffield['name'],
-            'name' => $bffield['fieldkey'],
+            'label' => self::$efprefix . $bffield['name'],
+            'name' => self::$efprefix . $bffield['fieldkey'],
             'instructions' => $bffield['description'],
             'default_value' => $bffield['empty_text'],
             'required' => 0,

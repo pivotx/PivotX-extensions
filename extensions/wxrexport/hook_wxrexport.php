@@ -91,24 +91,24 @@ class pivotxWxrExport
     <li><a href="?page=wxrexport&amp;type=pages">
         Export Pages
     </a></li>
-    <li>a. <a href="?page=wxrexport&amp;type=entries">
-        Export Entries (without comments)
-    </a></li>
-    <li>b. <a href="?page=wxrexport&amp;type=entries+comments">
-        Export Entries (including comments)
-    </a></li>
+    <li>Export Entries
+    <ul>
+        <li><a href="?page=wxrexport&amp;type=entries">Without comments</a></li>
+        <li><a href="?page=wxrexport&amp;type=entries+comments">Including comments</a></li>
+    </ul>
+    </li>
 </ol>
 <p>Without parsing of introduction and body content</p>
 <ol>
     <li><a href="?page=wxrexport&amp;type=pages&amp;parse=no">
         Export Pages
     </a></li>
-    <li>a. <a href="?page=wxrexport&amp;type=entries&amp;parse=no">
-        Export Entries (without comments)
-    </a></li>
-    <li>b. <a href="?page=wxrexport&amp;type=entries+comments&amp;parse=no">
-        Export Entries (including comments)
-    </a></li>
+    <li>Export Entries
+    <ul>
+        <li><a href="?page=wxrexport&amp;type=entries&amp;parse=no">Without comments</a></li>
+        <li><a href="?page=wxrexport&amp;type=entries+comments&amp;parse=no">Including comments</a></li>
+    </ul>
+    </li>
 </ol>
 </td>
 </tr>
@@ -197,34 +197,35 @@ THEEND;
         $output = '';
         self::recordId(0);   // so default of minimum gets overwritten
 
-        $bffields = self::getBFFields();
-        if ($bffields == false) {
-            $output = '<!-- Warning! you have no Bonusfields extension installed -->'."\n";
+        $extrafields = self::getExtrafields();
+
+        if ($extrafields == false) {
+            $output = '<!-- Warning! you have no extension with Extrafields installed -->'."\n";
             self::$warncnt++;
         } else {
-            if (!is_array($bffields)) {
-                $output = '<!-- Warning! you have no Bonusfields defined -->'."\n";
+            if (!is_array($extrafields)) {
+                $output = '<!-- Warning! you have no Extrafields defined -->'."\n";
                 self::$warncnt++;
             } else {
                 $output .= '<item>'."\n";
                 $record['post_id'] = 0;
-                $bfdate = date('Y-m-d H:i:s', strtotime($bfdate . ' - 1 day'));  // to be sure that imported item will be published
+                $efdate = date('Y-m-d H:i:s', strtotime($efdate . ' - 1 day'));  // to be sure that imported item will be published
                 $record['post_parent'] = '0';
 
-                $bfmeta = self::buildBFMeta('entry', $bffields);
-                if ($bfmeta == '') {
-                    $output .= '<!-- Warning! you have no Bonusfields for entries defined -->'."\n";
+                $efmeta = self::buildEFMeta('entry', $extrafields);
+                if ($efmeta == '') {
+                    $output .= '<!-- Warning! you have no Extrafields for entries defined -->'."\n";
                     self::$warncnt++;
                 } else {
                     $output .= self::outputMap(array(
                     'title' => 'Post_extrafields',
                     'link' => '0',
-                    'pubDate' => $bfdate,
+                    'pubDate' => $efdate,
                     'dc:creator' => 'pivx_extrafields',
                     'guid isPermaLink="false"' => '0',
                     'wp:post_id' => $record['post_id'],
-                    'wp:post_date' => $bfdate,
-                    'wp:post_date_gmt' => $bfdate,
+                    'wp:post_date' => $efdate,
+                    'wp:post_date_gmt' => $efdate,
                     'wp:comment_status' => 'closed',
                     'wp:ping_status' => 'closed',
                     'wp:post_name' => 'acf_post_extrafields',
@@ -233,7 +234,7 @@ THEEND;
                     'wp:menu_order' => '101',
                     'wp:post_type' => 'acf',
                     'wp:post_password' => '',
-                    'wp:postmeta' => array('html', $bfmeta),
+                    'wp:postmeta' => array('html', $efmeta),
                     ));
                 }
                 $output .= '</item>'."\n";
@@ -241,23 +242,23 @@ THEEND;
 
                 $output .= '<item>'."\n";
                 $record['post_id'] = 0;
-                $bfdate = date('Y-m-d H:i:s', strtotime($bfdate . ' - 1 day'));  // to be sure that imported item will be published
+                $efdate = date('Y-m-d H:i:s', strtotime($efdate . ' - 1 day'));  // to be sure that imported item will be published
                 $record['post_parent'] = '0';
 
-                $bfmeta = self::buildBFMeta('page', $bffields);
-                if ($bfmeta == '') {
-                    $output .= '<!-- Warning! you have no Bonusfields for pages defined -->'."\n";
+                $efmeta = self::buildEFMeta('page', $extrafields);
+                if ($efmeta == '') {
+                    $output .= '<!-- Warning! you have no Extrafields for pages defined -->'."\n";
                     self::$warncnt++;
                 } else {
                     $output .= self::outputMap(array(
                     'title' => 'Page_extrafields',
                     'link' => '0',
-                    'pubDate' => $bfdate,
+                    'pubDate' => $efdate,
                     'dc:creator' => 'pivx_extrafields',
                     'guid isPermaLink="false"' => '0',
                     'wp:post_id' => $record['post_id'],
-                    'wp:post_date' => $bfdate,
-                    'wp:post_date_gmt' => $bfdate,
+                    'wp:post_date' => $efdate,
+                    'wp:post_date_gmt' => $efdate,
                     'wp:comment_status' => 'closed',
                     'wp:ping_status' => 'closed',
                     'wp:post_name' => 'acf_page_extrafields',
@@ -266,7 +267,7 @@ THEEND;
                     'wp:menu_order' => '102',
                     'wp:post_type' => 'acf',
                     'wp:post_password' => '',
-                    'wp:postmeta' => array('html', $bfmeta),
+                    'wp:postmeta' => array('html', $efmeta),
                     ));
                 }
                 $output .= '</item>'."\n";
@@ -505,7 +506,7 @@ THEEND;
     {
         global $PIVOTX;
         global $UPLFILES;
-        global $BFFIELDS;
+        global $EXTRAFIELDS;
         $output = '';
         $parse = isset( $_GET['parse'] ) ? $_GET['parse'] : '';  
         foreach($data as &$record) {
@@ -577,18 +578,12 @@ THEEND;
                     // skip these ones   todo: find a solution for them
                     } elseif ($extrakey == 'image_description'
                             || $extrakey == 'date_depublish'
-                            || $extrakey == 'seodescription'
-                            || $extrakey == 'seokeywords'
-                            || $extrakey == 'seotitle'
-                            || $extrakey == 'ratings'
-                            || $extrakey == 'ratingaverage'
-                            || $extrakey == 'ratingcount'
                             || $extrakey == 'password'
                             || $extrakey == 'passwordprotect') {
                         continue;
                     } else {
                         // process other extrafields
-                        $extrafmeta .= self::processBFExtra($extrakey, $record['pivx_type'], $BFFIELDS, $extrafield, $extrafcnt);
+                        $extrafmeta .= self::processEFExtra($extrakey, $record['pivx_type'], $EXTRAFIELDS, $extrafield, $extrafcnt);
                         $extrafcnt   = $extrafcnt + 1;
                     }
                 }
@@ -783,203 +778,204 @@ THEEND;
         return $output;
     }
 
-    public static function buildBFMeta($bfsel, $bffields) {
+    public static function buildEFMeta($efsel, $extrafields) {
         // first open postmeta will be created when creating item
-        $bfmeta = "\n" . self::outputMap(array(
+        $efmeta = "\n" . self::outputMap(array(
             'wp:meta_key' => '_edit_last',
             'wp:meta_value' => array('cdata', 1),
         ));
-        $bfmeta .= '</wp:postmeta>';
-        $bfselcnt = -1;
-        foreach($bffields as $bffield) {
-            //echo "bffield: " . $bffield['name'] . "/" . $bffield['contenttype'] . "/" . $bffield['type'] . "<br/>";
-            if ($bffield['contenttype'] == $bfsel) {
-                $bfselcnt = $bfselcnt + 1;
+        $efmeta .= '</wp:postmeta>';
+        $efselcnt = -1;
+        foreach($extrafields as $extrafield) {
+            //echo "extrafield: " . $extrafield['name'] . "/" . $extrafield['contenttype'] . "/" . $extrafield['type'] . "<br/>";
+            if ($extrafield['contenttype'] == $efsel) {
+                $efselcnt = $efselcnt + 1;
                 // remove leading break (sometimes there to get description below field
-                $bffield['description'] = ltrim($bffield['description'], '<br/>');
-                $bffield['description'] = ltrim($bffield['description'], '<br />');
-                $bffield['description'] = ltrim($bffield['description'], '<br>');
+                $extrafield['description'] = ltrim($extrafield['description'], '<br/>');
+                $extrafield['description'] = ltrim($extrafield['description'], '<br />');
+                $extrafield['description'] = ltrim($extrafield['description'], '<br>');
                 // replace CR LF from description (they block the import)
-                $bffield['description'] = preg_replace( "/\r|\n/", " ", $bffield['description'] );
+                $extrafield['description'] = preg_replace( "/\r|\n/", " ", $extrafield['description'] );
                 // to do: strip other html from description (like <em> <b> <i>)
 
-                $bffieldkey = self::getBFKey($bffield['fieldkey'],$bffield['contenttype'],$bffields);
+                $extrafieldkey = self::getEFKey($extrafield['fieldkey'],$extrafield['contenttype'],$extrafields);
 
-                $bfmetacdata = self::buildBFMetacdata($bffieldkey, $bfselcnt, $bffield);
+                $efmetacdata = self::buildEFMetacdata($extrafieldkey, $efselcnt, $extrafield);
 
                 // add warning for checkbox multiple
-                if ($bffield['type'] == 'checkbox_multiple') {
-                    $bfmeta .= "\n" . '<!-- Warning! Bonusfield "' .
-                    $bffield['name'] . '" of contenttype ' . $bffield['contenttype'] .
+                if ($extrafield['type'] == 'checkbox_multiple') {
+                    $efmeta .= "\n" . '<!-- Warning! Extrafield "' .
+                    $extrafield['name'] . '" of contenttype ' . $extrafield['contenttype'] .
                     ' is of type checkbox multiple. This type does not exist as an import type. It has been processed as single checkbox -->';
                     self::$warncnt++;
                 }
                 // add warning for select multiple
-                if ($bffield['type'] == 'select_multiple') {
-                    $bfmeta .= "\n" . '<!-- Warning! Bonusfield "' .
-                    $bffield['name'] . '" of contenttype ' . $bffield['contenttype'] .
+                if ($extrafield['type'] == 'select_multiple') {
+                    $efmeta .= "\n" . '<!-- Warning! Extrafield "' .
+                    $extrafield['name'] . '" of contenttype ' . $extrafield['contenttype'] .
                     ' is of type select multiple. This type does not exist as an import type. It has been processed as single select -->';
                     self::$warncnt++;
                 }
                 // skip gallery
-                if ($bffield['type'] == 'gallery') {
-                    $bfmeta .= "\n" . '<!-- Warning! Bonusfield "' .
-                    $bffield['name'] . '" of contenttype ' . $bffield['contenttype'] .
+                if ($extrafield['type'] == 'gallery') {
+                    $efmeta .= "\n" . '<!-- Warning! Extrafield "' .
+                    $extrafield['name'] . '" of contenttype ' . $extrafield['contenttype'] .
                     ' is of type gallery. This type cannot be imported in this way. Use export galleries instead -->';
                     self::$warncnt++;
-                    $bfmetacdata = '';
+                    $efmetacdata = '';
                 }
                 // add warning for some non processed bonusfield parts
-                if ($bffield['showif_type'] != '' ||
-                    $bffield['showif'] != '') {
-                    $bfmeta .= "\n" . '<!-- Warning! Bonusfield "' .
-                    $bffield['name'] . '" of contenttype ' . $bffield['contenttype'] .
+                if ($extrafield['showif_type'] != '' ||
+                    $extrafield['showif'] != '') {
+                    $efmeta .= "\n" . '<!-- Warning! Extrafield "' .
+                    $extrafield['name'] . '" of contenttype ' . $extrafield['contenttype'] .
                     ' has a value for showif_type and/or showif that is not yet processed in this export -->';
                     self::$warncnt++;
                 }
-                if ($bfmetacdata != '') {        
-                    $bfmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
-                    'wp:meta_key' => $bffieldkey,
-                    'wp:meta_value' => array('cdata', $bfmetacdata),
+                if ($efmetacdata != '') {        
+                    $efmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
+                    'wp:meta_key' => $extrafieldkey,
+                    'wp:meta_value' => array('cdata', $efmetacdata),
                     ));
-                    $bfmeta .= '</wp:postmeta>';
+                    $efmeta .= '</wp:postmeta>';
                 }
             }
         }
         // rule to only show them for this selection
         $wpsel = 'post';
-        if ($bfsel == 'entry') { $wpsel = 'post'; }
-        if ($bfsel == 'page') { $wpsel = 'page'; }
-        $bfmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
+        if ($efsel == 'entry') { $wpsel = 'post'; }
+        if ($efsel == 'page') { $wpsel = 'page'; }
+        $efmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
             'wp:meta_key' => 'rule',
             'wp:meta_value' => array('cdata', 'a:5:{s:5:"param";s:9:"post_type";s:8:"operator";s:2:"==";s:5:"value";s:4:"' .
             $wpsel . '";s:8:"order_no";i:0;s:8:"group_no";i:0;}'),
         ));
-        $bfmeta .= '</wp:postmeta>';
-        $bfmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
+        $efmeta .= '</wp:postmeta>';
+        $efmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
             'wp:meta_key' => 'position',
             'wp:meta_value' => array('cdata', 'normal'),
         ));
-        $bfmeta .= '</wp:postmeta>';
-        $bfmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
+        $efmeta .= '</wp:postmeta>';
+        $efmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
             'wp:meta_key' => 'layout',
             'wp:meta_value' => array('cdata', 'no_box'),
         ));
-        $bfmeta .= '</wp:postmeta>';
-        $bfmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
+        $efmeta .= '</wp:postmeta>';
+        $efmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
             'wp:meta_key' => 'hide_on_screen',
             'wp:meta_value' => array('cdata', ''),
         ));
         // last close postmeta will be created when creating item
 
-        if ($bfselcnt == -1) {
-            $bfmeta = '';
+        if ($efselcnt == -1) {
+            $efmeta = '';
         }
 
-        return $bfmeta;
+        return $efmeta;
     }
 
-    public static function processBFExtra($extrakey, $pivx_type, $bffields, $extrafield, $extrafcnt) {
+    public static function processEFExtra($extrakey, $pivx_type, $extrafields, $extrafield, $extrafcnt) {
         global $PIVOTX;
-        $bffieldkey = self::getBFKey($extrakey, $pivx_type, $bffields);
-        $bfmeta = '';
-        if ($bffieldkey == '0') {
-            $bfmeta .= '<!-- Warning! extrafields key not found! ' . $extrakey . ' -->';
+        $extrafieldkey = self::getEFKey($extrakey, $pivx_type, $extrafields);
+        $efmeta = '';
+        if ($extrafieldkey == '0') {
+            $efmeta .= '<!-- Warning! extrafields key not found! ' . $extrakey . ' -->';
             self::$warncnt++;
         } else {
-            $bffieldtype = self::getBFType($extrakey, $pivx_type, $bffields);
-            if ($bffieldtype == 'gallery') {
-                $bfmeta .= '<!-- Warning! extrafields gallery skipped! ' . $extrakey . ' -->';
+            $extrafieldtype = self::getEFType($extrakey, $pivx_type, $extrafields);
+            if ($extrafieldtype == 'gallery') {
+                $efmeta .= '<!-- Warning! extrafields gallery skipped! ' . $extrakey . ' -->';
                 self::$warncnt++;
             } else {
             /*
-            Todo: Bonusfield types that have not been covered and/or tested: 'textarea' / 'radio' / 'file' / 'image'
-                // galleries are separate entities -- so will be created whenever the content contains reference to this bonusfield type
+            Todo: Extrafield types that have not been covered and/or tested: 'textarea' / 'radio' / 'file' / 'image'
+            ratings is an array 
+                // galleries are separate entities -- so will be created whenever the content contains reference to this extrafield type
             */
                 if ($extrafcnt > 0) {
-                    $bfmeta .= '</wp:postmeta>' . "\n" . '<wp:postmeta>';
+                    $efmeta .= '</wp:postmeta>' . "\n" . '<wp:postmeta>';
                 }
                 $extrafcnt   = $extrafcnt + 1;
-                if ($bffieldtype == 'checkbox' || $bffieldtype == 'checkbox_multiple') {
+                if ($extrafieldtype == 'checkbox' || $extrafieldtype == 'checkbox_multiple') {
                     if ($extrafield == 'on') {
-                        $bffielddata = self::getBFData($extrakey, $pivx_type, $bffields, true);
-                        $extrafield = 'a:1:{i:0;s:' . strlen($bffielddata) . ':"' . $bffielddata . '";}';
+                        $extrafielddata = self::getEFData($extrakey, $pivx_type, $extrafields, true);
+                        $extrafield = 'a:1:{i:0;s:' . strlen($extrafielddata) . ':"' . $extrafielddata . '";}';
                     }
                 }
-                if ($bffieldtype == 'choose_entry') {
-                    $bfentry = $PIVOTX['db']->read_entry($extrafield);
-                    if ($bfentry['uid'] == '') {
-                        $extrafield = 'Warning! extrafields value not found! ' . $extrafield;
+                if ($extrafieldtype == 'choose_entry') {
+                    $efentry = $PIVOTX['db']->read_entry($extrafield);
+                    if ($efentry['uid'] == '') {
+                        $extrafield = 'Warning! Extrafields value not found! ' . $extrafield;
                         self::$warncnt++;
                     } else {
-                        $extrafield = $bfentry['uid'] + self::$addtoentry;
+                        $extrafield = $efentry['uid'] + self::$addtoentry;
                     }
                 }
-                if ($bffieldtype == 'choose_page') {
-                    $bfpage = $PIVOTX['pages']->getPageByUri($extrafield);
-                    if ($bfpage['uid'] == '') {
-                        $extrafield = 'Warning! extrafields value not found! ' . $extrafield;
+                if ($extrafieldtype == 'choose_page') {
+                    $efpage = $PIVOTX['pages']->getPageByUri($extrafield);
+                    if ($efpage['uid'] == '') {
+                        $extrafield = 'Warning! Extrafields value not found! ' . $extrafield;
                         self::$warncnt++;
                     } else {
-                        $extrafield = $bfpage['uid'] + self::$addtopage;
+                        $extrafield = $efpage['uid'] + self::$addtopage;
                     }
                 }
-                $bfmeta .= "\n" . self::outputMap(array(
+                $efmeta .= "\n" . self::outputMap(array(
                     'wp:meta_key' => self::$efprefix . $extrakey,
                     'wp:meta_value' => array('cdata', $extrafield),
                     ));
-                $bfmeta .= '</wp:postmeta>' . "\n" . '<wp:postmeta>';
-                $bfmeta .= "\n" . self::outputMap(array(
+                $efmeta .= '</wp:postmeta>' . "\n" . '<wp:postmeta>';
+                $efmeta .= "\n" . self::outputMap(array(
                     'wp:meta_key' => '_' . self::$efprefix . $extrakey,
-                    'wp:meta_value' => array('cdata', $bffieldkey),
+                    'wp:meta_value' => array('cdata', $extrafieldkey),
                     ));
             }
         }
-        return $bfmeta;
+        return $efmeta;
     }
 
-    private static function getBFKey($bfkey, $bfctype, $bffields) {
-        $bfkeycnt = 0; $bfkeywp = 0;
-        foreach($bffields as $bffield) {
-            $bfkeycnt = $bfkeycnt + 1;
-            if ($bffield['contenttype'] == $bfctype && $bffield['fieldkey'] == $bfkey) {
+    private static function getEFKey($efkey, $efctype, $extrafields) {
+        $efkeycnt = 0; $efkeywp = 0;
+        foreach($extrafields as $extrafield) {
+            $efkeycnt = $efkeycnt + 1;
+            if ($extrafield['contenttype'] == $efctype && $extrafield['fieldkey'] == $efkey) {
                 // construct key
-                $bffill = '';
-                if ($bfkeycnt < 100) { $bffill = '000'; }
-                if ($bfkeycnt < 10) { $bffill = '0000'; }
-                $bfkeywp = 'field_20141116' . $bffill . $bfkeycnt;
+                $effill = '';
+                if ($efkeycnt < 100) { $effill = '000'; }
+                if ($efkeycnt < 10) { $effill = '0000'; }
+                $efkeywp = 'field_20141116' . $effill . $efkeycnt;
             }
         }
-        return $bfkeywp;
+        return $efkeywp;
     }
 
-    private static function getBFType($bfkey, $bfctype, $bffields) {
-        $bftype = 0;
-        foreach($bffields as $bffield) {
-            if ($bffield['contenttype'] == $bfctype && $bffield['fieldkey'] == $bfkey) {
-                $bftype = $bffield['type'];
+    private static function getEFType($efkey, $efctype, $extrafields) {
+        $eftype = 0;
+        foreach($extrafields as $extrafield) {
+            if ($extrafield['contenttype'] == $efctype && $extrafield['fieldkey'] == $efkey) {
+                $eftype = $extrafield['type'];
             }
         }
-        return $bftype;
+        return $eftype;
     }
 
-    private static function getBFData($bfkey, $bfctype, $bffields, $bffillit) {
-        $bfdata = '';
-        foreach($bffields as $bffield) {
-            if ($bffield['contenttype'] == $bfctype && $bffield['fieldkey'] == $bfkey) {
-                $bfdata = $bffield['data'];
-                if ($bfdata == '' && $bffillit == true) {
-                    $bfdata = $bffield['name'];
+    private static function getEFData($efkey, $efctype, $extrafields, $effillit) {
+        $efdata = '';
+        foreach($extrafields as $extrafield) {
+            if ($extrafield['contenttype'] == $efctype && $extrafield['fieldkey'] == $efkey) {
+                $efdata = $extrafield['data'];
+                if ($efdata == '' && $effillit == true) {
+                    $efdata = $extrafield['name'];
                 }
             }
         }
-        return $bfdata;
+        return $efdata;
     }
 
-    private static function buildBFMetacdata($bfkey, $bfocc, $bffield) {
-        // bffield lay-out:
-        //[name] => Bonusfield name 
-        //[fieldkey] => Bonusfield key 
+    private static function buildEFMetacdata($efkey, $efocc, $extrafield) {
+        // extrafield lay-out:
+        //[name] => Extrafield name 
+        //[fieldkey] => Extrafield key 
         //[type] => choose_page 
         //[location] => page-introduction-before 
         //[showif_type] => 
@@ -989,12 +985,12 @@ THEEND;
         //[description] => Description shown in editor 
         //[contenttype] => page
 
-        $bfmetacdata = array(
-            'key' => $bfkey,
-            'label' => self::$efprefix . $bffield['name'],
-            'name' => self::$efprefix . $bffield['fieldkey'],
-            'instructions' => $bffield['description'],
-            'default_value' => $bffield['empty_text'],
+        $efmetacdata = array(
+            'key' => $efkey,
+            'label' => self::$efprefix . $extrafield['name'],
+            'name' => self::$efprefix . $extrafield['fieldkey'],
+            'instructions' => $extrafield['description'],
+            'default_value' => $extrafield['empty_text'],
             'required' => 0,
             'conditional_logic' => array(
                 'status' => 0,
@@ -1006,101 +1002,101 @@ THEEND;
                 ),
                 'allorany' => 'all'
             ),
-            'order_no' => $bfocc
+            'order_no' => $efocc
         );
 
-        switch ($bffield['type']) {
+        switch ($extrafield['type']) {
             case 'input_text':
             case 'hidden':
-                $bfmetacdata['type'] = 'text';
-                $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
-                $bfmetacdata['maxlength'] = '';
-                $bfmetacdata['formatting'] = 'html';
+                $efmetacdata['type'] = 'text';
+                $efmetacdata['placeholder'] = $efmetacdata['prepend'] = $efmetacdata['append'] = ''; 
+                $efmetacdata['maxlength'] = '';
+                $efmetacdata['formatting'] = 'html';
                 break;
             case 'textarea':
-                $bfmetacdata['type'] = 'textarea';
-                $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
-                $bfmetacdata['maxlength'] = '';
-                $bfmetacdata['rows'] = '';
-                $bfmetacdata['formatting'] = 'br';
+                $efmetacdata['type'] = 'textarea';
+                $efmetacdata['placeholder'] = $efmetacdata['prepend'] = $efmetacdata['append'] = ''; 
+                $efmetacdata['maxlength'] = '';
+                $efmetacdata['rows'] = '';
+                $efmetacdata['formatting'] = 'br';
                 break;
             case 'choose_page':
-                $bfmetacdata['type'] = 'page_link';
-                $bfmetacdata['post_type'] = array('page');
-                $bfmetacdata['allow_null'] = '1';
-                $bfmetacdata['multiple'] = '0';
-                unset($bfmetacdata['default_value']);
+                $efmetacdata['type'] = 'page_link';
+                $efmetacdata['post_type'] = array('page');
+                $efmetacdata['allow_null'] = '1';
+                $efmetacdata['multiple'] = '0';
+                unset($efmetacdata['default_value']);
                 break;
             case 'choose_entry':
-                $bfmetacdata['type'] = 'page_link';
-                $bfmetacdata['post_type'] = array('post');
-                $bfmetacdata['allow_null'] = '1';
-                $bfmetacdata['multiple'] = '0';
-                unset($bfmetacdata['default_value']);
+                $efmetacdata['type'] = 'page_link';
+                $efmetacdata['post_type'] = array('post');
+                $efmetacdata['allow_null'] = '1';
+                $efmetacdata['multiple'] = '0';
+                unset($efmetacdata['default_value']);
                 break;
             case 'select':
             case 'select_multiple':
-                $bfmetacdata['type'] = 'select';
-                $bfmetacdata['choices'] = self::getBFChoices($bffield['data'], $bffield['name']);
-                if ($bffield['type'] == 'select_multiple') {
-                    $bfmetacdata['allow_null'] = '0';
-                    $bfmetacdata['multiple'] = '1';
+                $efmetacdata['type'] = 'select';
+                $efmetacdata['choices'] = self::getEFChoices($extrafield['data'], $extrafield['name']);
+                if ($extrafield['type'] == 'select_multiple') {
+                    $efmetacdata['allow_null'] = '0';
+                    $efmetacdata['multiple'] = '1';
                 } else {
-                    $bfmetacdata['allow_null'] = '1';
-                    $bfmetacdata['multiple'] = '0';
+                    $efmetacdata['allow_null'] = '1';
+                    $efmetacdata['multiple'] = '0';
                 }
                 break;
             case 'radio':
-                $bfmetacdata['type'] = 'radio';
-                $bfmetacdata['choices'] = self::getBFChoices($bffield['data'], $bffield['name']);
-                $bfmetacdata['other_choice'] = '0';
-                $bfmetacdata['save_other_choice'] = '0';
-                $bfmetacdata['layout'] = 'vertical';
+                $efmetacdata['type'] = 'radio';
+                $efmetacdata['choices'] = self::getEFChoices($extrafield['data'], $extrafield['name']);
+                $efmetacdata['other_choice'] = '0';
+                $efmetacdata['save_other_choice'] = '0';
+                $efmetacdata['layout'] = 'vertical';
                 break;
             case 'checkbox':
             case 'checkbox_multiple':
-                $bfmetacdata['type'] = 'checkbox';
-                $bfmetacdata['choices'] = self::getBFChoices($bffield['data'], $bffield['name']);
-                $bfmetacdata['layout'] = 'vertical';
+                $efmetacdata['type'] = 'checkbox';
+                $efmetacdata['choices'] = self::getEFChoices($extrafield['data'], $extrafield['name']);
+                $efmetacdata['layout'] = 'vertical';
                 break;
             case 'image':
-                $bfmetacdata['type'] = 'image';
-                $bfmetacdata['save_format'] = 'object';
-                $bfmetacdata['preview_size'] = 'thumbnail';
-                $bfmetacdata['library'] = 'all';
-                unset($bfmetacdata['default_value']);
+                $efmetacdata['type'] = 'image';
+                $efmetacdata['save_format'] = 'object';
+                $efmetacdata['preview_size'] = 'thumbnail';
+                $efmetacdata['library'] = 'all';
+                unset($efmetacdata['default_value']);
                 break;
-            // galleries are separate entities -- so will be created whenever the content contains reference to this bonusfield type
+            // galleries are separate entities -- so will be created whenever the content contains reference to this extrafield type
             case 'gallery':
                 break;
             case 'file':
-                $bfmetacdata['type'] = 'file';
-                $bfmetacdata['save_format'] = 'object';
-                $bfmetacdata['library'] = 'all';
-                unset($bfmetacdata['default_value']);
+                $efmetacdata['type'] = 'file';
+                $efmetacdata['save_format'] = 'object';
+                $efmetacdata['library'] = 'all';
+                unset($efmetacdata['default_value']);
                 break;
-            // bonusfields does not have a type number (but format still coded)
+            // extrafields does not have a type number (but format still coded)
             case 'number':
-                $bfmetacdata['type'] = 'number';
-                $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
-                $bfmetacdata['min'] = '123';
-                $bfmetacdata['max'] = '123456';
-                $bfmetacdata['step'] = '10';
-                $bfmetacdata['formatting'] = 'html';
+                $efmetacdata['type'] = 'number';
+                $efmetacdata['placeholder'] = $efmetacdata['prepend'] = $efmetacdata['append'] = ''; 
+                $efmetacdata['min'] = '123';
+                $efmetacdata['max'] = '123456';
+                $efmetacdata['step'] = '10';
+                $efmetacdata['formatting'] = 'html';
                 break;
             default:
-                echo "Unknown bonusfields type: " . $bffield['type'] . "<br/>";
-                print_r ($bffield); 
-                $bfmetacdata['type'] = 'text';
-                $bfmetacdata['placeholder'] = $bfmetacdata['prepend'] = $bfmetacdata['append'] = ''; 
-                $bfmetacdata['maxlength'] = '';
-                $bfmetacdata['formatting'] = 'html';
+                echo "Unknown extrafields type: " . $extrafield['type'] . "<br/>";
+                print_r ($extrafield); 
+                $efmetacdata['type'] = 'text';
+                $efmetacdata['placeholder'] = $efmetacdata['prepend'] = $efmetacdata['append'] = ''; 
+                $efmetacdata['maxlength'] = '';
+                $efmetacdata['formatting'] = 'html';
 
         }
-        return serialize($bfmetacdata);
+        return serialize($efmetacdata);
     }
 
-    private static function getBFChoices($data, $name) {
+    private static function getEFChoices($data, $name) {
         $combined_choices = explode("\r\n", $data);
         $choices = array();
         if (count($combined_choices) == 0 || $data == '') {
@@ -1114,33 +1110,96 @@ THEEND;
         return $choices;
     }
 
-    public static function getBFFields() {
+    public static function getExtrafields() {
         global $PIVOTX;
-        $bffields = false;
-        if (function_exists('load_serialize')) {
-            $config = load_serialize($PIVOTX['paths']['db_path'].'ser_bonusfields.php', true);
-        } else if (function_exists('loadSerialize')) {
-            $config = loadSerialize($PIVOTX['paths']['db_path'].'ser_bonusfields.php', true);
-        }
-        if ($config == true) {
-            $bffields = array();
-            foreach($config['definition'] as $array_field) {
-                $bffield = new bonusfieldsDefinition();
-                $bffield->importFromArray($array_field);
-                $bffields[] = $bffield;
+        $extrafields = false;
+
+        $activeext = $PIVOTX['extensions']->getActivated();
+//echo print_r($activeext) . '<br/>';
+        // extension bonusfields active?
+        if (in_array('bonusfields',$activeext)) {
+            //echo 'bonusfields active!' . '<br/>';
+            if (function_exists('load_serialize')) {
+                $config = load_serialize($PIVOTX['paths']['db_path'].'ser_bonusfields.php', true);
+            } else if (function_exists('loadSerialize')) {
+                $config = loadSerialize($PIVOTX['paths']['db_path'].'ser_bonusfields.php', true);
             }
-            $bfcount = count($bffields);
-            if ($bfcount < 1) {
-                $bffields = $bfcount;
-            } else {
-                $bffields2 = array();
-                foreach($bffields as $bffield) {
-                    $bffields2[] = $bffield->exportToArray();
+            if ($config == true) {
+                $extrafields = array();
+                foreach($config['definition'] as $array_field) {
+                    $extrafield = new bonusfieldsDefinition();
+                    $extrafield->importFromArray($array_field);
+                    $extrafields[] = $extrafield;
                 }
-                $bffields = $bffields2;
+                $efcount = count($extrafields);
+                if ($efcount < 1) {
+                    $extrafields = $efcount;
+                } else {
+                    $extrafields2 = array();
+                    foreach($extrafields as $extrafield) {
+                        $extrafields2[] = $extrafield->exportToArray();
+                    }
+                    $extrafields = $extrafields2;
+                }
             }
         }
-        return $bffields;
+        $extadd = array(
+            'name' => '',
+            'fieldkey' => '',
+            'type' => 'input_text',
+            'location' => '',
+            'showif_type' => '',
+            'showif' => '',
+            'data' => '',
+            'empty_text' => '',
+            'description' => '',
+            'taxonomy' => '',
+            'contenttype' => ''
+        );
+        // extension seo active?
+        if (in_array('seo',$activeext)) {
+            $extadd['name'] = 'seodescription';
+            $extadd['fieldkey'] = $extadd['name'];
+            $extadd['contenttype'] = 'entry';
+            array_push($extrafields, $extadd);
+            $extadd['contenttype'] = 'page';
+            array_push($extrafields, $extadd);
+            $extadd['name'] = 'seokeywords';
+            $extadd['fieldkey'] = $extadd['name'];
+            $extadd['contenttype'] = 'entry';
+            array_push($extrafields, $extadd);
+            $extadd['contenttype'] = 'page';
+            array_push($extrafields, $extadd);
+            $extadd['name'] = 'seotitle';
+            $extadd['fieldkey'] = $extadd['name'];
+            $extadd['contenttype'] = 'entry';
+            array_push($extrafields, $extadd);
+            $extadd['contenttype'] = 'page';
+            array_push($extrafields, $extadd);
+        }
+        // extension starrating active?
+        if (in_array('starrating',$activeext)) {
+            $extadd['name'] = 'ratings';
+            $extadd['fieldkey'] = $extadd['name'];
+            $extadd['contenttype'] = 'entry';
+            array_push($extrafields, $extadd);
+            $extadd['contenttype'] = 'page';
+            array_push($extrafields, $extadd);
+            $extadd['name'] = 'ratingaverage';
+            $extadd['fieldkey'] = $extadd['name'];
+            $extadd['contenttype'] = 'entry';
+            array_push($extrafields, $extadd);
+            $extadd['contenttype'] = 'page';
+            array_push($extrafields, $extadd);
+            $extadd['name'] = 'ratingcount';
+            $extadd['fieldkey'] = $extadd['name'];
+            $extadd['contenttype'] = 'entry';
+            array_push($extrafields, $extadd);
+            $extadd['contenttype'] = 'page';
+            array_push($extrafields, $extadd);
+        }
+//echo print_r($extrafields) . '<br/>';
+        return $extrafields;
     }
 
     public static function getUplfiles() {
@@ -1293,7 +1352,7 @@ function pageWxrexport()
 {
     $output = '';
     global $UPLFILES;
-    global $BFFIELDS;
+    global $EXTRAFIELDS;
     $filename = 'blog.xml';
     if (isset($_GET['type'])) {
         switch ($_GET['type']) {
@@ -1313,7 +1372,7 @@ function pageWxrexport()
             case 'pages':
                 $filename = 'pages.xml';
                 $UPLFILES = pivotxWxrExport::getUplfiles();
-                $BFFIELDS = pivotxWxrExport::getBFFields();
+                $EXTRAFIELDS = pivotxWxrExport::getExtrafields();
                 $output   = pivotxWxrExport::exportPages();
                 break;
             case 'chapters':
@@ -1323,13 +1382,13 @@ function pageWxrexport()
             case 'entries':
                 $filename = 'entries.xml';
                 $UPLFILES = pivotxWxrExport::getUplfiles();
-                $BFFIELDS = pivotxWxrExport::getBFFields();
+                $EXTRAFIELDS = pivotxWxrExport::getExtrafields();
                 $output   = pivotxWxrExport::exportEntries();
                 break;
             case 'entries comments':
                 $filename = 'entries_and_comments.xml';
                 $UPLFILES = pivotxWxrExport::getUplfiles();
-                $BFFIELDS = pivotxWxrExport::getBFFields();
+                $EXTRAFIELDS = pivotxWxrExport::getExtrafields();
                 $output   = pivotxWxrExport::exportEntriesWithComments();
                 break;
         }

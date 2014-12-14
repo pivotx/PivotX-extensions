@@ -4,7 +4,7 @@
 // - Author: PivotX team 
 // - Site: http://www.pivotx.net
 // - Description: Export content in WXR (WordPress eXtended RSS) format.
-// - Date: 2014-12-07
+// - Date: 2014-12-14
 // - Identifier: wxrexport
 
 
@@ -301,7 +301,28 @@ THEEND;
 
     private static function outputWXR_Chapters($chapter)
     {
+        global $PIVOTX;
         $record = $chapter;
+
+        $password = '';
+        $activeext = $PIVOTX['extensions']->getActivated();
+        // extension passwordprotect active?
+        if (in_array('passwordprotect',$activeext)) {
+            $passconf = $PIVOTX['config']->get('passwordprotect');
+            $passchap = explode(",",$PIVOTX['config']->get('passwordprotect_chapters'));
+            $passdefp = $PIVOTX['config']->get('passwordprotect_default');
+            // password protection for whole site?
+            if ($passconf == '2') {
+                $password = $passdefp;
+            }
+            // password protection partially for categories and/or chapters?
+            if ($passconf == '1') {
+                if (in_array('chapter_' . $record['uid'], $passchap)) {
+                    $password = $passdefp;
+                }
+            }
+        }
+
         $output = '';
         $output .= '<item>'."\n";
         $chapdate = date('Y-m-d H:i:s', strtotime($chapdate . ' - 1 day'));  // to be sure that imported page will be published
@@ -328,7 +349,7 @@ THEEND;
                 'wp:post_parent' => $record['post_parent'],
                 'wp:menu_order' => $record['sortorder'],
                 'wp:post_type' => $record['post_type'],
-                'wp:post_password' => '',
+                'wp:post_password' => $password,
             ));
         $output .= '</item>'."\n";
         self::$itemcnt++;
@@ -508,7 +529,21 @@ THEEND;
         global $UPLFILES;
         global $EXTRAFIELDS;
         $output = '';
-        $parse = isset( $_GET['parse'] ) ? $_GET['parse'] : '';  
+        $parse = isset( $_GET['parse'] ) ? $_GET['parse'] : '';
+
+        $activeext = $PIVOTX['extensions']->getActivated();
+        // extension passwordprotect active?
+        if (in_array('passwordprotect',$activeext)) {
+            $passactv = '1';
+            $passconf = $PIVOTX['config']->get('passwordprotect');
+            $passcats = explode(",",$PIVOTX['config']->get('passwordprotect_categories'));
+            $passchap = explode(",",$PIVOTX['config']->get('passwordprotect_chapters'));
+            $passdefp = $PIVOTX['config']->get('passwordprotect_default');
+        } else {
+            $passactv = '0';
+            $passconf = '0';
+        }
+
         foreach($data as &$record) {
 
             $record = call_user_func($callback, $record, $comments); // xiao: something goes wrong here with the comments!!!!
@@ -545,13 +580,13 @@ THEEND;
                 $content_encoded .= $record['body'];
             }
             $content_encoded = html_entity_decode($content_encoded, ENT_QUOTES, "UTF-8");   
-
+            $image = '';
+            $password = '';
+            $passprot = '0';
             $categories      = array();
-
             if (isset($record['category'])) {
                 $categories = $record['category'];
             }
-            $image = '';
             $extrafmeta = '';
             $extrafcnt  = 0;
             // process extrafields
@@ -575,16 +610,45 @@ THEEND;
                             $extrafmeta .= '<!-- Warning! extrafields image not found! ' . $extrafield . ' -->';
                             self::$warncnt++;
                         }
+                    // password protected?
+                    } elseif ($extrakey == 'passwordprotect') {
+                        $passprot = $extrafield;
+                        continue;
+                    } elseif ($extrakey == 'password') {
+                        $password = $extrafield;
+                        continue;
                     // skip these ones   todo: find a solution for them
                     } elseif ($extrakey == 'image_description'
-                            || $extrakey == 'date_depublish'
-                            || $extrakey == 'password'
-                            || $extrakey == 'passwordprotect') {
+                            || $extrakey == 'date_depublish') {
+                        //echo 'skip extrafield ' . $extrakey . '/' . $extrafield . '<br/>';
                         continue;
                     } else {
                         // process other extrafields
                         $extrafmeta .= self::processEFExtra($extrakey, $record['pivx_type'], $EXTRAFIELDS, $extrafield, $extrafcnt);
                         $extrafcnt   = $extrafcnt + 1;
+                    }
+                }
+            }
+            // decide whether item is really password protected
+            if ($passactv != '1' || $passprot != '1') {
+                $password = '';
+            }
+            // password protection for whole site?
+            if ($passconf == '2' && $password == '') {
+                $password = $passdefp;
+            }
+            // password protection partially for categories and/or chapters?
+            if ($passconf == '1' && $password == '') {
+                foreach ($categories as $category) {
+                    if (in_array($category, $passcats)) {
+                        $password = $passdefp;
+                        //break;    // breaks the upper loop too
+                    }
+                }
+                if ($record['chapter'] != '') {
+                    if (in_array('chapter_' . $record['chapter'], $passchap)) {
+                        $password = $passdefp;
+                        //break;    // breaks the upper loop too
                     }
                 }
             }
@@ -612,7 +676,7 @@ THEEND;
                 'wp:post_parent' => $record['post_parent'],
                 'wp:menu_order' => $record['sortorder'],
                 'wp:post_type' => $record['post_type'],
-                'wp:post_password' => '',
+                'wp:post_password' => $password,
                 'wp:postmeta' => array('html', $extrafmeta),
             ));
             if ($comments && ($record['comment_count'] > 0)) {
@@ -824,7 +888,7 @@ THEEND;
                     self::$warncnt++;
                     $efmetacdata = '';
                 }
-                // add warning for some non processed bonusfield parts
+                // add warning for some non processed extrafield parts
                 if ($extrafield['showif_type'] != '' ||
                     $extrafield['showif'] != '') {
                     $efmeta .= "\n" . '<!-- Warning! Extrafield "' .
@@ -889,8 +953,7 @@ THEEND;
             } else {
             /*
             Todo: Extrafield types that have not been covered and/or tested: 'textarea' / 'radio' / 'file' / 'image'
-            ratings is an array 
-                // galleries are separate entities -- so will be created whenever the content contains reference to this extrafield type
+            todo: galleries are separate entities -- so meta will be created whenever the content references this extrafield type
             */
                 if ($extrafcnt > 0) {
                     $efmeta .= '</wp:postmeta>' . "\n" . '<wp:postmeta>';
@@ -920,6 +983,10 @@ THEEND;
                         $extrafield = $efpage['uid'] + self::$addtopage;
                     }
                 }
+                // ratings is an array 
+                if (is_array($extrafield)) {
+                    $extrafield = implode(',', $extrafield);
+                }
                 $efmeta .= "\n" . self::outputMap(array(
                     'wp:meta_key' => self::$efprefix . $extrakey,
                     'wp:meta_value' => array('cdata', $extrafield),
@@ -935,7 +1002,7 @@ THEEND;
     }
 
     private static function getEFKey($efkey, $efctype, $extrafields) {
-        $efkeycnt = 0; $efkeywp = 0;
+        $efkeycnt = 0; $efkeywxr = 0;
         foreach($extrafields as $extrafield) {
             $efkeycnt = $efkeycnt + 1;
             if ($extrafield['contenttype'] == $efctype && $extrafield['fieldkey'] == $efkey) {
@@ -943,10 +1010,11 @@ THEEND;
                 $effill = '';
                 if ($efkeycnt < 100) { $effill = '000'; }
                 if ($efkeycnt < 10) { $effill = '0000'; }
-                $efkeywp = 'field_20141116' . $effill . $efkeycnt;
+                $efkeywxr = 'field_20141116' . $effill . $efkeycnt;
+                break;
             }
         }
-        return $efkeywp;
+        return $efkeywxr;
     }
 
     private static function getEFType($efkey, $efctype, $extrafields) {
@@ -954,6 +1022,7 @@ THEEND;
         foreach($extrafields as $extrafield) {
             if ($extrafield['contenttype'] == $efctype && $extrafield['fieldkey'] == $efkey) {
                 $eftype = $extrafield['type'];
+                break;
             }
         }
         return $eftype;
@@ -967,6 +1036,7 @@ THEEND;
                 if ($efdata == '' && $effillit == true) {
                     $efdata = $extrafield['name'];
                 }
+                break;
             }
         }
         return $efdata;
@@ -974,16 +1044,16 @@ THEEND;
 
     private static function buildEFMetacdata($efkey, $efocc, $extrafield) {
         // extrafield lay-out:
-        //[name] => Extrafield name 
-        //[fieldkey] => Extrafield key 
-        //[type] => choose_page 
-        //[location] => page-introduction-before 
-        //[showif_type] => 
-        //[showif] => 
-        //[data] => 
-        //[empty_text] => No link 
+        //[name] => name 
+        //[fieldkey] => key 
+        //[type] => type e.g. choose_page 
+        //[location] => location e.g. page-introduction-before 
+        //[showif_type] => cond.logic type
+        //[showif] => cond.logic
+        //[data] => value(s)
+        //[empty_text] => placeholder text e.g. No link 
         //[description] => Description shown in editor 
-        //[contenttype] => page
+        //[contenttype] => page or entry
 
         $efmetacdata = array(
             'key' => $efkey,

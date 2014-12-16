@@ -53,7 +53,7 @@ class pivotxWxrExport
     public static $addtopage = 300;
     public static $addtochap = 500;
     public static $addtoupl = 550;
-    public static $efprefix = '';   // only lower case!
+    public static $efprefix = 'pivx_';   // only lower case!
     public static $entrysel = array('show'=>20000);   //  all categories are selected
     //public static $entrysel = array('cats'=>array('default', 'linkdump'),'show'=>20000);   // only specific categories
     //public static $entrysel = array('uid'=>array(75,85),'show'=>20000);   // only specific uids
@@ -618,8 +618,7 @@ THEEND;
                         $password = $extrafield;
                         continue;
                     // skip these ones   todo: find a solution for them
-                    } elseif ($extrakey == 'image_description'
-                            || $extrakey == 'date_depublish') {
+                    } elseif ($extrakey == 'image_description') {
                         //echo 'skip extrafield ' . $extrakey . '/' . $extrafield . '<br/>';
                         continue;
                     } else {
@@ -628,6 +627,11 @@ THEEND;
                         $extrafcnt   = $extrafcnt + 1;
                     }
                 }
+            }
+            // subtitle
+            if ($record['subtitle'] != '') {
+                $extrafmeta .= self::processEFExtra('subtitle', $record['pivx_type'], $EXTRAFIELDS, $record['subtitle'], $extrafcnt);
+                $extrafcnt   = $extrafcnt + 1;
             }
             // decide whether item is really password protected
             if ($passactv != '1' || $passprot != '1') {
@@ -655,11 +659,17 @@ THEEND;
             $output .= '<item>'."\n";
             $output .= '<!-- Item for old id ' . $record['uid'] .  ' to post_id ' . $record['post_id'] . ' -->'."\n";
             //$output .= '<!-- ' . var_export($record, true) . ' -->';
-            // todo: check pub.date in the future
+            $recstatus = $record['status'];
+            if ($recstatus == 'hold') {
+                $recstatus = 'pending';
+            }
+            if ($recstatus == 'timed') {
+                $recstatus = 'future';
+            }
             $output .= self::outputMap(array(
                 'title' => $record['title'],
                 'link' => $record['link'],
-                'pubDate' => array('date_2822', $record['date']),
+                'pubDate' => array('date_2822', $record['publish_date']),
                 'dc:creator' => array('cdata', $record['user']),
                 '#1' => self::outputWXR_ItemCategories($categories),
                 '#2' => self::outputWXR_ItemTags($record['keywords']),
@@ -669,11 +679,11 @@ THEEND;
                 'excerpt:encoded' => array('cdata', $excerpt_encoded),
                 'content:encoded' => array('cdata', $content_encoded),
                 'wp:post_id' => $record['post_id'],
-                'wp:post_date' => array('date', $record['date']),
-                'wp:post_date_gmt' => array('date_gmt', $record['date']),
+                'wp:post_date' => array('date', $record['publish_date']),
+                'wp:post_date_gmt' => array('date_gmt', $record['publish_date']),
                 'wp:comment_status' => (isset($record['allow_comments']) && $record['allow_comments']) ? 'open' : 'closed',
                 'wp:ping_status' => 'closed',
-                'wp:status' => $record['status'] == 'publish' ? 'publish' : 'pending',
+                'wp:status' => $recstatus,
                 'wp:post_parent' => $record['post_parent'],
                 'wp:menu_order' => $record['sortorder'],
                 'wp:post_type' => $record['post_type'],
@@ -954,8 +964,6 @@ THEEND;
                 self::$warncnt++;
             } else {
             /*
-            Todo: Extrafield types that have not been covered and/or tested: 
-            'textarea' / 'radio'  
             todo: galleries are separate entities -- so meta will be created whenever the content references this extrafield type
             */
                 if ($extrafcnt > 0) {
@@ -1152,7 +1160,7 @@ THEEND;
                 $efmetacdata['library'] = 'all';
                 unset($efmetacdata['default_value']);
                 break;
-            // galleries are separate entities -- so will be created whenever the content contains reference to this extrafield type
+            // galleries are separate entities -- will be created whenever the content contains reference to this extrafield type
             case 'gallery':
                 break;
             case 'file':
@@ -1179,12 +1187,12 @@ THEEND;
                 $efmetacdata['first_day'] = 1;
                 break;
             default:
-                echo "Unknown extrafields type: " . $extrafield['type'] . "<br/>";
-                print_r ($extrafield); 
                 $efmetacdata['type'] = 'text';
                 $efmetacdata['placeholder'] = $efmetacdata['prepend'] = $efmetacdata['append'] = ''; 
                 $efmetacdata['maxlength'] = '';
                 $efmetacdata['formatting'] = 'html';
+                $efmetacdata['warning'] = "Unknown extrafields type: " . $extrafield['type'];
+                self::$warncnt++;
 
         }
         return serialize($efmetacdata);
@@ -1250,22 +1258,29 @@ THEEND;
             'taxonomy' => '',
             'contenttype' => ''
         );
+        // add subtitle
+        $extadd['name'] = 'Subtitle';
+        $extadd['fieldkey'] = 'subtitle';
+        $extadd['contenttype'] = 'entry';
+        array_push($extrafields, $extadd);
+        $extadd['contenttype'] = 'page';
+        array_push($extrafields, $extadd);
         // extension seo active?
         if (in_array('seo',$activeext)) {
-            $extadd['name'] = 'seodescription';
-            $extadd['fieldkey'] = $extadd['name'];
+            $extadd['name'] = 'SEO description';
+            $extadd['fieldkey'] = 'seodescription';
             $extadd['contenttype'] = 'entry';
             array_push($extrafields, $extadd);
             $extadd['contenttype'] = 'page';
             array_push($extrafields, $extadd);
-            $extadd['name'] = 'seokeywords';
-            $extadd['fieldkey'] = $extadd['name'];
+            $extadd['name'] = 'SEO keywords';
+            $extadd['fieldkey'] = 'seokeywords';
             $extadd['contenttype'] = 'entry';
             array_push($extrafields, $extadd);
             $extadd['contenttype'] = 'page';
             array_push($extrafields, $extadd);
-            $extadd['name'] = 'seotitle';
-            $extadd['fieldkey'] = $extadd['name'];
+            $extadd['name'] = 'SEO title';
+            $extadd['fieldkey'] = 'seotitle';
             $extadd['contenttype'] = 'entry';
             array_push($extrafields, $extadd);
             $extadd['contenttype'] = 'page';
@@ -1273,20 +1288,30 @@ THEEND;
         }
         // extension starrating active?
         if (in_array('starrating',$activeext)) {
-            $extadd['name'] = 'ratings';
-            $extadd['fieldkey'] = $extadd['name'];
+            $extadd['name'] = 'Ratings';
+            $extadd['fieldkey'] = 'ratings';
             $extadd['contenttype'] = 'entry';
             array_push($extrafields, $extadd);
             $extadd['contenttype'] = 'page';
             array_push($extrafields, $extadd);
-            $extadd['name'] = 'ratingaverage';
-            $extadd['fieldkey'] = $extadd['name'];
+            $extadd['name'] = 'Rating average';
+            $extadd['fieldkey'] = 'ratingaverage';
             $extadd['contenttype'] = 'entry';
             array_push($extrafields, $extadd);
             $extadd['contenttype'] = 'page';
             array_push($extrafields, $extadd);
-            $extadd['name'] = 'ratingcount';
-            $extadd['fieldkey'] = $extadd['name'];
+            $extadd['name'] = 'Rating count';
+            $extadd['fieldkey'] = 'ratingcount';
+            $extadd['contenttype'] = 'entry';
+            array_push($extrafields, $extadd);
+            $extadd['contenttype'] = 'page';
+            array_push($extrafields, $extadd);
+        }
+        // extension depublish active?
+        if (in_array('depublish',$activeext)) {
+            $extadd['name'] = 'Depublish on';
+            $extadd['fieldkey'] = 'date_depublish';
+            $extadd['type'] = 'date';
             $extadd['contenttype'] = 'entry';
             array_push($extrafields, $extadd);
             $extadd['contenttype'] = 'page';

@@ -655,6 +655,7 @@ THEEND;
             $output .= '<item>'."\n";
             $output .= '<!-- Item for old id ' . $record['uid'] .  ' to post_id ' . $record['post_id'] . ' -->'."\n";
             //$output .= '<!-- ' . var_export($record, true) . ' -->';
+            // todo: check pub.date in the future
             $output .= self::outputMap(array(
                 'title' => $record['title'],
                 'link' => $record['link'],
@@ -940,19 +941,21 @@ THEEND;
 
     public static function processEFExtra($extrakey, $pivx_type, $extrafields, $extrafield, $extrafcnt) {
         global $PIVOTX;
+        global $UPLFILES;
         $extrafieldkey = self::getEFKey($extrakey, $pivx_type, $extrafields);
         $efmeta = '';
         if ($extrafieldkey == '0') {
-            $efmeta .= '<!-- Warning! extrafields key not found! ' . $extrakey . ' -->';
+            $efmeta .= '<!-- Warning! Extrafields key not found! ' . $extrakey . ' -->';
             self::$warncnt++;
         } else {
             $extrafieldtype = self::getEFType($extrakey, $pivx_type, $extrafields);
             if ($extrafieldtype == 'gallery') {
-                $efmeta .= '<!-- Warning! extrafields gallery skipped! ' . $extrakey . ' -->';
+                $efmeta .= '<!-- Warning! Extrafields gallery skipped! ' . $extrakey . ' -->';
                 self::$warncnt++;
             } else {
             /*
-            Todo: Extrafield types that have not been covered and/or tested: 'textarea' / 'radio' / 'file' / 'image'
+            Todo: Extrafield types that have not been covered and/or tested: 
+            'textarea' / 'radio'  
             todo: galleries are separate entities -- so meta will be created whenever the content references this extrafield type
             */
                 if ($extrafcnt > 0) {
@@ -981,6 +984,19 @@ THEEND;
                         self::$warncnt++;
                     } else {
                         $extrafield = $efpage['uid'] + self::$addtopage;
+                    }
+                }
+                if ($extrafieldtype == 'date' || $extrafieldtype == 'datetime') {
+                    $extrafield = substr($extrafield,0,4) . substr($extrafield,5,2) . substr($extrafield,8,2);
+                }
+                if ($extrafieldtype == 'image' || $extrafieldtype == 'file') {
+                    $uplinfo = self::searchUploadFilename($UPLFILES, $extrafield);
+                    // image/file found?
+                    if (isset($uplinfo['index'])) {
+                        $extrafield = $uplinfo['uid'];
+                    } else {
+                        $extrafield = 'Warning! Extrafields value not found! ' . $extrafield;
+                        self::$warncnt++;
                     }
                 }
                 // ratings is an array 
@@ -1153,6 +1169,14 @@ THEEND;
                 $efmetacdata['max'] = '123456';
                 $efmetacdata['step'] = '10';
                 $efmetacdata['formatting'] = 'html';
+                break;
+            case 'date':
+            case 'datetime':
+                // only date is available
+                $efmetacdata['type'] = 'date_picker';
+                $efmetacdata['date_format'] = 'yymmdd';    // yy is 4 char
+                $efmetacdata['display_format'] = 'dd-mm-yy';   // yy is 4 char
+                $efmetacdata['first_day'] = 1;
                 break;
             default:
                 echo "Unknown extrafields type: " . $extrafield['type'] . "<br/>";

@@ -4,13 +4,11 @@
 // - Author: PivotX team 
 // - Site: http://www.pivotx.net
 // - Description: Export content in WXR (WordPress eXtended RSS) format.
-// - Date: 2014-12-14
+// - Date: 2014-12-22
 // - Identifier: wxrexport
 
 
 // You can change things yourself to influence processing. These points are visible by the string @@CHANGE
-// @todo Move this configuration to the beginning of the pivotxWxrExport class 
-// as properties so everything is one location.
 
 $this->addHook(
     'configuration_add',
@@ -35,8 +33,13 @@ class pivotxWxrExport
     // upload_dest_def is the folder name to set in the export whenever an upload is encountered that is not in a yyyy-nn
     // subfolder (WP only uses that structure)
     //
+    // dest_base is the base name of the folder where the wxr cms is in
+    //
     // addtoupl generates fixed ids based on the sequence in the total collection of uploads;
     // this is necessary to connect an entry or page's image field to the right WP media id
+    //
+    // addtogall generates fixed ids based on the sequence of encountered galleries;
+    // this is necessary to add these galleries to an entry or page in WP Envira plugin
     //
     // efprefix is the prefix put in front of the exported extrafield field names
     //
@@ -45,14 +48,16 @@ class pivotxWxrExport
     // defweblog is meant to specify the name of your default weblog
     //
     // todo: write an instruction on how to use these adds; after the import the auto_increment will have to highest value + 1
-    //       and this cannot be lowered anymore in all cases.
+    //       and this cannot be lowered any more in all cases.
     // @@CHANGE
     public static $upload_dest_def = '2010/01';
     public static $upload_input = '../images/';
+    public static $dest_base = '/wordpress';      // default set for WP
     public static $addtoentry = 100;
     public static $addtopage = 300;
     public static $addtochap = 500;
     public static $addtoupl = 550;
+    public static $addtogall = 800;
     public static $efprefix = 'pivx_';   // only lower case!
     public static $entrysel = array('show'=>20000);   //  all categories are selected
     //public static $entrysel = array('cats'=>array('default', 'linkdump'),'show'=>20000);   // only specific categories
@@ -74,22 +79,25 @@ class pivotxWxrExport
         Export Categories
     </a></li>
     <li><a href="?page=wxrexport&amp;type=chapters">
-        Export Chapters (as plain pages that can be used to parent the PivotX pages)
+        Export Chapters as plain pages that can be used to parent the PivotX pages
     </a></li>
     <li><a href="?page=wxrexport&amp;type=uploads">
         Export Uploads
     </a></li>
     <li><a href="?page=wxrexport&amp;type=extrafields">
-        Export Extrafields definitions like e.g. Bonusfields extension (for use in ACF plugin for WP - galleries will be skipped)
+        Export Extrafields definitions like e.g. Bonusfields extension for use in ACF plugin for WP (galleries will be skipped)
     </a></li>
-    <li><!-- <a href="?page=wxrexport&amp;type=galleries"> -->
-        Export Extrafields galleries (for use in Envira plugin for WP) - not active yet
-    <!-- </a> --></li>
+    <li><a href="?page=wxrexport&amp;type=galleries">
+        Export Extrafields galleries for use in Envira (Lite) plugin for WP
+    </a></li>
 </ol>
 <p>With parsing of introduction and body content</p>
 <ol>
     <li><a href="?page=wxrexport&amp;type=pages">
         Export Pages
+    </a></li>
+    <li><a href="?page=wxrexport&amp;type=pages&amp;galleries=yes">
+        Export Pages and Galleries 
     </a></li>
     <li>Export Entries
     <ul>
@@ -97,8 +105,14 @@ class pivotxWxrExport
         <li><a href="?page=wxrexport&amp;type=entries+comments">Including comments</a></li>
     </ul>
     </li>
+    <li>Export Entries and Galleries
+    <ul>
+        <li><a href="?page=wxrexport&amp;type=entries&amp;galleries=yes">Without comments</a></li>
+        <li><a href="?page=wxrexport&amp;type=entries+comments&amp;galleries=yes">Including comments</a></li>
+    </ul>
+    </li>
 </ol>
-<p>Without parsing of introduction and body content</p>
+<p>Without parsing of introduction and body content (so you can check where template tags are used)</p>
 <ol>
     <li><a href="?page=wxrexport&amp;type=pages&amp;parse=no">
         Export Pages
@@ -200,11 +214,11 @@ THEEND;
         $extrafields = self::getExtrafields();
 
         if ($extrafields == false) {
-            $output = '<!-- Warning! you have no extension with Extrafields installed -->'."\n";
+            $output = '<!-- Warning! You have no extension with Extrafields installed -->'."\n";
             self::$warncnt++;
         } else {
             if (!is_array($extrafields)) {
-                $output = '<!-- Warning! you have no Extrafields defined -->'."\n";
+                $output = '<!-- Warning! You have no Extrafields defined -->'."\n";
                 self::$warncnt++;
             } else {
                 $output .= '<item>'."\n";
@@ -214,14 +228,14 @@ THEEND;
 
                 $efmeta = self::buildEFMeta('entry', $extrafields);
                 if ($efmeta == '') {
-                    $output .= '<!-- Warning! you have no Extrafields for entries defined -->'."\n";
+                    $output .= '<!-- Warning! You have no Extrafields for entries defined -->'."\n";
                     self::$warncnt++;
                 } else {
                     $output .= self::outputMap(array(
                     'title' => 'Post_extrafields',
                     'link' => '0',
                     'pubDate' => $efdate,
-                    'dc:creator' => 'pivx_extrafields',
+                    'dc:creator' => array('cdata' , 'pivx_extrafields'),
                     'guid isPermaLink="false"' => '0',
                     'wp:post_id' => $record['post_id'],
                     'wp:post_date' => $efdate,
@@ -247,14 +261,14 @@ THEEND;
 
                 $efmeta = self::buildEFMeta('page', $extrafields);
                 if ($efmeta == '') {
-                    $output .= '<!-- Warning! you have no Extrafields for pages defined -->'."\n";
+                    $output .= '<!-- Warning! You have no Extrafields for pages defined -->'."\n";
                     self::$warncnt++;
                 } else {
                     $output .= self::outputMap(array(
                     'title' => 'Page_extrafields',
                     'link' => '0',
                     'pubDate' => $efdate,
-                    'dc:creator' => 'pivx_extrafields',
+                    'dc:creator' => array('cdata' , 'pivx_extrafields'),
                     'guid isPermaLink="false"' => '0',
                     'wp:post_id' => $record['post_id'],
                     'wp:post_date' => $efdate,
@@ -278,9 +292,56 @@ THEEND;
         return $output;
     }
 
+    private static function outputWXR_Galleries()
+    {
+        global $PIVOTX;
+        $output = '';
+        self::recordId(0);   // so default of minimum gets overwritten
+        $activeext = $PIVOTX['extensions']->getActivated();
+        $galleries = self::getGalleries();
+        $gallcnt = count($galleries);
+
+        if ($gallcnt == 0) {
+            $output = '<!-- Warning! There are no galleries found -->'."\n";
+            self::$warncnt++;
+        } else {
+            $record['post_id'] = 0;
+            $galldate = date('Y-m-d H:i:s', strtotime($efdate . ' - 1 day'));  // to be sure that imported item will be published
+            $record['post_parent'] = '0';
+            foreach ($galleries as $gallery) {
+                $output .= '<item>'."\n";
+                $gallery['title'] = $gallery['gall_name'] . ' for ' . $gallery['content_uid_title'];
+                $gallery['post_name'] = $gallery['gall_name'] . '_' . $gallery['content_type'] . '_' . $gallery['content_uid'];
+                $gallmeta = self::buildGallMeta($gallery);
+                $output .= self::outputMap(array(
+                    'title' => $gallery['title'],
+                    'link' => '0',
+                    'pubDate' => $galldate,
+                    'dc:creator' => array('cdata' , 'pivx_galleries'),
+                    'guid isPermaLink="false"' => '0',
+                    'wp:post_id' => $gallery['gall_id'],
+                    'wp:post_date' => $galldate,
+                    'wp:post_date_gmt' => $galldate,
+                    'wp:comment_status' => 'closed',
+                    'wp:ping_status' => 'closed',
+                    'wp:post_name' => $gallery['post_name'],
+                    'wp:status' => 'publish',
+                    'wp:post_parent' => '0',
+                    'wp:menu_order' => '0',
+                    'wp:post_type' => 'envira',
+                    'wp:post_password' => '',
+                    'wp:postmeta' => array('html', $gallmeta),
+                    ));
+                $output .= '</item>'."\n";
+                self::$itemcnt++;
+            }
+        }
+        return $output;
+    }
+
     private static function outputWXR_Tags()
     {
-        // Harm: tags can be supplied within the item (so no need for this routine any more?)
+        // Tags can be supplied within the item (so no need for this routine any more?)
         $output = '';
         //    <wp:tag><wp:tag_slug>dunkin-donuts</wp:tag_slug><wp:tag_name><![CDATA[dunkin donuts]]></wp:tag_name></wp:tag>
         return $output;
@@ -335,7 +396,7 @@ THEEND;
                 'title' => $record['chaptername'],
                 'link' => '0',
                 'pubDate' => $chapdate,
-                'dc:creator' => 'pivx_chapter',
+                'dc:creator' => array('cdata' , 'pivx_chapter'),
                 'guid isPermaLink="true"' => '0',
                 'description' => $record['description'],
                 'excerpt:encoded' => array('cdata', ''),
@@ -374,7 +435,7 @@ THEEND;
                 'title' => $record['title'],
                 'link' => '0',
                 'pubDate' => $upldate,
-                'dc:creator' => 'pivx_upload',
+                'dc:creator' => array('cdata' , 'pivx_upload'),
                 'guid isPermaLink="false"' => 'uploads/' . $record['destfolder'] . '/' . $record['filename'],
                 'description' => '',
                 'excerpt:encoded' => '',
@@ -528,8 +589,10 @@ THEEND;
         global $PIVOTX;
         global $UPLFILES;
         global $EXTRAFIELDS;
+        global $GALLERIES;
         $output = '';
         $parse = isset( $_GET['parse'] ) ? $_GET['parse'] : '';
+        $gallsel = isset( $_GET['galleries'] ) ? $_GET['galleries'] : '';
 
         $activeext = $PIVOTX['extensions']->getActivated();
         // extension passwordprotect active?
@@ -546,10 +609,10 @@ THEEND;
 
         foreach($data as &$record) {
 
-            $record = call_user_func($callback, $record, $comments); // xiao: something goes wrong here with the comments!!!!
+            $record = call_user_func($callback, $record, $comments); 
+            // xiao: something goes wrong here with the comments!!!!
             // harm: I tested with comments and all seems to process well?
 
-            // harm todo: find a solution for the subtitle
             // harm todo: scan for image tags in content and replace them
 
 //@@CHANGE REPLACE STRINGS HERE -- start
@@ -575,7 +638,6 @@ THEEND;
                 $content_encoded = parse_intro_or_body($record['introduction']); 
                 $content_encoded .= parse_intro_or_body($record['body']); 
             } else {
-                // added by Harm
                 $content_encoded = $record['introduction'];
                 $content_encoded .= $record['body'];
             }
@@ -595,7 +657,7 @@ THEEND;
                     // the "normal" image fields
                     if ($extrakey == 'image' || $extrakey == 'afbeelding') {
                         $image = $PIVOTX['paths']['host'].$PIVOTX['paths']['upload_base_url'] . $extrafield;
-                        $uplinfo = self::searchUploadFilename($UPLFILES, $extrafield);
+                        $uplinfo = self::searchUploadByFilename($UPLFILES, $extrafield);
                         // image found?
                         if (isset($uplinfo['index'])) {
                             if ($extrafcnt > 0) {
@@ -623,8 +685,19 @@ THEEND;
                         continue;
                     } else {
                         // process other extrafields
-                        $extrafmeta .= self::processEFExtra($extrakey, $record['pivx_type'], $EXTRAFIELDS, $extrafield, $extrafcnt);
-                        $extrafcnt   = $extrafcnt + 1;
+                        $extrafieldtype = self::getEFType($extrakey, $record['pivx_type'], $EXTRAFIELDS);
+                        if ($gallsel == 'yes' && $extrafieldtype == 'gallery') {
+                            $gallkey = self::getGallKey($extrakey, $record['pivx_type'], $record['uid']);
+                            if ($gallkey != 0) {
+                                $content_encoded .= '<br/>[envira-gallery id="' . $gallkey . '"]';
+                            } else {
+                                $content_encoded .= '<!-- Warning! Gallery id not found! ' . $extrakey . ' -->';
+                                self::$warncnt++;
+                            }
+                        } else {
+                            $extrafmeta .= self::processEFExtra($extrakey, $record['pivx_type'], $EXTRAFIELDS, $extrafield, $extrafcnt);
+                            $extrafcnt   = $extrafcnt + 1;
+                        }
                     }
                 }
             }
@@ -732,7 +805,7 @@ THEEND;
             if (in_array($uplinfo['fileext'], $toskipext)) { continue; }
             // skip thumbnails
             if (substr($uplinfo['postname'], -6) == '.thumb') { continue; }
-            $upldupl = self::searchUploadPostname($UPLFILES, $uplinfo['postname'], $uplinfo['index'] - 1, 0);
+            $upldupl = self::searchUploadByPostname($UPLFILES, $uplinfo['postname'], $uplinfo['index'] - 1, 0);
             // duplicate file name found?
             if (isset($upldupl['index']) && $uplinfo['index'] != $upldupl['index']) {
                 //echo ($uplinfo['uid'] . ' duplicate of ' . $upldupl['uid'] . '<br/>');
@@ -763,6 +836,18 @@ THEEND;
         return $output;
     }
 
+    public static function exportGalleries()
+    {
+        global $PIVOTX;
+
+        $output  = '';
+        $output .= self::outputWXR_Header('galleries');
+        $output .= self::outputWXR_Galleries();
+        $output .= self::outputWXR_Footer('galleries');
+
+        return $output;
+    }
+
     public static function exportPages()
     {
         global $PIVOTX;
@@ -774,10 +859,10 @@ THEEND;
         $output .= self::outputWXR_Header('pages');
         $output .= self::outputWXR_Tags();
 
-        // @@CHANGE Harm: fill chaparray with chapter ids and their corresponding WP parent ids to get their belonging pages under them
+        // @@CHANGE Fill chaparray with chapter ids and their corresponding WP parent ids to get their belonging pages under them
         // even when they are already in WP then they still need to be in the same WXR import to be able to function as post_parent
         $chaparray = array();
-        // hard code the desired parent ids for the chapters you wish
+        // Hard code the desired parent ids for the chapters you wish
         //$chaparray = array(16 => 1234, 18 => 2345, 17 => 3456);
         // or build the array from the all chapters in the chapters array
         //foreach($chapters as $chapter) { 
@@ -831,7 +916,7 @@ THEEND;
 
         $output  = '';
         $output .= self::outputWXR_Header('entries');
-        //$output .= self::outputWXR_Categories();   // Harm: not needed -- categories can be exported separately.
+        //$output .= self::outputWXR_Categories();   // Not needed -- categories can be exported separately.
         $output .= self::outputWXR_Tags();
         $output .= self::outputWXR_Items($PIVOTX['db']->read_entries(self::$entrysel), false, array('pivotxWxrExport','convertEntryToItem'));
         $output .= self::outputWXR_Footer('entries');
@@ -844,7 +929,7 @@ THEEND;
 
         $output  = '';
         $output .= self::outputWXR_Header('entries and their comments');
-        //$output .= self::outputWXR_Categories();    // Harm: not needed -- categories can be exported separately.
+        //$output .= self::outputWXR_Categories();    // Not needed -- categories can be exported separately.
         $output .= self::outputWXR_Tags();
 
         $output .= self::outputWXR_Items($PIVOTX['db']->read_entries(self::$entrysel), true, array('pivotxWxrExport','convertEntryToItem'));
@@ -963,9 +1048,6 @@ THEEND;
                 $efmeta .= '<!-- Warning! Extrafields gallery skipped! ' . $extrakey . ' -->';
                 self::$warncnt++;
             } else {
-            /*
-            todo: galleries are separate entities -- so meta will be created whenever the content references this extrafield type
-            */
                 if ($extrafcnt > 0) {
                     $efmeta .= '</wp:postmeta>' . "\n" . '<wp:postmeta>';
                 }
@@ -998,7 +1080,7 @@ THEEND;
                     $extrafield = substr($extrafield,0,4) . substr($extrafield,5,2) . substr($extrafield,8,2);
                 }
                 if ($extrafieldtype == 'image' || $extrafieldtype == 'file') {
-                    $uplinfo = self::searchUploadFilename($UPLFILES, $extrafield);
+                    $uplinfo = self::searchUploadByFilename($UPLFILES, $extrafield);
                     // image/file found?
                     if (isset($uplinfo['index'])) {
                         $extrafield = $uplinfo['uid'];
@@ -1042,7 +1124,7 @@ THEEND;
     }
 
     private static function getEFType($efkey, $efctype, $extrafields) {
-        $eftype = 0;
+        $eftype = '';
         foreach($extrafields as $extrafield) {
             if ($extrafield['contenttype'] == $efctype && $extrafield['fieldkey'] == $efkey) {
                 $eftype = $extrafield['type'];
@@ -1191,7 +1273,7 @@ THEEND;
                 $efmetacdata['placeholder'] = $efmetacdata['prepend'] = $efmetacdata['append'] = ''; 
                 $efmetacdata['maxlength'] = '';
                 $efmetacdata['formatting'] = 'html';
-                $efmetacdata['warning'] = "Unknown extrafields type: " . $extrafield['type'];
+                $efmetacdata['warning'] = "Unknown Extrafields type: " . $extrafield['type'];
                 self::$warncnt++;
 
         }
@@ -1333,6 +1415,148 @@ THEEND;
         return $uplfiles;
     }
 
+    public static function getGalleries() {
+        global $PIVOTX;
+        global $EXTRAFIELDS;
+        $galleries = array();
+        $gallcnt = 0 + self::$addtogall;
+        $entries = $PIVOTX['db']->read_entries(self::$entrysel);
+        foreach($entries as $entry) {
+            foreach($entry['extrafields'] as $extrakey=>$extrafield) {
+                $extrafieldtype = self::getEFType($extrakey, 'entry', $EXTRAFIELDS);
+                if ($extrafieldtype == 'gallery') {
+                    $gallcnt++;
+                    $gallarr['gall_id'] = $gallcnt;
+                    $gallarr['gall_name'] = $extrakey;
+                    $gallarr['gall_ftype'] = $extrafieldtype;
+                    $gallarr['gall_value'] = $extrafield;
+                    $gallarr['content_type'] = 'entry';
+                    $gallarr['content_uid'] = $entry['uid'];
+                    $gallarr['content_uid_title'] = $entry['title'];
+                    $galleries[] = $gallarr;
+                }
+            }
+        }
+        $chapters = $PIVOTX['pages']->getIndex();
+        foreach($chapters as $chapter) {
+            foreach($chapter['pages'] as $page) {
+                $page = $PIVOTX['pages']->getPage($page['uid']);
+                foreach($page['extrafields'] as $extrakey=>$extrafield) {
+                    $extrafieldtype = self::getEFType($extrakey, 'page', $EXTRAFIELDS);
+                    if ($extrafieldtype == 'gallery') {
+                        $gallcnt++;
+                        $gallarr['gall_id'] = $gallcnt;
+                        $gallarr['gall_name'] = $extrakey;
+                        $gallarr['gall_ftype'] = $extrafieldtype;
+                        $gallarr['gall_value'] = $extrafield;
+                        $gallarr['content_type'] = 'page';
+                        $gallarr['content_uid'] = $page['uid'];
+                        $gallarr['content_uid_title'] = $page['title'];
+                        $galleries[] = $gallarr;
+                    }
+                }
+            }
+        }
+        //foreach($galleries as $gallery) {
+        //  echo print_r($gallery) . '<br/>';
+        //}
+        return $galleries;
+    }
+
+    private static function getGallKey($efname, $ctype, $cuid) {
+        global $GALLERIES;
+        $gallkeywxr = 0;
+        foreach($GALLERIES as $gallery) {
+            if ($gallery['content_type'] == $ctype && $gallery['content_uid'] == $cuid && $gallery['gall_name']) {
+                $gallkeywxr = $gallery['gall_id'];
+                break;
+            }
+        }
+        return $gallkeywxr;
+    }
+
+    public static function buildGallMeta($gallery) {
+        global $UPLFILES;
+
+        $gallmeta = '';
+        $gallids = array();
+        $gallidsdata = array(
+            'id' => $gallery['gall_id'],
+            'gallery' => array(),
+            'config' => array(
+                'columns' => '3',
+                'gutter' => 10,
+                'margin' => 10,
+                'crop' => 0,
+                'crop_width' => 960,
+                'crop_height' => 300,
+                'classes' => array('wxr_galleryclass'),
+                'title' => $gallery['title'],
+                'slug' => $gallery['post_name']
+            )
+        );
+        $gallidsdatasrc = array(
+            'status' => 'active', 
+            'src' => '==uploadsrc==',
+            'title' => '==title==',
+            'link' => '==uploadsrc==',
+            'alt' => '==alt==',
+            'thumb' => ''
+        );
+
+        $galllines = preg_split('|[\r\n]+|',trim($gallery['gall_value']));
+        $gallery['galllines'] = array();
+        foreach ($galllines as $gallline) {
+            $gallparts = explode('###',trim($gallline));
+            switch (count($gallparts)) {
+            case 4:
+                $gallimg['data']  = trim($gallparts[3]);
+            case 3:
+                $gallimg['alt']   = trim($gallparts[2]);
+            case 2:
+                $gallimg['title'] = trim($gallparts[1]);
+            case 1:
+                $gallimg['image'] = trim($gallparts[0]);
+                break;
+            }
+            $uplinfo = self::searchUploadByFilename($UPLFILES, $gallimg['image']);
+            if (isset($uplinfo['index'])) {
+                $gallimg['upl_uid'] = $uplinfo['uid'];
+                $gallimg['upl_destfolder'] = $uplinfo['destfolder'];
+                $gallimg['upl_filename'] = $uplinfo['filename'];
+            } else {
+                $gallimg['upl_uid'] = '0';
+                $gallimg['upl_destfolder'] = 'notknown';
+                $gallimg['upl_filename'] = 'warning_notfound_' . $gallimg['image'];
+                self::$warncnt++;
+            }
+            array_push($gallery['galllines'], $gallimg);
+        }
+
+        $gallurl = self::$dest_base . '/wp-content/uploads/';
+        foreach ($gallery['galllines'] as $gallline) {
+            array_push($gallids, strval($gallline['upl_uid']));
+            $gallidsdatasrc['src'] = $gallurl . $gallline['upl_destfolder'] . '/' . $gallline['upl_filename'];
+            $gallidsdatasrc['link'] = $gallidsdatasrc['src'];
+            $gallidsdatasrc['title'] = $gallline['title'];
+            $gallidsdatasrc['alt'] = $gallline['alt'];
+            $gallidsdata['gallery'][$gallline['upl_uid']] = $gallidsdatasrc;
+        }
+
+        $gallmeta .= "\n" . self::outputMap(array(
+            'wp:meta_key' => '_eg_in_gallery',
+            'wp:meta_value' => array('cdata', serialize($gallids)),
+            ));
+        $gallmeta .= '</wp:postmeta>';
+
+        $gallmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
+            'wp:meta_key' => '_eg_gallery_data',
+            'wp:meta_value' => array('cdata', serialize($gallidsdata)),
+            ));
+
+        return $gallmeta;
+    }
+
     private static function replaceIt($record, $replthis, $replby) {
         $record['introduction'] = str_replace($replthis, $replby, $record['introduction']);
         $record['body']         = str_replace($replthis, $replby, $record['body']);
@@ -1386,7 +1610,7 @@ THEEND;
         return $uplinfo;
     }
 
-    private static function searchUploadPostname($uplfiles, $postname, $start, $end) {
+    private static function searchUploadByPostname($uplfiles, $postname, $start, $end) {
         $start = $start ?: 0;
         if (!isset($end)) { $end = (count($uplfiles) - 1); }
         $uplsrch = array();
@@ -1414,7 +1638,7 @@ THEEND;
         return $uplsrch;
     }
 
-    private static function searchUploadFilename($uplfiles, $filename, $start, $end) {
+    private static function searchUploadByFilename($uplfiles, $filename, $start, $end) {
         $start = $start ?: 0;
         if (!isset($end)) { $end = (count($uplfiles) - 1); }
         $uplsrch = array();
@@ -1472,6 +1696,7 @@ function pageWxrexport()
     $output = '';
     global $UPLFILES;
     global $EXTRAFIELDS;
+    global $GALLERIES;
     $filename = 'blog.xml';
     if (isset($_GET['type'])) {
         switch ($_GET['type']) {
@@ -1488,10 +1713,17 @@ function pageWxrexport()
                 $filename = 'extrafields.xml';
                 $output   = pivotxWxrExport::exportExtrafields();
                 break;
+            case 'galleries':
+                $filename = 'galleries.xml';
+                $UPLFILES = pivotxWxrExport::getUplfiles();
+                $EXTRAFIELDS = pivotxWxrExport::getExtrafields();
+                $output   = pivotxWxrExport::exportGalleries();
+                break;
             case 'pages':
                 $filename = 'pages.xml';
                 $UPLFILES = pivotxWxrExport::getUplfiles();
                 $EXTRAFIELDS = pivotxWxrExport::getExtrafields();
+                $GALLERIES = pivotxWxrExport::getGalleries();
                 $output   = pivotxWxrExport::exportPages();
                 break;
             case 'chapters':
@@ -1502,12 +1734,14 @@ function pageWxrexport()
                 $filename = 'entries.xml';
                 $UPLFILES = pivotxWxrExport::getUplfiles();
                 $EXTRAFIELDS = pivotxWxrExport::getExtrafields();
+                $GALLERIES = pivotxWxrExport::getGalleries();
                 $output   = pivotxWxrExport::exportEntries();
                 break;
             case 'entries comments':
                 $filename = 'entries_and_comments.xml';
                 $UPLFILES = pivotxWxrExport::getUplfiles();
                 $EXTRAFIELDS = pivotxWxrExport::getExtrafields();
+                $GALLERIES = pivotxWxrExport::getGalleries();
                 $output   = pivotxWxrExport::exportEntriesWithComments();
                 break;
         }

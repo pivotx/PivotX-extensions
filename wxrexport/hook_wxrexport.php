@@ -4,7 +4,7 @@
 // - Author: PivotX team 
 // - Site: http://www.pivotx.net
 // - Description: Export content in WXR (WordPress eXtended RSS) format.
-// - Date: 2014-12-22
+// - Date: 2014-12-27
 // - Identifier: wxrexport
 
 
@@ -33,6 +33,10 @@ class pivotxWxrExport
     // upload_dest_def is the folder name to set in the export whenever an upload is encountered that is not in a yyyy-nn
     // subfolder (WP only uses that structure)
     //
+    // thumb_repl can contain the replacement string for a thumbnail file whenever it is referenced in the content
+    //
+    // thumb_skip can be set to true or false to skip thumbnails from being exported
+    //
     // dest_base is the base name of the folder where the wxr cms is in
     //
     // addtoupl generates fixed ids based on the sequence in the total collection of uploads;
@@ -52,6 +56,8 @@ class pivotxWxrExport
     // @@CHANGE
     public static $upload_dest_def = '2010/01';
     public static $upload_input = '../images/';
+    public static $thumb_repl = '';  // replacement string within content for thumbnails for images (WP uses "-200x200")
+    public static $thumb_skip = true;  // skip the export of thumbnails
     public static $dest_base = '/wordpress';      // default set for WP
     public static $addtoentry = 100;
     public static $addtopage = 300;
@@ -504,6 +510,10 @@ THEEND;
         $warncnt = self::$warncnt;
         $minid = self::$id_min;
         $maxid = self::$id_max;
+        $extraline = '';
+        if ($exporttype == 'entries' || $exporttype == 'pages') {
+            $extraline = '<!-- Replace [imgpath] if needed (see docs) -->';
+        }
         return <<<THEEND
 </channel>
 </rss>
@@ -511,6 +521,7 @@ THEEND;
 <!-- It contains information about your $exporttype -->
 <!-- Number of export items generated: $itemcnt -->
 <!-- Number of warnings generated: $warncnt -->
+$extraline
 <!-- The original ids encountered were: $minid (minimum) and $maxid (maximum) -->
 THEEND;
     }
@@ -613,8 +624,6 @@ THEEND;
             // xiao: something goes wrong here with the comments!!!!
             // harm: I tested with comments and all seems to process well?
 
-            // harm todo: scan for image tags in content and replace them
-
 //@@CHANGE REPLACE STRINGS HERE -- start
             // replace some strings in introduction and body before parsing
             // Scan your xml output for message "Smarty error:"
@@ -641,7 +650,14 @@ THEEND;
                 $content_encoded = $record['introduction'];
                 $content_encoded .= $record['body'];
             }
-            $content_encoded = html_entity_decode($content_encoded, ENT_QUOTES, "UTF-8");   
+
+            // todo: scan for tag tags in content and replace them
+
+            // scan for pivotx images code
+            $content_encoded = self::replImg($content_encoded);
+
+            $content_encoded = html_entity_decode($content_encoded, ENT_QUOTES, "UTF-8");
+
             $image = '';
             $password = '';
             $passprot = '0';
@@ -803,8 +819,8 @@ THEEND;
             if (in_array($uplinfo['filename'], $toskip)) { continue; }
             // skip specific extensions
             if (in_array($uplinfo['fileext'], $toskipext)) { continue; }
-            // skip thumbnails
-            if (substr($uplinfo['postname'], -6) == '.thumb') { continue; }
+            // skip thumbnails (moved to getuplfiles)
+            //if (substr($uplinfo['postname'], -6) == '.thumb') { continue; }
             $upldupl = self::searchUploadByPostname($UPLFILES, $uplinfo['postname'], $uplinfo['index'] - 1, 0);
             // duplicate file name found?
             if (isset($upldupl['index']) && $uplinfo['index'] != $upldupl['index']) {
@@ -1409,7 +1425,23 @@ THEEND;
         $uplfiles  = array();
         foreach ($globfiles as $globfile) {
             if (!is_dir($globfile)) {
-                $uplfiles[] = $globfile;
+                if (self::$thumb_skip && (strpos($globfile, '.thumb.') !== false)) {
+                    continue;
+                } else {
+                    $uplfiles[] = $globfile;
+                    //echo print_r($globfile) . '<br/>';
+                }
+            }
+        }
+        // add the pivotx/pics
+        $globfiles = _wxrexport_glob_recursive('../pivotx/pics/' . "*");
+        foreach ($globfiles as $globfile) {
+            if (!is_dir($globfile)) {
+                if (self::$thumb_skip && (strpos($globfile, '.thumb.') !== false)) {
+                    continue;
+                } else {
+                    $uplfiles[] = $globfile;
+                }
             }
         }
         return $uplfiles;
@@ -1569,6 +1601,58 @@ THEEND;
         return;
     }
 
+    private static function replImg($content) {
+        global $PIVOTX;
+        global $UPLFILES;
+        // replace upload_base_url by something general (or a shortcode)
+        $findsrc = 'src="' . $PIVOTX['paths']['upload_base_url'];
+        $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+        $findhref = 'href="' . $PIVOTX['paths']['upload_base_url'];
+        $content = str_replace($findhref, 'href="[imgpath]/', $content);
+        $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'pics/';
+        $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+        // replace class pivotx-image, pivotx-popupimage and pivotx-wrapper @@CHANGE
+        $content = str_replace('class="pivotx-image align-left"', 'class="alignleft"', $content);
+        $content = str_replace('class="pivotx-image align-right"', 'class="alignright"', $content);
+        $content = str_replace('class="pivotx-image"', 'class="alignnone"', $content);
+        $content = str_replace('class="pivotx-popupimage align-left"', 'class="alignleft"', $content);
+        $content = str_replace('class="pivotx-popupimage align-right"', 'class="alignright"', $content);
+        $content = str_replace('class="pivotx-popupimage"', 'class="alignnone"', $content);
+        $content = str_replace('class="pivotx-wrapper"', 'style="text-align: center;"', $content);
+        // replace the img src
+        $findsrc = '="[imgpath]/';
+        $srcpos = 0; $srclen = strlen($findsrc);
+        while ($srcpos !== false) {
+            $srcpos = strpos($content, $findsrc, $srcpos);
+            if ($srcpos !== false) {
+                $endpos = strpos($content, '" ', $srcpos+1);
+                if ($endpos !== false) {
+                    $srcsearch = $srcimg = substr($content, $srcpos+$srclen, $endpos-($srcpos+$srclen));
+                    // thumbs are skipped?
+                    if (self::$thumb_skip) {
+                        $srcsearch = str_replace('.thumb', '', $srcimg);
+                    }
+                    $uplinfo = self::searchUploadByFilename($UPLFILES, $srcsearch);
+                    // replace the thumb string
+                    $srcimgth = str_replace('.thumb', self::$thumb_repl, $srcimg);
+                    $srcinbetw = '';
+                    if ($srcimg != $srcimgth) {
+                        $srcinbetw = self::$thumb_repl;
+                    }
+                    if (isset($uplinfo['index'])) {
+                        $srcrepl = $uplinfo['destfolder'] . '/' .  $uplinfo['title'] . $srcinbetw . '.' . $uplinfo['fileext'];
+                    } else {
+                        $srcrepl = 'notknown' . '/warning_notfound_' . $srcimg;
+                        self::$warncnt++;
+                    }
+                    $content = substr_replace($content, $srcrepl, $srcpos+$srclen, strlen($srcimg));
+                }
+                $srcpos = $srcpos + $srclen;
+            }
+        }
+        return $content;
+    }
+
     private static function createUplinfo($uplfile, $uplcounter) {
         global $PIVOTX;
         $curryear = date('Y');
@@ -1598,7 +1682,11 @@ THEEND;
         if (substr($inpfolder, 0, 3) == '../') {
             $inpfolder = substr($inpfolder, 3);
         }
-        //echo $uplcounter . '|' . $uplfilename . '|' . $yearfolder . '|' . $inpurl . $inpfolder . '|' . $basefolder . '<br/>';
+        // put pivotx pics in another folder
+        if ($inpfolder == 'pivotx/pics/') {
+            $yearfolder = '2000/12';    //  @@CHANGE
+        }
+//echo $uplcounter . '|' . $uplfilename . '|' . $yearfolder . '|' . $inpurl . '|' . $inpfolder . '|' . $basefolder . '<br/>';
         $uplinfo = array('uid' => $uplcounter,
                          'destfolder' => $yearfolder,
                          'filename' => $uplfilename,

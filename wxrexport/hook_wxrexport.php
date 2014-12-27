@@ -650,13 +650,11 @@ THEEND;
                 $content_encoded = $record['introduction'];
                 $content_encoded .= $record['body'];
             }
+            $content_encoded = rawurldecode(html_entity_decode($content_encoded, ENT_QUOTES, "UTF-8"));
 
             // todo: scan for tag tags in content and replace them
-
             // scan for pivotx images code
             $content_encoded = self::replImg($content_encoded);
-
-            $content_encoded = html_entity_decode($content_encoded, ENT_QUOTES, "UTF-8");
 
             $image = '';
             $password = '';
@@ -1609,7 +1607,15 @@ THEEND;
         $content = str_replace($findsrc, 'src="[imgpath]/', $content);
         $findhref = 'href="' . $PIVOTX['paths']['upload_base_url'];
         $content = str_replace($findhref, 'href="[imgpath]/', $content);
+        // the same for location pivotx/pics
         $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'pics/';
+        $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+        // attempt to do the same for timthumb img source
+        $findsrc = 'src="' . $PIVOTX['paths']['host'] . $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=' . $PIVOTX['paths']['upload_base_url'];
+        $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+        $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=' . $PIVOTX['paths']['upload_base_url'];
+        $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+        $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=';
         $content = str_replace($findsrc, 'src="[imgpath]/', $content);
         // replace class pivotx-image, pivotx-popupimage and pivotx-wrapper @@CHANGE
         $content = str_replace('class="pivotx-image align-left"', 'class="alignleft"', $content);
@@ -1632,6 +1638,15 @@ THEEND;
                     if (self::$thumb_skip) {
                         $srcsearch = str_replace('.thumb', '', $srcimg);
                     }
+                    // remnants of timthumb syntax? (&w= &h= &zc=)
+                    $srcparts = explode('&',$srcsearch);
+                    $srcgoners = array('w=', 'h=', 'zc');
+                    foreach ($srcparts as $srcpkey=>$srcpart) {
+                        if (in_array(substr($srcpart, 0 , 2), $srcgoners)) {
+                            unset($srcparts[$srcpkey]);
+                        }
+                    }
+                    $srcsearch = implode('&',$srcparts);
                     $uplinfo = self::searchUploadByFilename($UPLFILES, $srcsearch);
                     // replace the thumb string
                     $srcimgth = str_replace('.thumb', self::$thumb_repl, $srcimg);

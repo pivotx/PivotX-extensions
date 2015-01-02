@@ -33,11 +33,18 @@ class pivotxWxrExport
     // upload_dest_def is the folder name to set in the export whenever an upload is encountered that is not in a yyyy-nn
     // subfolder (WP only uses that structure)
     //
+    // upload_input is an array where you can specify which subfolder's content should be exported
+    // (value in upload_base_url and pivotx/pics will be included automatically)
+    //
     // thumb_repl can contain the replacement string for a thumbnail file whenever it is referenced in the content
     //
     // thumb_skip can be set to true or false to skip thumbnails from being exported
     //
     // dest_base is the base name of the folder where the wxr cms is in
+    //
+    // include_skip can contain the include elements in your templates folder that you do not want to include ([[ include tag)
+    //
+    // include_skip_all can specify whether you do not want to include any element at all ([[ include tag)
     //
     // addtoupl generates fixed ids based on the sequence in the total collection of uploads;
     // this is necessary to connect an entry or page's image field to the right WP media id
@@ -49,16 +56,16 @@ class pivotxWxrExport
     //
     // entrysel gives you the option to only select specific categories or uids
     //
-    // defweblog is meant to specify the name of your default weblog
+    // defweblog is meant to specify the name of your default weblog folder name
     //
-    // todo: write an instruction on how to use these adds; after the import the auto_increment will have to highest value + 1
-    //       and this cannot be lowered any more in all cases.
     // @@CHANGE
     public static $upload_dest_def = '2010/01';
-    public static $upload_input = '../images/';
+    public static $upload_input = array('images/');  // always end the element with a "/"
     public static $thumb_repl = '';  // replacement string within content for thumbnails for images (WP uses "-200x200")
     public static $thumb_skip = true;  // skip the export of thumbnails
     public static $dest_base = '/wordpress';      // default set for WP
+    public static $include_skip = array('skip_this_include.tpl','subfolder/and_this_one_too.php');  // skip include elements in content ([[ include tag)
+    public static $include_skip_all = false;  // skip all includes
     public static $addtoentry = 100;
     public static $addtopage = 300;
     public static $addtochap = 500;
@@ -639,6 +646,14 @@ THEEND;
             $record = self::replaceIt($record, '&gt;', '>');
             // &lt; due to editor (or the parsing?)
             $record = self::replaceIt($record, '&lt;', '<');
+            // skip all includes?
+            if (self::$include_skip_all) {
+                $record = self::replaceIt($record, '[[ include', '[[*include');
+            }
+            foreach (self::$include_skip as $incl_skip) {
+                //echo getcwd() . "/templates/" . self::$defweblog . '/' . $incl_skip . '<br/>';
+                $record = self::replaceIt($record, '[[ include file="' . getcwd() . "/templates/" . self::$defweblog . '/' . $incl_skip . '" ]]', '<!-- Include skipped! -->');
+            }
 //@@CHANGE REPLACE STRINGS HERE -- end
 
             $excerpt_encoded = ''; 
@@ -654,8 +669,10 @@ THEEND;
 
             // todo: scan for tag tags in content and replace them
             // todo: scan for archive links
+            // todo: scan for internal links from the content itself
+
             // scan for pivotx images code
-            $content_encoded = self::replImg($content_encoded);
+            $content_encoded = self::replImg($content_encoded, $parse);
 
             $image = '';
             $password = '';
@@ -1425,16 +1442,23 @@ THEEND;
 
     public static function getUplfiles() {
         global $PIVOTX;
-        $globfiles = _wxrexport_glob_recursive(self::$upload_input . "*");
-        // loose the directories
+        // put upload_base_url in upload_input
+        $base = substr($PIVOTX['paths']['upload_base_url'],strlen($PIVOTX['paths']['site_url']));
+        if (!in_array($base,self::$upload_input)) {
+            self::$upload_input[] = $base;
+        }
         $uplfiles  = array();
-        foreach ($globfiles as $globfile) {
-            if (!is_dir($globfile)) {
-                if (self::$thumb_skip && (strpos($globfile, '.thumb.') !== false)) {
-                    continue;
-                } else {
-                    $uplfiles[] = $globfile;
-                    //echo print_r($globfile) . '<br/>';
+        foreach (self::$upload_input as $upload_inp) {
+            $globfiles = _wxrexport_glob_recursive('../' . $upload_inp . "*");
+            // loose the directories
+            foreach ($globfiles as $globfile) {
+                if (!is_dir($globfile)) {
+                    if (self::$thumb_skip && (strpos($globfile, '.thumb.') !== false)) {
+                        continue;
+                    } else {
+                        $uplfiles[] = $globfile;
+                        //echo print_r($globfile) . '<br/>';
+                    }
                 }
             }
         }
@@ -1616,22 +1640,20 @@ THEEND;
         return;
     }
 
-    private static function replImg($content) {
+    private static function replImg($content, $parse) {
         global $PIVOTX;
         global $UPLFILES;
         // replace upload_base_url by something general (or a shortcode)
-        $findsrc = 'src="' . $PIVOTX['paths']['upload_base_url'];
-        $content = str_replace($findsrc, 'src="[imgpath]/', $content);
-        $findhref = 'href="' . $PIVOTX['paths']['upload_base_url'];
-        $content = str_replace($findhref, 'href="[imgpath]/', $content);
-        // the same for location pivotx/pics
+        $content = self::replImgUploads($content, 'src="', '', '[imgpath]/');
+        $content = self::replImgUploads($content, 'href="', '', '[imgpath]/');
+        // the same for fixed location pivotx/pics
         $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'pics/';
         $content = str_replace($findsrc, 'src="[imgpath]/', $content);
         // attempt to do the same for timthumb img source
-        $findsrc = 'src="' . $PIVOTX['paths']['host'] . $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=' . $PIVOTX['paths']['upload_base_url'];
-        $content = str_replace($findsrc, 'src="[imgpath]/', $content);
-        $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=' . $PIVOTX['paths']['upload_base_url'];
-        $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+        $findbetw = $PIVOTX['paths']['host'] . $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=';
+        $content = self::replImgUploads($content, 'src="', $findbetw, '[imgpath]/');
+        $findbetw = $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=';
+        $content = self::replImgUploads($content, 'src="', $findbetw, '[imgpath]/');
         $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=';
         $content = str_replace($findsrc, 'src="[imgpath]/', $content);
 
@@ -1639,10 +1661,9 @@ THEEND;
         // extension media active?
         if (in_array('media',$activeext)) {
             // try to replace some of the flash vars
-            $findsrc = 'file: "' . $PIVOTX['paths']['upload_base_url'];
-            $content = str_replace($findsrc, 'file: "[imgpath]/', $content);
-            $findsrc = 'image: "' . $PIVOTX['paths']['upload_base_url'];
-            $content = str_replace($findsrc, 'image: "[imgpath]/', $content);
+            $content = self::replImgUploads($content, 'file: "' , '', '[imgpath]/');
+            $content = self::replImgUploads($content, 'soundFile: "' , '', '[imgpath]/');
+            $content = self::replImgUploads($content, 'image: "' , '', '[imgpath]/');
             $findsrc = 'image: "' . $PIVOTX['paths']['pivotx_url'] . 'extensions/media/';
             $content = str_replace($findsrc, 'image: "[imgpath]/', $content);
             $findsrc = 'image: "../../../' . substr($PIVOTX['paths']['upload_base_url'],strlen($PIVOTX['paths']['site_url']));
@@ -1659,7 +1680,7 @@ THEEND;
             self::$warncnt = self::$warncnt + $replcnt;
         }
 
-        // replace class pivotx-image, pivotx-popupimage and pivotx-wrapper @@CHANGE
+        // replace class pivotx-image, pivotx-popupimage and pivotx-wrapper and others @@CHANGE
         $content = str_replace('class="pivotx-image align-left"', 'class="alignleft"', $content);
         $content = str_replace('class="pivotx-image align-right"', 'class="alignright"', $content);
         $content = str_replace('class="pivotx-image"', 'class="alignnone"', $content);
@@ -1667,7 +1688,35 @@ THEEND;
         $content = str_replace('class="pivotx-popupimage align-right"', 'class="alignright"', $content);
         $content = str_replace('class="pivotx-popupimage"', 'class="alignnone"', $content);
         $content = str_replace('class="pivotx-wrapper"', 'style="text-align: center;"', $content);
-        // replace the img src
+        $content = str_replace('class="pivotx-media', 'class="wxr-media', $content);
+        $content = str_replace('class="pivotx-popuptext"', 'class="wxr-popuptext"', $content);
+
+        // check/warn for remaining pivotx and other strings
+        if ($parse != 'no') {
+            $content2 = str_replace('/pivotx/', '@@CHANGE', $content, $replcnt);
+            if ($replcnt != 0) {
+                self::$warncnt++;
+                $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to /pivotx/! -->';
+            }
+            $content2 = str_replace('class="pivotx', '@@CHANGE', $content, $replcnt);
+            if ($replcnt != 0) {
+                self::$warncnt++;
+                $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to class=\"pivotx! (without the back slash) -->';
+            }
+            $content2 = str_replace($PIVOTX['paths']['host'], '@@CHANGE', $content, $replcnt);
+            if ($replcnt != 0) {
+                self::$warncnt++;
+                $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this host! -->';
+            }
+            if ($PIVOTX['paths']['host'] != $PIVOTX['paths']['canonical_host']) {
+                $content2 = str_replace($PIVOTX['paths']['canonical_host'], '@@CHANGE', $content, $replcnt);
+                if ($replcnt != 0) {
+                    self::$warncnt++;
+                    $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this canonical host! -->';
+                }
+            }
+        }
+        // replace the img pointer
         $findsrc = '"[imgpath]/';
         $srcpos = 0; $srclen = strlen($findsrc);
         while ($srcpos !== false) {
@@ -1714,6 +1763,22 @@ THEEND;
         return $content;
     }
 
+    private static function replImgUploads($content, $replpfx, $replbetw, $replby) {
+        global $PIVOTX;
+        foreach (self::$upload_input as $upload_inp) {
+            //echo 'repl ' . $replpfx . $PIVOTX['paths']['site_url'] . $upload_inp . '<br/>';
+            $content = str_replace($replpfx . $replbetw . $PIVOTX['paths']['site_url'] . $upload_inp, $replpfx . $replby, $content);
+            $content = str_replace($replpfx . $replbetw . $upload_inp, $replpfx . $replby, $content);
+            // sometimes only a slash in front despite other site_url
+            if ($PIVOTX['paths']['site_url'] != '/') {
+                $content = str_replace($replpfx . $replbetw . '/' . $upload_inp, $replpfx . $replby, $content);
+            }
+            // leave out first position of site_url
+            $content = str_replace($replpfx . $replbetw . substr($PIVOTX['paths']['site_url'],1) . $upload_inp, $replpfx . $replby, $content);
+        }
+        return $content;
+    }
+
     private static function createUplinfo($uplfile, $uplcounter) {
         global $PIVOTX;
         $curryear = date('Y');
@@ -1725,18 +1790,21 @@ THEEND;
         $yearfolder  = self::$upload_dest_def;
         $basefolder  = '';
         // strip the main input from the total folder to check for yyyy-nn folder
-        if (substr($uplfile, 0, strlen(self::$upload_input)) == self::$upload_input) {
-            $basefolder = substr($inpfolder, strlen(self::$upload_input));
-            $yearfolder = rtrim($basefolder,"/");
-            $regex = '/\d{4}[-]\d{2}/';   //  yyyy-nn format
-            if (!preg_match($regex, $yearfolder)) {
-                $yearfolder = self::$upload_dest_def;
-            } else {
-                $yearparts = explode("-",$yearfolder);
-                if ($yearparts[0] < 1990 || $yearparts[0] > $curryear || $yearparts[1] < 1 || $yearparts[1] > 12) {
+        foreach (self::$upload_input as $upload_inp) {
+            $upload_inp = '../' . $upload_inp;  //  add the prefix to get correct compare
+            if (substr($uplfile, 0, strlen($upload_inp)) == $upload_inp) {
+                $basefolder = substr($inpfolder, strlen($upload_inp));
+                $yearfolder = rtrim($basefolder,"/");
+                $regex = '/\d{4}[-]\d{2}/';   //  yyyy-nn format
+                if (!preg_match($regex, $yearfolder)) {
                     $yearfolder = self::$upload_dest_def;
                 } else {
-                    $yearfolder = $yearparts[0] . '/' . $yearparts[1];
+                    $yearparts = explode("-",$yearfolder);
+                    if ($yearparts[0] < 1990 || $yearparts[0] > $curryear || $yearparts[1] < 1 || $yearparts[1] > 12) {
+                        $yearfolder = self::$upload_dest_def;
+                    } else {
+                        $yearfolder = $yearparts[0] . '/' . $yearparts[1];
+                    }
                 }
             }
         }

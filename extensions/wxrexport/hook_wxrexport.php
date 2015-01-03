@@ -28,12 +28,13 @@ class pivotxWxrExport
     // so these will be recognisable in future; also ids for pages and entries can be the same in PivotX but in WP
     // they cannot.
     // These old and new ids can also be used in the chaparray after importing the chapters and exporting the pages.
-    // Vars addtoentry / addtopage / addtochap are meant to accomplish this.
+    // Vars addto... are meant to accomplish this.
     // 
     // upload_dest_def is the folder name to set in the export whenever an upload is encountered that is not in a yyyy-nn
     // subfolder (WP only uses that structure)
     //
     // upload_input is an array where you can specify which subfolder's content should be exported
+    // start the value with #ROOT# to get folder from the root (it will be replaced by document root)
     // (value in upload_base_url and pivotx/pics will be included automatically)
     //
     // thumb_repl can contain the replacement string for a thumbnail file whenever it is referenced in the content
@@ -61,6 +62,7 @@ class pivotxWxrExport
     // @@CHANGE
     public static $upload_dest_def = '2010/01';
     public static $upload_input = array('images/');  // always end the element with a "/"
+    //public static $upload_input = array('images/','media/','#ROOT#/files/');  // example for 2 relative folders and 1 direct from root
     public static $thumb_repl = '';  // replacement string within content for thumbnails for images (WP uses "-200x200")
     public static $thumb_skip = true;  // skip the export of thumbnails
     public static $dest_base = '/wordpress';      // default set for WP
@@ -1449,8 +1451,14 @@ THEEND;
         }
         $uplfiles  = array();
         foreach (self::$upload_input as $upload_inp) {
-            $globfiles = _wxrexport_glob_recursive('../' . $upload_inp . "*");
-            // loose the directories
+            //echo 'processing: ' . $upload_inp . '<br/>';
+            if (substr($upload_inp,0,6) == '#ROOT#') {
+                $upload_inp = str_replace('#ROOT#', $_SERVER['DOCUMENT_ROOT'], $upload_inp);
+                $globfiles = _wxrexport_glob_recursive($upload_inp . "*");
+            } else {
+                $globfiles = _wxrexport_glob_recursive('../' . $upload_inp . "*");
+            }
+            // loose the entries for directories only
             foreach ($globfiles as $globfile) {
                 if (!is_dir($globfile)) {
                     if (self::$thumb_skip && (strpos($globfile, '.thumb.') !== false)) {
@@ -1715,6 +1723,8 @@ THEEND;
                     $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this canonical host! -->';
                 }
             }
+            //Smarty error:
+            //Unrecognized template code:
         }
         // replace the img pointer
         $findsrc = '"[imgpath]/';
@@ -1738,6 +1748,7 @@ THEEND;
                         }
                     }
                     $srcsearch = implode('&',$srcparts);
+                    //echo 'searching for: ' . $srcsearch . '<br/>';
                     $uplinfo = self::searchUploadByFilename($UPLFILES, $srcsearch);
                     // replace the thumb string
                     $srcimgth = str_replace('.thumb', self::$thumb_repl, $srcimg);
@@ -1766,6 +1777,9 @@ THEEND;
     private static function replImgUploads($content, $replpfx, $replbetw, $replby) {
         global $PIVOTX;
         foreach (self::$upload_input as $upload_inp) {
+            if (substr($upload_inp,0,6) == '#ROOT#') {
+                $upload_inp = str_replace('#ROOT#', $PIVOTX['paths']['canonical_host'], $upload_inp);
+            }
             //echo 'repl ' . $replpfx . $PIVOTX['paths']['site_url'] . $upload_inp . '<br/>';
             $content = str_replace($replpfx . $replbetw . $PIVOTX['paths']['site_url'] . $upload_inp, $replpfx . $replby, $content);
             $content = str_replace($replpfx . $replbetw . $upload_inp, $replpfx . $replby, $content);
@@ -1782,6 +1796,7 @@ THEEND;
     private static function createUplinfo($uplfile, $uplcounter) {
         global $PIVOTX;
         $curryear = date('Y');
+        //echo 'uplinfo create for: ' . $uplfile . '<br/>';
         $inpurl   = $PIVOTX['paths']['canonical_host'] . $PIVOTX['paths']['site_url'];
         $uplinfo  = array();
         $path_parts = pathinfo($uplfile);
@@ -1789,9 +1804,13 @@ THEEND;
         $inpfolder   = $path_parts['dirname'] . '/';
         $yearfolder  = self::$upload_dest_def;
         $basefolder  = '';
-        // strip the main input from the total folder to check for yyyy-nn folder
+        // strip the main input from the total folder to check for yyyy-nn folder (and also set basefolder)
         foreach (self::$upload_input as $upload_inp) {
-            $upload_inp = '../' . $upload_inp;  //  add the prefix to get correct compare
+            if (substr($upload_inp,0,6) == '#ROOT#') {
+                $upload_inp = str_replace('#ROOT#', $_SERVER['DOCUMENT_ROOT'], $upload_inp);
+            } else {
+                $upload_inp = '../' . $upload_inp;  //  add the prefix to get correct compare
+            }
             if (substr($uplfile, 0, strlen($upload_inp)) == $upload_inp) {
                 $basefolder = substr($inpfolder, strlen($upload_inp));
                 $yearfolder = rtrim($basefolder,"/");
@@ -1806,10 +1825,19 @@ THEEND;
                         $yearfolder = $yearparts[0] . '/' . $yearparts[1];
                     }
                 }
+                break;
             }
         }
         if (substr($inpfolder, 0, 3) == '../') {
             $inpfolder = substr($inpfolder, 3);
+        }
+        // root location?
+        $rootloc = false;
+        if (substr($inpfolder, 0, strlen($_SERVER['DOCUMENT_ROOT'])) == $_SERVER['DOCUMENT_ROOT']) {
+            $rootloc = true;
+            $inpurl  = $PIVOTX['paths']['canonical_host'];
+            $inpfolder = substr($inpfolder, strlen($_SERVER['DOCUMENT_ROOT']));
+            $yearfolder = '2000/11';    //  @@CHANGE
         }
         // put pivotx pics in another folder
         if ($inpfolder == 'pivotx/pics/') {
@@ -1823,6 +1851,7 @@ THEEND;
                          'fileext' => $path_parts['extension'],
                          'title' => removeExtension($uplfilename),
                          'postname' => strtolower(str_replace(' ', '-', (removeExtension($uplfilename)))),
+                         'rootloc' => $rootloc,
                          'inputloc' => $inpurl . $inpfolder);
         return $uplinfo;
     }
@@ -1866,7 +1895,7 @@ THEEND;
             $filebase = $path_parts['dirname'] . '/';
         }
         if ($start < $end) {
-            //echo ('search up for ' . $filename . ' start-end: ' . $start . '-' . $end . '<br/>');
+            //echo ('search up for ' . $filename . ' in ' . $filebase . ' start-end: ' . $start . '-' . $end . '<br/>');
             for ($i = $start; $i <= $end; $i++) {
                 $uplsrch = self::createUplinfo($uplfiles[$i], $i + self::$addtoupl);
                 if ($filesrch == $uplsrch['filename'] && $filebase == $uplsrch['basefolder']) {
@@ -1876,7 +1905,7 @@ THEEND;
                 }
             }
         } else {
-            //echo ('search down for ' . $filename . ' start-end: ' . $start . '-' . $end . '<br/>');
+            //echo ('search down for ' . $filename . ' in ' . $filebase . ' start-end: ' . $start . '-' . $end . '<br/>');
             for ($i = $start; $i >= $end; $i--) {
                 $uplsrch = self::createUplinfo($uplfiles[$i], $i + self::$addtoupl);
                 if ($filesrch == $uplsrch['filename'] && $filebase == $uplsrch['basefolder']) {

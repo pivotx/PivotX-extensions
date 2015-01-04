@@ -21,8 +21,10 @@ class pivotxWxrExport
 {
     public static $itemcnt = 0;
     public static $warncnt = 0;
-    public static $id_min = 99999999;
-    public static $id_max = 0;
+    public static $id_min_org = 99999999;
+    public static $id_max_org = 0;
+    public static $id_min_new = 99999999;
+    public static $id_max_new = 0;
     // @@CHANGE 
     // If you are importing into an existing WP then you probably want to add some number to the internal ids
     // so these will be recognisable in future; also ids for pages and entries can be the same in PivotX but in WP
@@ -35,7 +37,7 @@ class pivotxWxrExport
     //
     // upload_input is an array where you can specify which subfolder's content should be exported
     // start the value with #ROOT# to get folder from the root (it will be replaced by document root)
-    // (value in upload_base_url and pivotx/pics will be included automatically)
+    // (value in upload_base_url, pivotx/pics and pivotx/includes/emoticons/trillian will be included automatically)
     //
     // thumb_repl can contain the replacement string for a thumbnail file whenever it is referenced in the content
     //
@@ -69,10 +71,10 @@ class pivotxWxrExport
     public static $include_skip = array('skip_this_include.tpl','subfolder/and_this_one_too.php');  // skip include elements in content ([[ include tag)
     public static $include_skip_all = false;  // skip all includes
     public static $addtoentry = 100;
-    public static $addtopage = 300;
-    public static $addtochap = 500;
-    public static $addtoupl = 550;
-    public static $addtogall = 800;
+    public static $addtopage  = 300;
+    public static $addtochap  = 500;
+    public static $addtogall  = 550;
+    public static $addtoupl   = 600;
     public static $efprefix = 'pivx_';   // only lower case!
     public static $entrysel = array('show'=>20000);   //  all categories are selected
     //public static $entrysel = array('cats'=>array('default', 'linkdump'),'show'=>20000);   // only specific categories
@@ -198,7 +200,7 @@ THEEND;
     {
         global $PIVOTX;
         $output = '';
-        self::recordId(0);   // so default of minimum gets overwritten
+        self::recordId(0, 0);   // so default of minimum gets overwritten
         foreach($PIVOTX['categories']->data as $cat) {
             $output .= '<wp:category><wp:category_nicename>'.htmlspecialchars($cat['name']).'</wp:category_nicename><wp:category_parent></wp:category_parent><wp:cat_name><![CDATA['.$cat['display'].']]></wp:cat_name></wp:category>'."\n";
             self::$itemcnt++;
@@ -226,7 +228,7 @@ THEEND;
     {
         global $PIVOTX;
         $output = '';
-        self::recordId(0);   // so default of minimum gets overwritten
+        self::recordId(0, 0);   // so default of minimum gets overwritten
 
         $extrafields = self::getExtrafields();
 
@@ -313,7 +315,6 @@ THEEND;
     {
         global $PIVOTX;
         $output = '';
-        self::recordId(0);   // so default of minimum gets overwritten
         $activeext = $PIVOTX['extensions']->getActivated();
         $galleries = self::getGalleries();
         $gallcnt = count($galleries);
@@ -326,6 +327,7 @@ THEEND;
             $galldate = date('Y-m-d H:i:s', strtotime($efdate . ' - 1 day'));  // to be sure that imported item will be published
             $record['post_parent'] = '0';
             foreach ($galleries as $gallery) {
+                self::recordId(0, $gallery['gall_id']);
                 $output .= '<item>'."\n";
                 $gallery['title'] = $gallery['gall_name'] . ' for ' . $gallery['content_uid_title'];
                 $gallery['post_name'] = $gallery['gall_name'] . '_' . $gallery['content_type'] . '_' . $gallery['content_uid'];
@@ -407,6 +409,7 @@ THEEND;
         $record['post_type'] = 'page';
 
         $record['post_id'] = $record['uid'] + self::$addtochap;
+        self::recordId($record['uid'], $record['post_id']);
         $output .= '<!-- Item for old id ' . $record['uid'] .  ' to post_id ' . $record['post_id'] . ' -->'."\n";
         $record['post_parent'] = '0';
         $output .= self::outputMap(array(
@@ -444,6 +447,7 @@ THEEND;
         $record['post_id'] = $record['uid'];
         $output .= '<!-- Item for upload will have id ' . $record['post_id'] . ' -->'."\n";
         $record['post_parent'] = '0';
+        self::recordId(0, $record['post_id']);
         $attmeta = "\n" . self::outputMap(array(
                 'wp:meta_key' => '_wp_attached_file',
                 'wp:meta_value' => array('cdata', $record['destfolder'] . '/' . $record['filename']),
@@ -519,11 +523,34 @@ THEEND;
     {
         $itemcnt = self::$itemcnt;
         $warncnt = self::$warncnt;
-        $minid = self::$id_min;
-        $maxid = self::$id_max;
+        $minid_org = self::$id_min_org;
+        $maxid_org = self::$id_max_org;
+        $minid_new = self::$id_min_new;
+        $maxid_new = self::$id_max_new;
         $extraline = '';
         if ($exporttype == 'entries' || $exporttype == 'pages') {
-            $extraline = "\n" . '<!-- Replace [imgpath] if needed (see docs) -->';
+            $extraline .= "\n" . '<!-- Replace [imgpath] if needed (see docs) -->';
+        }
+        // check if maximum exceeds any of the other addto... values
+        if ($maxid_new > self::$addtoentry && $minid_new < self::$addtoentry) {
+            $extraline .= "\n" . '<!-- Warning! This export overlaps the id range for addtoentry! -->';
+            $warncnt++;
+        }
+        if ($maxid_new > self::$addtopage && $minid_new < self::$addtopage) {
+            $extraline .= "\n" . '<!-- Warning! This export overlaps the id range for addtopage! -->';
+            $warncnt++;
+        }
+        if ($maxid_new > self::$addtochap && $minid_new < self::$addtochap) {
+            $extraline .= "\n" . '<!-- Warning! This export overlaps the id range for addtochap! -->';
+            $warncnt++;
+        }
+        if ($maxid_new > self::$addtogall && $minid_new < self::$addtogall) {
+            $extraline .= "\n" . '<!-- Warning! This export overlaps the id range for addtogall! -->';
+            $warncnt++;
+        }
+        if ($maxid_new > self::$addtoupl && $minid_new < self::$addtoupl) {
+            $extraline .= "\n" . '<!-- Warning! This export overlaps the id range for addtoupl! -->';
+            $warncnt++;
         }
         return <<<THEEND
 </channel>
@@ -532,7 +559,8 @@ THEEND;
 <!-- It contains information about your $exporttype -->
 <!-- Number of export items generated: $itemcnt -->
 <!-- Number of warnings generated: $warncnt -->$extraline
-<!-- The original ids encountered were: $minid (minimum) and $maxid (maximum) -->
+<!-- The original ids encountered were: $minid_org (minimum) and $maxid_org (maximum) -->
+<!-- The new ids set are: $minid_new (minimum) and $maxid_new (maximum) -->
 THEEND;
     }
 
@@ -552,7 +580,6 @@ THEEND;
         if ($item['new_uid'] != '') {
             $item['post_id'] = $item['new_uid'];
         }
-        self::recordId($item['uid']);
 
         if (array_key_exists($item['chapter'], $chaparray)) {
             $item['post_parent'] = $chaparray[$item['chapter']];
@@ -575,7 +602,7 @@ THEEND;
         $item['pivx_type'] = 'entry';
 
         $item['post_id'] = $item['uid'] + self::$addtoentry;
-        self::recordId($item['uid']);
+
         $item['post_parent'] = '0'; 
         return $item;
     }
@@ -610,6 +637,7 @@ THEEND;
         global $UPLFILES;
         global $EXTRAFIELDS;
         global $GALLERIES;
+        self::repairEmot();
         $output = '';
         $parse = isset( $_GET['parse'] ) ? $_GET['parse'] : '';
         $gallsel = isset( $_GET['galleries'] ) ? $_GET['galleries'] : '';
@@ -674,7 +702,7 @@ THEEND;
             // todo: scan for internal links from the content itself
 
             // scan for pivotx images code
-            $content_encoded = self::replImg($content_encoded, $parse);
+            $content_encoded = self::contentReplParts($content_encoded, $parse);
 
             $image = '';
             $password = '';
@@ -773,6 +801,7 @@ THEEND;
             if ($recstatus == 'timed') {
                 $recstatus = 'future';
             }
+            self::recordId($record['uid'], $record['post_id']);
             $output .= self::outputMap(array(
                 'title' => $record['title'],
                 'link' => $record['link'],
@@ -850,7 +879,6 @@ THEEND;
                     $uplinfo['title'] .= '_dupl.of_' . $upldupl['uid'];
                 }
             }
-            self::recordId($uplinfo['uid']);
             $output .= self::outputWXR_Uploads($uplinfo);
         }
 
@@ -940,7 +968,6 @@ THEEND;
                               'description' => $chapter['description'],
                               'sortorder' => $chapter['sortorder']);
             if ($chapter['chaptername'] != '') {
-                self::recordId($chapter['uid']);
                 $output .= self::outputWXR_Chapters($chapinfo);
             }
         }
@@ -1481,6 +1508,17 @@ THEEND;
                 }
             }
         }
+        // add the pivotx/includes/emoticons/trillian
+        $globfiles = _wxrexport_glob_recursive('../pivotx/includes/emoticons/trillian/' . "*.gif");
+        foreach ($globfiles as $globfile) {
+            if (!is_dir($globfile)) {
+                if (self::$thumb_skip && (strpos($globfile, '.thumb.') !== false)) {
+                    continue;
+                } else {
+                    $uplfiles[] = $globfile;
+                }
+            }
+        }
         $activeext = $PIVOTX['extensions']->getActivated();
         // extension media active?
         if (in_array('media',$activeext)) {
@@ -1642,26 +1680,57 @@ THEEND;
         return $record;
     }
 
-    private static function recordId($uid) {
-        if ($uid < self::$id_min) { self::$id_min = $uid; }
-        if ($uid > self::$id_max) { self::$id_max = $uid; }
+    private static function recordId($uid_org, $uid_new) {
+        if ($uid_org < self::$id_min_org) { self::$id_min_org = $uid_org; }
+        if ($uid_org > self::$id_max_org) { self::$id_max_org = $uid_org; }
+        if ($uid_new < self::$id_min_new) { self::$id_min_new = $uid_new; }
+        if ($uid_new > self::$id_max_new) { self::$id_max_new = $uid_new; }
         return;
     }
 
-    private static function replImg($content, $parse) {
+    private static function repairEmot() {
+        // "repair" emoticons table (format should specify double quotes in stead of single) -- fixed in lib.php revision 4410)
+        global $emot;
+        foreach ($emot as $emokey=>$emotic) {
+            if (substr($emotic, 0, 10) == '<img src="') {
+                break;
+            }
+            $emotic = str_replace("<img src='", '<img src="', $emotic);
+            $emotic = str_replace(".gif'", '.gif"', $emotic);
+            $emotic = str_replace("alt='", 'alt="', $emotic);
+            $emotic = str_replace("' />", '" />', $emotic);
+            $emot[$emokey] = $emotic;
+        }
+    }
+
+    private static function contentReplParts($content, $parse) {
+        $content = self::contentReplImg($content);
+        $content = self::contentReplLink($content);
+        $content = self::contentReplString($content);
+        // check/warn for remaining pivotx and other strings
+        if ($parse != 'no') {
+            $content = self::contentWarn($content);
+        }
+        return $content;
+    }
+
+    private static function contentReplImg($content) {
         global $PIVOTX;
         global $UPLFILES;
         // replace upload_base_url by something general (or a shortcode)
-        $content = self::replImgUploads($content, 'src="', '', '[imgpath]/');
-        $content = self::replImgUploads($content, 'href="', '', '[imgpath]/');
+        $content = self::contentReplImgUploads($content, 'src="', '', '[imgpath]/');
+        $content = self::contentReplImgUploads($content, 'href="', '', '[imgpath]/');
         // the same for fixed location pivotx/pics
         $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'pics/';
         $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+        // the same for fixed location pivotx/includes/emoticons/trillian
+        $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'includes/emoticons/trillian/';
+        $content = str_replace($findsrc, 'src="[imgpath]/', $content);
         // attempt to do the same for timthumb img source
         $findbetw = $PIVOTX['paths']['host'] . $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=';
-        $content = self::replImgUploads($content, 'src="', $findbetw, '[imgpath]/');
+        $content = self::contentReplImgUploads($content, 'src="', $findbetw, '[imgpath]/');
         $findbetw = $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=';
-        $content = self::replImgUploads($content, 'src="', $findbetw, '[imgpath]/');
+        $content = self::contentReplImgUploads($content, 'src="', $findbetw, '[imgpath]/');
         $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=';
         $content = str_replace($findsrc, 'src="[imgpath]/', $content);
 
@@ -1669,9 +1738,9 @@ THEEND;
         // extension media active?
         if (in_array('media',$activeext)) {
             // try to replace some of the flash vars
-            $content = self::replImgUploads($content, 'file: "' , '', '[imgpath]/');
-            $content = self::replImgUploads($content, 'soundFile: "' , '', '[imgpath]/');
-            $content = self::replImgUploads($content, 'image: "' , '', '[imgpath]/');
+            $content = self::contentReplImgUploads($content, 'file: "' , '', '[imgpath]/');
+            $content = self::contentReplImgUploads($content, 'soundFile: "' , '', '[imgpath]/');
+            $content = self::contentReplImgUploads($content, 'image: "' , '', '[imgpath]/');
             $findsrc = 'image: "' . $PIVOTX['paths']['pivotx_url'] . 'extensions/media/';
             $content = str_replace($findsrc, 'image: "[imgpath]/', $content);
             $findsrc = 'image: "../../../' . substr($PIVOTX['paths']['upload_base_url'],strlen($PIVOTX['paths']['site_url']));
@@ -1688,44 +1757,6 @@ THEEND;
             self::$warncnt = self::$warncnt + $replcnt;
         }
 
-        // replace class pivotx-image, pivotx-popupimage and pivotx-wrapper and others @@CHANGE
-        $content = str_replace('class="pivotx-image align-left"', 'class="alignleft"', $content);
-        $content = str_replace('class="pivotx-image align-right"', 'class="alignright"', $content);
-        $content = str_replace('class="pivotx-image"', 'class="alignnone"', $content);
-        $content = str_replace('class="pivotx-popupimage align-left"', 'class="alignleft"', $content);
-        $content = str_replace('class="pivotx-popupimage align-right"', 'class="alignright"', $content);
-        $content = str_replace('class="pivotx-popupimage"', 'class="alignnone"', $content);
-        $content = str_replace('class="pivotx-wrapper"', 'style="text-align: center;"', $content);
-        $content = str_replace('class="pivotx-media', 'class="wxr-media', $content);
-        $content = str_replace('class="pivotx-popuptext"', 'class="wxr-popuptext"', $content);
-
-        // check/warn for remaining pivotx and other strings
-        if ($parse != 'no') {
-            $content2 = str_replace('/pivotx/', '@@CHANGE', $content, $replcnt);
-            if ($replcnt != 0) {
-                self::$warncnt++;
-                $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to /pivotx/! -->';
-            }
-            $content2 = str_replace('class="pivotx', '@@CHANGE', $content, $replcnt);
-            if ($replcnt != 0) {
-                self::$warncnt++;
-                $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to class=\"pivotx! (without the back slash) -->';
-            }
-            $content2 = str_replace($PIVOTX['paths']['host'], '@@CHANGE', $content, $replcnt);
-            if ($replcnt != 0) {
-                self::$warncnt++;
-                $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this host! -->';
-            }
-            if ($PIVOTX['paths']['host'] != $PIVOTX['paths']['canonical_host']) {
-                $content2 = str_replace($PIVOTX['paths']['canonical_host'], '@@CHANGE', $content, $replcnt);
-                if ($replcnt != 0) {
-                    self::$warncnt++;
-                    $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this canonical host! -->';
-                }
-            }
-            //Smarty error:
-            //Unrecognized template code:
-        }
         // replace the img pointer
         $findsrc = '"[imgpath]/';
         $srcpos = 0; $srclen = strlen($findsrc);
@@ -1774,7 +1805,7 @@ THEEND;
         return $content;
     }
 
-    private static function replImgUploads($content, $replpfx, $replbetw, $replby) {
+    private static function contentReplImgUploads($content, $replpfx, $replbetw, $replby) {
         global $PIVOTX;
         foreach (self::$upload_input as $upload_inp) {
             if (substr($upload_inp,0,6) == '#ROOT#') {
@@ -1789,6 +1820,63 @@ THEEND;
             }
             // leave out first position of site_url
             $content = str_replace($replpfx . $replbetw . substr($PIVOTX['paths']['site_url'],1) . $upload_inp, $replpfx . $replby, $content);
+        }
+        return $content;
+    }
+
+    private static function contentReplLink($content) {
+        // todo: replaces internal links
+        return $content;
+    }
+
+    private static function contentReplString($content) {
+        // replace class pivotx-image, pivotx-popupimage and pivotx-wrapper and others @@CHANGE
+        $content = str_replace('class="pivotx-image align-left"', 'class="alignleft"', $content);
+        $content = str_replace('class="pivotx-image align-right"', 'class="alignright"', $content);
+        $content = str_replace('class="pivotx-image"', 'class="alignnone"', $content);
+        $content = str_replace('class="pivotx-popupimage align-left"', 'class="alignleft"', $content);
+        $content = str_replace('class="pivotx-popupimage align-right"', 'class="alignright"', $content);
+        $content = str_replace('class="pivotx-popupimage"', 'class="alignnone"', $content);
+        $content = str_replace('class="pivotx-wrapper"', 'style="text-align: center;"', $content);
+        $content = str_replace('class="pivotx-media', 'class="wxr-media', $content);
+        $content = str_replace('class="pivotx-popuptext"', 'class="wxr-popuptext"', $content);
+        return $content;
+    }
+
+    private static function contentWarn($content) {
+
+        // check/warn for remaining pivotx and other strings
+        $content2 = str_replace('/pivotx/', '@@CHANGE', $content, $replcnt);
+        if ($replcnt != 0) {
+            self::$warncnt++;
+            $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to /pivotx/! -->';
+        }
+        $content2 = str_replace('class="pivotx', '@@CHANGE', $content, $replcnt);
+        if ($replcnt != 0) {
+            self::$warncnt++;
+            $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to class=\"pivotx! (without the back slash) -->';
+        }
+        $content2 = str_replace($PIVOTX['paths']['host'], '@@CHANGE', $content, $replcnt);
+        if ($replcnt != 0) {
+            self::$warncnt++;
+            $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this host! -->';
+        }
+        if ($PIVOTX['paths']['host'] != $PIVOTX['paths']['canonical_host']) {
+            $content2 = str_replace($PIVOTX['paths']['canonical_host'], '@@CHANGE', $content, $replcnt);
+            if ($replcnt != 0) {
+                self::$warncnt++;
+                $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this canonical host! -->';
+            }
+        }
+        $content2 = str_replace('Smarty error:', '@@CHANGE', $content, $replcnt);
+        if ($replcnt != 0) {
+            self::$warncnt++;
+            $content .= '<br/><!-- Warning! This content contains ' . $replcnt . ' smarty errors! -->';
+        }
+        $content2 = str_replace('Unrecognized template code:', '@@CHANGE', $content, $replcnt);
+        if ($replcnt != 0) {
+            self::$warncnt++;
+            $content .= '<br/><!-- Warning! This content contains ' . $replcnt . ' unrecognised template codes (spelled unrecognized) -->';
         }
         return $content;
     }
@@ -1839,8 +1927,8 @@ THEEND;
             $inpfolder = substr($inpfolder, strlen($_SERVER['DOCUMENT_ROOT']));
             $yearfolder = '2000/11';    //  @@CHANGE
         }
-        // put pivotx pics in another folder
-        if ($inpfolder == 'pivotx/pics/') {
+        // put pivotx pics and emoticons in another folder
+        if ($inpfolder == 'pivotx/pics/' || $inpfolder == 'pivotx/includes/emoticons/trillian/') {
             $yearfolder = '2000/12';    //  @@CHANGE
         }
 //echo $uplcounter . '|' . $uplfilename . '|' . $yearfolder . '|' . $inpurl . '|' . $inpfolder . '|' . $basefolder . '<br/>';
@@ -1943,6 +2031,7 @@ function pageWxrexport()
     global $UPLFILES;
     global $EXTRAFIELDS;
     global $GALLERIES;
+
     $filename = 'blog.xml';
     if (isset($_GET['type'])) {
         switch ($_GET['type']) {

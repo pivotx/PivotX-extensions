@@ -1,11 +1,11 @@
 <?php
 // - Extension: Image Tools
-// - Version: 0.8
+// - Version: 0.8.1
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A collection of small tools to simplify handling images in your content.
-// - Date: 2013-02-14
+// - Date: 2015-01-10
 // - Identifier: imagetools
 // - Required PivotX version: 2.3.6
 
@@ -47,7 +47,11 @@ function smarty_thumbnail($params, &$smarty) {
     $imgparams = array();
 
     if (!empty($params['src'])) {
-        $imgparams[] = "src=".base64_encode($params['src']);
+        if ($params['noencode'] == true) {
+            $imgparams[] = "src=".$params['src'];
+        } else {
+            $imgparams[] = "src=".base64_encode($params['src']);
+        }
     }
 
     $whcombined = "";
@@ -144,7 +148,11 @@ function smarty_thumbnail($params, &$smarty) {
         }   
         
         $linkparams = array();
-        $linkparams[] = "src=" . base64_encode($params['src']);
+        if ($params['noencode'] == true) {
+            $linkparams[] = "src=" . $params['src'];
+        } else {
+            $linkparams[] = "src=" . base64_encode($params['src']);
+        }
         $linkparams[] = "w=" . $srcw;
         $linkparams[] = "h=" . $srch;
         $linkparams[] = "fit=1";

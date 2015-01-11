@@ -4,7 +4,7 @@
 // - Author: PivotX team 
 // - Site: http://www.pivotx.net
 // - Description: Export content in WXR (WordPress eXtended RSS) format.
-// - Date: 2014-12-27
+// - Date: 2015-01-11
 // - Identifier: wxrexport
 
 
@@ -70,11 +70,11 @@ class pivotxWxrExport
     public static $dest_base = '/wordpress';      // default set for WP
     public static $include_skip = array('skip_this_include.tpl','subfolder/and_this_one_too.php');  // skip include elements in content ([[ include tag)
     public static $include_skip_all = false;  // skip all includes
-    public static $addtoentry = 100;
-    public static $addtopage  = 300;
-    public static $addtochap  = 500;
-    public static $addtogall  = 550;
-    public static $addtoupl   = 600;
+    public static $addtochap  = 100;
+    public static $addtogall  = 150;
+    public static $addtoentry = 200;
+    public static $addtopage  = 500;
+    public static $addtoupl   = 800;
     public static $efprefix = 'pivx_';   // only lower case!
     public static $entrysel = array('show'=>20000);   //  all categories are selected
     //public static $entrysel = array('cats'=>array('default', 'linkdump'),'show'=>20000);   // only specific categories
@@ -409,7 +409,10 @@ THEEND;
         $record['post_type'] = 'page';
 
         $record['post_id'] = $record['uid'] + self::$addtochap;
-        self::recordId($record['uid'], $record['post_id']);
+        // do not record if chapter is placed in front of page
+        if ($record['forpage'] != 1) {
+            self::recordId($record['uid'], $record['post_id']);
+        }
         $output .= '<!-- Item for old id ' . $record['uid'] .  ' to post_id ' . $record['post_id'] . ' -->'."\n";
         $record['post_parent'] = '0';
         $output .= self::outputMap(array(
@@ -661,6 +664,15 @@ THEEND;
             // xiao: something goes wrong here with the comments!!!!
             // harm: I tested with comments and all seems to process well?
 
+            // set the $entry.field.field fields that can be used directly in the content
+            if ($record['pivx_type'] == 'entry') {
+                $PIVOTX['template']->assign('entry', $record);
+            }
+            // do the same for the $page fields
+            if ($record['pivx_type'] == 'page') {
+                $PIVOTX['template']->assign('page', $record);
+            }
+
 //@@CHANGE REPLACE STRINGS HERE -- start
             // replace some strings in introduction and body before parsing
             // Scan your xml output for message "Smarty error:"
@@ -684,6 +696,11 @@ THEEND;
                 //echo getcwd() . "/templates/" . self::$defweblog . '/' . $incl_skip . '<br/>';
                 $record = self::replaceIt($record, '[[ include file="' . getcwd() . "/templates/" . self::$defweblog . '/' . $incl_skip . '" ]]', '<!-- Include skipped! -->');
             }
+            // extension imagetools active? (need version 0.8.1 to use this)
+            if (in_array('imagetools',$activeext)) {
+                $record = self::replaceIt($record, '[[ thumbnail ', '[[ thumbnail noencode=1 ');
+            }
+
 //@@CHANGE REPLACE STRINGS HERE -- end
 
             $excerpt_encoded = ''; 
@@ -701,8 +718,8 @@ THEEND;
             // todo: scan for archive links
             // todo: scan for internal links from the content itself
 
-            // scan for pivotx images code
-            $content_encoded = self::contentReplParts($content_encoded, $parse);
+            $repldebug = 'item processing: ' . $record['uid'] . '|' . $record['title'];
+            $content_encoded = self::contentReplParts($content_encoded, $parse, $repldebug);
 
             $image = '';
             $password = '';
@@ -944,6 +961,7 @@ THEEND;
             // put version of the chapter page in front of the child pages so import knows it is OK (otherwise it won't work)
             if (array_key_exists($chapter['uid'], $chaparray)) {
                 $chapinfo['new_uid'] = $chaparray[$chapter['uid']];
+                $chapinfo['forpage'] = 1;
                 $output .= self::outputWXR_Chapters($chapinfo);
             }
 
@@ -1529,6 +1547,35 @@ THEEND;
                 }
             }
         }
+        // extension sociable active?
+        if (in_array('sociable',$activeext)) {
+            $globfiles = _wxrexport_glob_recursive('../pivotx/extensions/sociable/images/' . "*");
+            foreach ($globfiles as $globfile) {
+                if (!is_dir($globfile)) {
+                    $uplfiles[] = $globfile;
+                }
+            }
+        }
+        // extension nivoslider active?
+        if (in_array('nivoslider',$activeext)) {
+            $globfiles = _wxrexport_glob_recursive('../pivotx/extensions/nivoslider/slides/' . "*");
+            foreach ($globfiles as $globfile) {
+                if (self::$thumb_skip && (strpos($globfile, '_thumb.') !== false)) {
+                    continue;
+                } else {
+                    $uplfiles[] = $globfile;
+                }
+            }
+        }
+        // extension slidingpanel active?
+        if (in_array('slidingpanel',$activeext)) {
+            $globfiles = _wxrexport_glob_recursive('../pivotx/extensions/slidingpanel/icons/' . "*");
+            foreach ($globfiles as $globfile) {
+                if (!is_dir($globfile)) {
+                    $uplfiles[] = $globfile;
+                }
+            }
+        }
         return $uplfiles;
     }
 
@@ -1703,44 +1750,50 @@ THEEND;
         }
     }
 
-    private static function contentReplParts($content, $parse) {
-        $content = self::contentReplImg($content);
-        $content = self::contentReplLink($content);
-        $content = self::contentReplString($content);
+    private static function contentReplParts($content, $parse, $repldebug) {
+        $content = self::contentReplImg($content, $repldebug);
+        $content = self::contentReplLink($content, $repldebug);
+        $content = self::contentReplString($content, $repldebug);
         // check/warn for remaining pivotx and other strings
         if ($parse != 'no') {
-            $content = self::contentWarn($content);
+            $content = self::contentWarn($content, $repldebug);
         }
         return $content;
     }
 
-    private static function contentReplImg($content) {
+    private static function contentReplImg($content, $repldebug) {
         global $PIVOTX;
         global $UPLFILES;
         // replace upload_base_url by something general (or a shortcode)
-        $content = self::contentReplImgUploads($content, 'src="', '', '[imgpath]/');
-        $content = self::contentReplImgUploads($content, 'href="', '', '[imgpath]/');
+        $content = self::contentReplImgUploads($content, 'src=', '', '[imgpath]/', 'B', $repldebug);
+        $content = self::contentReplImgUploads($content, 'href=', '', '[imgpath]/', 'B', $repldebug);
         // the same for fixed location pivotx/pics
         $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'pics/';
         $content = str_replace($findsrc, 'src="[imgpath]/', $content);
         // the same for fixed location pivotx/includes/emoticons/trillian
         $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'includes/emoticons/trillian/';
         $content = str_replace($findsrc, 'src="[imgpath]/', $content);
-        // attempt to do the same for timthumb img source
+        // attempt to do the same for timthumb img source (can also be used as href)
         $findbetw = $PIVOTX['paths']['host'] . $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=';
-        $content = self::contentReplImgUploads($content, 'src="', $findbetw, '[imgpath]/');
+        $content = self::contentReplImgUploads($content, 'src=', $findbetw, '[imgpath]/', 'B', $repldebug);
+        $content = self::contentReplImgUploads($content, 'href=', $findbetw, '[imgpath]/', 'B', $repldebug);
         $findbetw = $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=';
-        $content = self::contentReplImgUploads($content, 'src="', $findbetw, '[imgpath]/');
+        $content = self::contentReplImgUploads($content, 'src=', $findbetw, '[imgpath]/', 'B', $repldebug);
+        $content = self::contentReplImgUploads($content, 'href=', $findbetw, '[imgpath]/', 'B', $repldebug);
         $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=';
         $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+        $findsrc = 'href="' . $PIVOTX['paths']['pivotx_url'] . 'includes/timthumb.php?src=';
+        $content = str_replace($findsrc, 'href="[imgpath]/', $content);
+        $findsrc = 'href="' . $PIVOTX['paths']['pivotx_url'] . 'includes/timwrapper.php?src=';
+        $content = str_replace($findsrc, 'href="[imgpath]/', $content);
 
         $activeext = $PIVOTX['extensions']->getActivated();
         // extension media active?
         if (in_array('media',$activeext)) {
             // try to replace some of the flash vars
-            $content = self::contentReplImgUploads($content, 'file: "' , '', '[imgpath]/');
-            $content = self::contentReplImgUploads($content, 'soundFile: "' , '', '[imgpath]/');
-            $content = self::contentReplImgUploads($content, 'image: "' , '', '[imgpath]/');
+            $content = self::contentReplImgUploads($content, 'file: ' , '', '[imgpath]/', 'D', $repldebug);
+            $content = self::contentReplImgUploads($content, 'soundFile: ' , '', '[imgpath]/', 'D', $repldebug);
+            $content = self::contentReplImgUploads($content, 'image: ' , '', '[imgpath]/', 'D', $repldebug);
             $findsrc = 'image: "' . $PIVOTX['paths']['pivotx_url'] . 'extensions/media/';
             $content = str_replace($findsrc, 'image: "[imgpath]/', $content);
             $findsrc = 'image: "../../../' . substr($PIVOTX['paths']['upload_base_url'],strlen($PIVOTX['paths']['site_url']));
@@ -1756,30 +1809,52 @@ THEEND;
             $content = str_replace($findsrc, 'Warning! Replace the flash swf files yourself! videoplayer.swf', $content, $replcnt);
             self::$warncnt = self::$warncnt + $replcnt;
         }
+        // extension sociable active?
+        if (in_array('sociable',$activeext)) {
+            $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'extensions/sociable/images/';
+            $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+            $findsrc = 'src="' . '/sociable/images/';
+            $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+        }
+        // extension nivoslider active?
+        if (in_array('nivoslider',$activeext)) {
+            $findsrc = "data-thumb='" . $PIVOTX['paths']['pivotx_url'] . 'extensions/nivoslider/slides/';
+            $content = str_replace($findsrc, "data-thumb='[imgpath]/", $content);
+            $findsrc = "src='" . $PIVOTX['paths']['pivotx_url'] . 'extensions/nivoslider/slides/';
+            $content = str_replace($findsrc, "src='[imgpath]/", $content);
+        }
+        // extension slidingpanel active?
+        if (in_array('slidingpanel',$activeext)) {
+            $findsrc = 'src="' . $PIVOTX['paths']['host'] . $PIVOTX['paths']['pivotx_url'] . 'extensions/slidingpanel/icons/';
+            $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+        }
 
         // replace the img pointer
-        $findsrc = '"[imgpath]/';
+        $findsrc = '[imgpath]/';
         $srcpos = 0; $srclen = strlen($findsrc);
         while ($srcpos !== false) {
             $srcpos = strpos($content, $findsrc, $srcpos);
             if ($srcpos !== false) {
-                $endpos = strpos($content, '"', $srcpos+$srclen);
+                $endpos = strpos($content, substr($content, ($srcpos-1), 1), $srcpos+$srclen);
                 if ($endpos !== false) {
                     $srcsearch = $srcimg = substr($content, $srcpos+$srclen, $endpos-($srcpos+$srclen));
                     // thumbs are skipped?
                     if (self::$thumb_skip) {
                         $srcsearch = str_replace('.thumb', '', $srcimg);
                     }
-                    // remnants of timthumb syntax? (&w= &h= &zc=)
+                    // remnants of timthumb syntax? (&w= &h= &zc=) imagetools also uses &fit=1&type=.jpg
                     $srcparts = explode('&',$srcsearch);
-                    $srcgoners = array('w=', 'h=', 'zc');
+                    $srcgoners = array('w=', 'h=', 'zc', 'fit=', 'type');
                     foreach ($srcparts as $srcpkey=>$srcpart) {
                         if (in_array(substr($srcpart, 0 , 2), $srcgoners)) {
                             unset($srcparts[$srcpkey]);
                         }
+                        if (in_array(substr($srcpart, 0 , 4), $srcgoners)) {
+                            unset($srcparts[$srcpkey]);
+                        }
                     }
                     $srcsearch = implode('&',$srcparts);
-                    //echo 'searching for: ' . $srcsearch . '<br/>';
+                    //echo 'searching for: ' . $srcsearch . ' for ' . $repldebug . '<br/>';
                     $uplinfo = self::searchUploadByFilename($UPLFILES, $srcsearch);
                     // replace the thumb string
                     $srcimgth = str_replace('.thumb', self::$thumb_repl, $srcimg);
@@ -1805,13 +1880,26 @@ THEEND;
         return $content;
     }
 
-    private static function contentReplImgUploads($content, $replpfx, $replbetw, $replby) {
+    private static function contentReplImgUploads($content, $replpfx, $replbetw, $replby, $quotetype, $repldebug) {
         global $PIVOTX;
+        // quote type processing? B = both / D = only double quote / S = only single quote
+        if ($quotetype == 'B') {
+            $content = self::contentReplImgUploads($content, $replpfx, $replbetw, $replby, 'D', $repldebug);
+            $content = self::contentReplImgUploads($content, $replpfx, $replbetw, $replby, 'S', $repldebug);
+            return $content;
+        }
+        //echo 'replstart ' . $replpfx . '|' . $replbetw . '|' . $replby . '<br/>';
+        //echo 'for ' . $repldebug . '<br/>';
+        if ($quotetype == 'S') {
+            $replpfx .= "'";
+        } else {
+            $replpfx .= '"';
+        }
         foreach (self::$upload_input as $upload_inp) {
             if (substr($upload_inp,0,6) == '#ROOT#') {
                 $upload_inp = str_replace('#ROOT#', $PIVOTX['paths']['canonical_host'], $upload_inp);
             }
-            //echo 'repl ' . $replpfx . $PIVOTX['paths']['site_url'] . $upload_inp . '<br/>';
+            //echo 'repl ' . $replpfx . '|' . $PIVOTX['paths']['site_url'] . $upload_inp . '<br/>';
             $content = str_replace($replpfx . $replbetw . $PIVOTX['paths']['site_url'] . $upload_inp, $replpfx . $replby, $content);
             $content = str_replace($replpfx . $replbetw . $upload_inp, $replpfx . $replby, $content);
             // sometimes only a slash in front despite other site_url
@@ -1821,15 +1909,197 @@ THEEND;
             // leave out first position of site_url
             $content = str_replace($replpfx . $replbetw . substr($PIVOTX['paths']['site_url'],1) . $upload_inp, $replpfx . $replby, $content);
         }
+        // if replacement string contains timthumb then also without $upload_inp
+        if (strpos($replbetw, 'includes/timthumb.php', 0) != 0) {
+            $content = str_replace($replpfx . $replbetw . $PIVOTX['paths']['site_url'], $replpfx . $replby, $content);
+            $content = str_replace($replpfx . $replbetw, $replpfx . $replby, $content);
+        }
         return $content;
     }
 
-    private static function contentReplLink($content) {
-        // todo: replaces internal links
+    private static function contentReplLink($content, $repldebug) {
+        global $PIVOTX;
+        // todo: replace internal links
+        // replace the href pointer if needed
+        $findthis = 'href=';
+        $posbeg = 0; $findlen = strlen($findthis);
+        while ($posbeg !== false) {
+            $posbeg = strpos($content, $findthis, $posbeg);
+            if ($posbeg !== false) {
+                $findpos1 = substr($content, $posbeg+$findlen, 1);
+                //echo 'fpos1: ' . $findpos1 . '<br/>';
+                //echo 'bpos : ' . $posbeg . '<br/>';
+                if ($findpos1 == '"' || $findpos1 == "'") {   // real href?
+                    //echo 'real href!' . '<br/>';
+                    $posend = strpos($content, $findpos1, $posbeg+$findlen+1);
+                    if ($posend !== false) {
+                        //echo 'epos : ' . $posend . '<br/>';
+                        $findsearch = strtolower($findorg = substr($content, $posbeg+$findlen+1, $posend-($posbeg+$findlen+1)));
+                        //echo 'hrefbskip: ' . $findsearch . '|<br/>';
+                        // skip the ones that are (already) OK
+                        if (substr($findsearch,0,9) == '[imgpath]') { // do nothing (img link)
+                        } elseif (substr($findsearch,0,1) == '#') { // do nothing (only hash found)
+                        } elseif (substr($findsearch,0,3) == '../') { // do nothing (cannot be an internal link)
+                        } elseif (substr($findsearch,0,11) == 'javascript:') { // do nothing (js call)
+                        } elseif (substr($findsearch,0,1) == '"') { // do nothing (potential js var?)
+                        } elseif (substr($findsearch,0,1) == "'") { // do nothing (potential js var?)
+                        } elseif (substr($findsearch,0,7) == 'http://' && substr($findsearch,0,strlen($PIVOTX['paths']['canonical_host'])) != $PIVOTX['paths']['canonical_host']) { // do nothing 
+                        } elseif (substr($findsearch,0,8) == 'https://' && substr($findsearch,0,strlen($PIVOTX['paths']['canonical_host'])) != $PIVOTX['paths']['canonical_host']) { // do nothing
+                        } elseif (substr($findsearch,0,7) == "mailto:") { // do nothing 
+                        } else {
+                            //echo 'hrefaskip: ' . $findsearch . '|<br/>';
+                            // potential internal link
+                            if (substr($findsearch,0,strlen($PIVOTX['paths']['canonical_host'])) == $PIVOTX['paths']['canonical_host']) {
+                                $findsearch = substr($findsearch, strlen($PIVOTX['paths']['canonical_host']));
+                            }
+                            if (substr($findsearch,0,strlen($PIVOTX['paths']['site_path'])) == $PIVOTX['paths']['site_path']) {
+                                $findsearch = substr($findsearch, strlen($PIVOTX['paths']['site_path']));
+                            }
+                            if (substr($findsearch,0,strlen($PIVOTX['paths']['site_url'])) == $PIVOTX['paths']['site_url']) {
+                                $findsearch = substr($findsearch, strlen($PIVOTX['paths']['site_url']));
+                            }
+                            $findpure = explode('#',$findsearch);
+                            $findsearch = $findpure[0];
+                            unset($findpure[0]);
+                            $findhash = implode('#',$findpure);
+                            //echo 'hash: ' . $findhash . '<br/>';
+                            $findlinktype = ''; $findlinkvalue = '';
+                            if (substr($findsearch,0,1) == '?') {
+                                //echo 'query: ' . $findsearch . '|<br/>';
+                                $findparts = explode('&',substr($findsearch,1));
+                                foreach ($findparts as $findpart) {
+                                    //echo 'qpart: ' . $findpart . '<br/>';
+                                    // tag
+                                    if (substr($findpart,0,2) == 't=') {
+                                        $findlinktype = 'tag';
+                                        $findlinkvalue = substr($findpart,2);
+                                        break;
+                                    }
+                                    if (substr($findpart,0,2) == 'e=') {
+                                        $findlinktype = 'entry';
+                                        $findlinkvalue = substr($findpart,2);
+                                        break;
+                                    }
+                                    if (substr($findpart,0,2) == 'p=') {
+                                        $findlinktype = 'page';
+                                        $findlinkvalue = substr($findpart,2);
+                                        break;
+                                    }
+                                    if (substr($findpart,0,2) == 'a=') {
+                                        $findlinktype = 'archive';
+                                        $findlinkvalue = substr($findpart,2);
+                                        break;
+                                    }
+                                    if (substr($findpart,0,2) == 'w=') {
+                                        $findlinktype = 'weblog';
+                                        $findlinkvalue = substr($findpart,2);
+                                        //break;     do not break continue!
+                                    }
+                                    if (substr($findpart,0,2) == 'x=') {
+                                        $findlinktype = 'visitor';
+                                        $findlinkvalue = substr($findpart,2);
+                                        break;
+                                    }
+                                }
+                            } else {
+                                //echo 'link: ' . $findsearch . '|<br/>';
+                                $findparts = explode('/',$findsearch);
+                                foreach ($findparts as $findkey=>$findpart) {
+                                    //echo 'lpart: ' . $findkey . '|' . $findpart . '<br/>';
+                                    // tag
+                                    if ($findpart == 'tag') {
+                                        $findlinktype = 'tag';
+                                        $findlinkvalue = $findparts[$findkey+1];
+                                        break;
+                                    }
+                                    if ($findpart == 'entry') {
+                                        $findlinktype = 'entry';
+                                        $findlinkvalue = $findparts[$findkey+1];
+                                        break;
+                                    }
+                                    if ($findpart == 'page') {
+                                        $findlinktype = 'page';
+                                        $findlinkvalue = $findparts[$findkey+1];
+                                        break;
+                                    }
+                                    if ($findpart == 'archive') {
+                                        $findlinktype = 'archive';
+                                        $findlinkvalue = $findparts[$findkey+1];
+                                        break;
+                                    }
+                                    if ($findpart == 'category') {
+                                        $findlinktype = 'category';
+                                        $findlinkvalue = $findparts[$findkey+1];
+                                        break;
+                                    }
+                                    if ($findpart == 'weblog') {
+                                        $findlinktype = 'weblog';
+                                        $findlinkvalue = $findparts[$findkey+1];
+                                        break;
+                                    }
+                                    if ($findpart == 'visitor') {
+                                        $findlinktype = 'visitor';
+                                        $findlinkvalue = $findparts[$findkey+1];
+                                        break;
+                                    }
+                                }
+                                if ($findlinktype == '') {
+                                    $findlinktype = 'entrypage';
+                                    $findlinkvalue = $findparts[0];
+                                }
+                            }
+                            //echo 'linktype: ' . $findlinktype . '|' . $findlinkvalue . '<br/>';
+                            $linkentry = array(); $linkpage = array();
+                            if ($findlinktype == 'entry' || $findlinktype == 'entrypage') {
+                                $linkentry = $PIVOTX['db']->read_entry($findlinkvalue);
+                            }
+                            if ($findlinktype == 'page' || $findlinktype == 'entrypage') {
+                                $linkpage = $PIVOTX['pages']->getPageByUri($findlinkvalue);
+                            }
+                            $unsupported_types = array('visitor','archive','category','weblog');
+                            if ($findlinktype == 'entrypage' && $linkentry['uid'] != '' && $linkpage['uid'] != '') {
+                                $content = substr_replace($content, 'warning_link_found_for_both_entry_and_page_', $posbeg+$findlen+1, 0);
+                                echo 'entry + page link? ' . $findsearch . '|<br/>';
+                                self::$warncnt++;
+                            } elseif (($findlinktype == 'entrypage' || $findlinktype == 'entry' || $findlinktype == 'page') &&
+                                        ($linkentry['uid'] == '' && $linkpage['uid'] == '')) {
+                                $content = substr_replace($content, 'warning_uid_not_found_for_this_entry_or_page_', $posbeg+$findlen+1, 0);
+                                //echo $repldebug . '<br/>';
+                                //echo 'uid not found ' . $findsearch . '|<br/>';
+                                self::$warncnt++;
+                            } elseif ($findlinktype == 'entry' || ($findlinktype == 'entrypage' && $linkentry['uid'] != '')) {
+                                $relid = $linkentry['uid'] + self::$addtoentry;
+                                $content = substr_replace($content, '?p=' . $relid . $findhash, $posbeg+$findlen+1, strlen($findorg));
+                            } elseif ($findlinktype == 'page' || ($findlinktype == 'entrypage' && $linkpage['uid'] != '')) {
+                                $relid = $linkpage['uid'] + self::$addtopage;
+                                $content = substr_replace($content, '?page_id=' . $relid . $findhash, $posbeg+$findlen+1, strlen($findorg));
+                            } elseif ($findlinktype == 'tag') {
+                                $content = substr_replace($content, '?tag=' . $findlinkvalue . $findhash, $posbeg+$findlen+1, strlen($findorg));
+                            } elseif (in_array($findlinktype, $unsupported_types)) {
+                                $content = substr_replace($content, 'warning_linktype_'.$findlinktype.'_unsupported_', $posbeg+$findlen+1, 0);
+                                self::$warncnt++;
+                            } else {
+                                $content = substr_replace($content, 'warning_linktype_not_found_for_', $posbeg+$findlen+1, 0);
+                                if ($findlinktype == '') { 
+                                    //echo 'href not recognised: ' . $findsearch . '|<br/>';
+                                    $content = substr_replace($content, 'nolinktype_', $posbeg+$findlen+1, 0);
+                                }
+                                self::$warncnt++;
+                            }
+                        }
+                    } else {
+                        $findwarn = 'warning_href_end_not_found:';
+                        self::$warncnt++;
+                        $content = substr_replace($content, $findwarn, $posbeg+$findlen+1, 0);
+                    } 
+                }
+                $posbeg = $posbeg + $findlen;
+            }
+        }
         return $content;
     }
 
-    private static function contentReplString($content) {
+    private static function contentReplString($content, $repldebug) {
         // replace class pivotx-image, pivotx-popupimage and pivotx-wrapper and others @@CHANGE
         $content = str_replace('class="pivotx-image align-left"', 'class="alignleft"', $content);
         $content = str_replace('class="pivotx-image align-right"', 'class="alignright"', $content);
@@ -1839,46 +2109,55 @@ THEEND;
         $content = str_replace('class="pivotx-popupimage"', 'class="alignnone"', $content);
         $content = str_replace('class="pivotx-wrapper"', 'style="text-align: center;"', $content);
         $content = str_replace('class="pivotx-media', 'class="wxr-media', $content);
-        $content = str_replace('class="pivotx-popuptext"', 'class="wxr-popuptext"', $content);
+        $content = str_replace('class="pivotx-popup', 'class="wxr-popup', $content);
+        $content = str_replace('class="pivotx-download', 'class="wxr-download', $content);
+        $content = str_replace("class='pivotx-taglink'", 'class="wxr-taglink"', $content);    // quotes set differently for this link
         return $content;
     }
 
-    private static function contentWarn($content) {
+    private static function contentWarn($content, $repldebug) {
 
         // check/warn for remaining pivotx and other strings
+        $contentorg = $content;
         $content2 = str_replace('/pivotx/', '@@CHANGE', $content, $replcnt);
         if ($replcnt != 0) {
             self::$warncnt++;
-            $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to /pivotx/! -->';
+            $contentorg .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to /pivotx/! -->';
         }
         $content2 = str_replace('class="pivotx', '@@CHANGE', $content, $replcnt);
         if ($replcnt != 0) {
             self::$warncnt++;
-            $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to class=\"pivotx! (without the back slash) -->';
+            $contentorg .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to class=\"pivotx! (without the back slash) -->';
         }
         $content2 = str_replace($PIVOTX['paths']['host'], '@@CHANGE', $content, $replcnt);
         if ($replcnt != 0) {
             self::$warncnt++;
-            $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this host! -->';
+            $contentorg .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this host! -->';
         }
         if ($PIVOTX['paths']['host'] != $PIVOTX['paths']['canonical_host']) {
             $content2 = str_replace($PIVOTX['paths']['canonical_host'], '@@CHANGE', $content, $replcnt);
             if ($replcnt != 0) {
                 self::$warncnt++;
-                $content .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this canonical host! -->';
+                $contentorg .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this canonical host! -->';
             }
         }
         $content2 = str_replace('Smarty error:', '@@CHANGE', $content, $replcnt);
         if ($replcnt != 0) {
             self::$warncnt++;
-            $content .= '<br/><!-- Warning! This content contains ' . $replcnt . ' smarty errors! -->';
+            $contentorg .= '<br/><!-- Warning! This content contains ' . $replcnt . ' smarty errors! -->';
         }
         $content2 = str_replace('Unrecognized template code:', '@@CHANGE', $content, $replcnt);
         if ($replcnt != 0) {
             self::$warncnt++;
-            $content .= '<br/><!-- Warning! This content contains ' . $replcnt . ' unrecognised template codes (spelled unrecognized) -->';
+            $contentorg .= '<br/><!-- Warning! This content contains ' . $replcnt . ' unrecognised template codes (spelled unrecognized) -->';
         }
-        return $content;
+        $content2 = str_replace('href="mailto:', '@@CHANGE', $content, $replcnt);
+        $content2 = str_replace("href='mailto:", '@@CHANGE', $content, $replcnt2);
+        if ($replcnt != 0 || $replcnt2 != 0) {
+            self::$warncnt++;
+            $contentorg .= '<br/><!-- Warning! This content contains ' . ($replcnt+$replcnt2) . ' mailto links -->';
+        }
+        return $contentorg;
     }
 
     private static function createUplinfo($uplfile, $uplcounter) {
@@ -1918,6 +2197,13 @@ THEEND;
         }
         if (substr($inpfolder, 0, 3) == '../') {
             $inpfolder = substr($inpfolder, 3);
+        }
+        // put extension folder in another folder
+        if ($inpfolder == 'pivotx/extensions/sociable/images/' 
+            || $inpfolder == 'pivotx/extensions/nivoslider/slides/' 
+            || $inpfolder == 'pivotx/extensions/slidingpanel/icons/' 
+            || $inpfolder == 'pivotx/extensions/media/') {
+            $yearfolder = '2000/10';    //  @@CHANGE
         }
         // root location?
         $rootloc = false;
@@ -2011,15 +2297,17 @@ THEEND;
 /**
  * functional style hook for configuration_add
  */
+
 function functionalCallWxrExportConfigurationAdd(&$form_html)
 {
+/*   harm: not needed?
     if (isset($_GET['action']) && ($_GET['action'] != '')) {
         pivotxBonusfieldsInterface::actionBonusfield($_GET['action']);
 
         Header('Location: ?page=configuration#section-bonusfields');
         exit();
     }
-
+*/
     return pivotxWxrExport::adminTab($form_html);
 }
 

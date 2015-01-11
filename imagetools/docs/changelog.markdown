@@ -1,5 +1,10 @@
 # Changelog
 
+*   ## Version 0.8.1: New parm "noencode"
+    2015-01-10
+
+    *   New parm "noencode" to block encoding of src (when set to true)  
+
 *   ## Version 0.8: New parm "id" and different interpretation of "alt"
     2013-02-14
 

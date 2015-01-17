@@ -63,6 +63,8 @@ class pivotxWxrExport
     //
     // defweblog is meant to specify the name of your default weblog folder name
     //
+    // aliases is meant to specify the urls of your aliases
+    //
     // @@CHANGE
     public static $upload_dest_def = '2010/01';
     public static $upload_input = array('images/');  // always end the element with a "/"
@@ -84,6 +86,9 @@ class pivotxWxrExport
     public static $pagesel = array();     // all chapters are selected
     //public static $pagesel = array('chapters'=>array('Pages', 'Pages2'));    // only specific chapters (upper case name!)
     public static $defweblog = 'weblog';
+    // array for your aliases (full urls with http) -- you can also enter your main url if your canonical-host setting is incorrect
+    public static $aliases = array();
+    //public static $aliases = array('http://www.myurl.com','http://www.my-url.com');
     
     public static function adminTab(&$form_html)
     {
@@ -538,8 +543,8 @@ THEEND;
         $minid_new = self::$id_min_new;
         $maxid_new = self::$id_max_new;
         $extraline = '';
-        if ($exporttype == 'entries' || $exporttype == 'pages') {
-            $extraline .= "\n" . '<!-- Replace [imgpath] if needed (see docs) -->';
+        if ($exporttype == 'entries' || $exporttype = 'entries and their comments' || $exporttype == 'pages') {
+            $extraline .= "\n" . '<!-- Replace [imgpath] and [urlhome] if needed (see docs) -->';
         }
         // check if maximum exceeds any of the other addto... values
         if ($maxid_new > self::$addtoentry && $minid_new < self::$addtoentry) {
@@ -1953,23 +1958,42 @@ THEEND;
 
     private static function contentReplLink($content, $repldebug) {
         global $PIVOTX;
-        // todo: replace internal links
         // replace the href pointer if needed
         $findthis = 'href=';
         $posbeg = 0; $findlen = strlen($findthis);
-        while ($posbeg !== false) {
+        $loopprotect = -1;
+        while ($posbeg !== false && $posbeg != $loopprotect) {
+            $loopprotect = $posbeg;
             $posbeg = strpos($content, $findthis, $posbeg);
             if ($posbeg !== false) {
                 $findpos1 = substr($content, $posbeg+$findlen, 1);
-                //echo 'fpos1: ' . $findpos1 . '<br/>';
-                //echo 'bpos : ' . $posbeg . '<br/>';
                 if ($findpos1 == '"' || $findpos1 == "'") {   // real href?
-                    //echo 'real href!' . '<br/>';
                     $posend = strpos($content, $findpos1, $posbeg+$findlen+1);
                     if ($posend !== false) {
-                        //echo 'epos : ' . $posend . '<br/>';
                         $findsearch = strtolower($findorg = substr($content, $posbeg+$findlen+1, $posend-($posbeg+$findlen+1)));
-                        //echo 'hrefbskip: ' . $findsearch . '|<br/>';
+                        // replace other links to myurl by canonical host value
+                        $myhost = $PIVOTX['paths']['canonical_host'];
+                        if (substr($findsearch,0,strlen($PIVOTX['paths']['site_path'])) == $PIVOTX['paths']['site_path']) {
+                            $findsearch = substr_replace($findsearch, $myhost, 0, strlen($PIVOTX['paths']['site_path']));
+                        }
+                        if (substr($findsearch,0,strlen($PIVOTX['paths']['site_url'])) == $PIVOTX['paths']['site_url']) {
+                            $findsearch = substr_replace($findsearch, $myhost, 0, strlen($PIVOTX['paths']['site_url']));
+                        }
+                        // peculiar form but does work 
+                        if (substr($findsearch,0,strlen('../pivotx/index.php')) == '../pivotx/index.php') {
+                            $findsearch = substr_replace($findsearch, $myhost, 0, strlen('../pivotx/index.php'));
+                        }
+                        // aliases array
+                        foreach (self::$aliases as $alias) {
+                            if (substr($findsearch,0,strlen($alias)) == $alias) {
+                                $findsearch = substr_replace($findsearch, $myhost, 0, strlen($alias));
+                                //break;  // do not use break here!?
+                            }
+                        }
+			// plain index.php
+                        if (substr($findsearch,0,strlen($myhost . '/index.php')) == $myhost . '/index.php') {
+                            $findsearch = substr_replace($findsearch, $myhost, 0, strlen($myhost . '/index.php'));
+                        }
                         // skip the ones that are (already) OK
                         if (substr($findsearch,0,9) == '[imgpath]') { // do nothing (img link)
                         } elseif (substr($findsearch,0,1) == '#') { // do nothing (only hash found)
@@ -1977,32 +2001,25 @@ THEEND;
                         } elseif (substr($findsearch,0,11) == 'javascript:') { // do nothing (js call)
                         } elseif (substr($findsearch,0,1) == '"') { // do nothing (potential js var?)
                         } elseif (substr($findsearch,0,1) == "'") { // do nothing (potential js var?)
-                        } elseif (substr($findsearch,0,7) == 'http://' && substr($findsearch,0,strlen($PIVOTX['paths']['canonical_host'])) != $PIVOTX['paths']['canonical_host']) { // do nothing 
-                        } elseif (substr($findsearch,0,8) == 'https://' && substr($findsearch,0,strlen($PIVOTX['paths']['canonical_host'])) != $PIVOTX['paths']['canonical_host']) { // do nothing
+                        } elseif (substr($findsearch,0,7) == 'http://' && substr($findsearch,0,strlen($myhost)) != $myhost) { // do nothing 
+                        } elseif (substr($findsearch,0,8) == 'https://' && substr($findsearch,0,strlen($myhost)) != $myhost) { // do nothing
                         } elseif (substr($findsearch,0,7) == "mailto:") { // do nothing 
                         } else {
-                            //echo 'hrefaskip: ' . $findsearch . '|<br/>';
                             // potential internal link
-                            if (substr($findsearch,0,strlen($PIVOTX['paths']['canonical_host'])) == $PIVOTX['paths']['canonical_host']) {
-                                $findsearch = substr($findsearch, strlen($PIVOTX['paths']['canonical_host']));
-                            }
-                            if (substr($findsearch,0,strlen($PIVOTX['paths']['site_path'])) == $PIVOTX['paths']['site_path']) {
-                                $findsearch = substr($findsearch, strlen($PIVOTX['paths']['site_path']));
-                            }
-                            if (substr($findsearch,0,strlen($PIVOTX['paths']['site_url'])) == $PIVOTX['paths']['site_url']) {
-                                $findsearch = substr($findsearch, strlen($PIVOTX['paths']['site_url']));
+                            if (substr($findsearch,0,strlen($myhost)) == $myhost) {
+                                $findsearch = substr($findsearch, strlen($myhost));
                             }
                             $findpure = explode('#',$findsearch);
                             $findsearch = $findpure[0];
                             unset($findpure[0]);
                             $findhash = implode('#',$findpure);
-                            //echo 'hash: ' . $findhash . '<br/>';
+                            if ($findhash != '') {
+                                $findhash = '#' . $findhash;
+                            }
                             $findlinktype = ''; $findlinkvalue = '';
                             if (substr($findsearch,0,1) == '?') {
-                                //echo 'query: ' . $findsearch . '|<br/>';
                                 $findparts = explode('&',substr($findsearch,1));
                                 foreach ($findparts as $findpart) {
-                                    //echo 'qpart: ' . $findpart . '<br/>';
                                     // tag
                                     if (substr($findpart,0,2) == 't=') {
                                         $findlinktype = 'tag';
@@ -2036,7 +2053,7 @@ THEEND;
                                     }
                                 }
                             } else {
-                                //echo 'link: ' . $findsearch . '|<br/>';
+                                //echo 'link: |' . $findsearch . '|<br/>';
                                 $findparts = explode('/',$findsearch);
                                 foreach ($findparts as $findkey=>$findpart) {
                                     //echo 'lpart: ' . $findkey . '|' . $findpart . '<br/>';
@@ -2077,12 +2094,12 @@ THEEND;
                                         break;
                                     }
                                 }
-                                if ($findlinktype == '') {
+                                if ($findlinktype == '' && ($findsearch != '' && $findsearch != '/')) {
                                     $findlinktype = 'entrypage';
                                     $findlinkvalue = $findparts[0];
                                 }
                             }
-                            //echo 'linktype: ' . $findlinktype . '|' . $findlinkvalue . '<br/>';
+                            //echo 'linktype: ' . $findlinktype . '|' . $findlinkvalue . '|' . $findsearch . '|<br/>';
                             $linkentry = array(); $linkpage = array();
                             if ($findlinktype == 'entry' || $findlinktype == 'entrypage') {
                                 $linkentry = $PIVOTX['db']->read_entry($findlinkvalue);
@@ -2093,7 +2110,7 @@ THEEND;
                             $unsupported_types = array('visitor','archive','category','weblog');
                             if ($findlinktype == 'entrypage' && $linkentry['uid'] != '' && $linkpage['uid'] != '') {
                                 $content = substr_replace($content, 'warning_link_found_for_both_entry_and_page_', $posbeg+$findlen+1, 0);
-                                echo 'entry + page link? ' . $findsearch . '|<br/>';
+                                //echo 'entry + page link? ' . $findsearch . '|<br/>';
                                 self::$warncnt++;
                             } elseif (($findlinktype == 'entrypage' || $findlinktype == 'entry' || $findlinktype == 'page') &&
                                         ($linkentry['uid'] == '' && $linkpage['uid'] == '')) {
@@ -2113,12 +2130,16 @@ THEEND;
                                 $content = substr_replace($content, 'warning_linktype_'.$findlinktype.'_unsupported_', $posbeg+$findlen+1, 0);
                                 self::$warncnt++;
                             } else {
-                                $content = substr_replace($content, 'warning_linktype_not_found_for_', $posbeg+$findlen+1, 0);
-                                if ($findlinktype == '') { 
-                                    //echo 'href not recognised: ' . $findsearch . '|<br/>';
-                                    $content = substr_replace($content, 'nolinktype_', $posbeg+$findlen+1, 0);
+                                if ($findsearch != '' && $findsearch != '/') {
+                                    $content = substr_replace($content, 'warning_linktype_not_found_for_', $posbeg+$findlen+1, 0);
+                                    if ($findlinktype == '') { 
+                                        //echo 'href not recognised: ' . $findsearch . '|<br/>';
+                                        $content = substr_replace($content, 'nolinktype_', $posbeg+$findlen+1, 0);
+                                    }
+                                    self::$warncnt++;
+                                } else {
+                                    $content = substr_replace($content, '[urlhome]' . $findhash, $posbeg+$findlen+1, strlen($findorg));
                                 }
-                                self::$warncnt++;
                             }
                         }
                     } else {
@@ -2129,6 +2150,11 @@ THEEND;
                 }
                 $posbeg = $posbeg + $findlen;
             }
+        }
+        if ($posbeg == $loopprotect && $loopprotect != 0) {
+            //echo 'loopprotect!' . $loopprotect . '|' . $repldebug . '<br/>';
+            self::$warncnt++;
+            $content .= '<br/><!-- Warning! Something went wrong while replacing internal links! -->';
         }
         return $content;
     }

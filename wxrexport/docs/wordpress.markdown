@@ -50,7 +50,11 @@ Checking the result and actions afterwards
 
 Obviously all imports have to result in no errors reported. If all is well your content is visible in the Dashboard. Getting all to display correctly on your site means updating your theme :-) .
 
-__Defining the shortcode [imgpath]__
+__[urlhome] - Your main url__
+
+All references to your main url or your aliases (set in the aliases array) in the content of the entries and/or pages will be replaced by [urlhome]. You need to replace that string by the desired new url.
+
+__[imgpath] - Defining the shortcode__
 
 When exporting entries and pages their content is scanned for image references. These are replaced by the correct pointer to the exported upload. This pointer contains a shortcode [imgpath] which can be replaced manually in the xml file by the url you are importing on but can also be used as a shortcode in WP. This shortcode has to be defined in functions.php of your theme so it can be displayed correctly (the image will not be shown in the visual editor):
 

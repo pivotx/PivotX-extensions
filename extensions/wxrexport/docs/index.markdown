@@ -22,6 +22,11 @@ Currently the following export choices exists:
    * Export Pages and Galleries
    * Export Entries (with and without comments)
    * Export Entries and Galleries (with and without comments)
- * Without parsing of introduction and body content (so you can check where template tags are used)
+ * Without parsing of introduction and body content (so you can check where template tags or smarty variables are used)
    * Export Pages
    * Export Entries (with and without comments)
+
+Remarks:
+
+1. If you use extension Imagetools be sure to have at least version 0.8.1 installed.
+2. Template tags for extension Bonusforms are disabled when exporting because they give errors when parsing and also can switch the entire extension seemingly off.

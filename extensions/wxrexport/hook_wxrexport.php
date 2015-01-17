@@ -57,7 +57,9 @@ class pivotxWxrExport
     //
     // efprefix is the prefix put in front of the exported extrafield field names
     //
-    // entrysel gives you the option to only select specific categories or uids
+    // entrysel gives you the option to only select specific categories (also valid for category export) or uids
+    //
+    // pagesel gives you the option to only select specific chapters (also valid for chapter export)
     //
     // defweblog is meant to specify the name of your default weblog folder name
     //
@@ -131,7 +133,7 @@ class pivotxWxrExport
     </ul>
     </li>
 </ol>
-<p>Without parsing of introduction and body content (so you can check where template tags are used)</p>
+<p>Without parsing of introduction and body content (so you can check where template tags and smarty variables are used)</p>
 <ol>
     <li><a href="?page=wxrexport&amp;type=pages&amp;parse=no">
         Export Pages
@@ -202,6 +204,11 @@ THEEND;
         $output = '';
         self::recordId(0, 0);   // so default of minimum gets overwritten
         foreach($PIVOTX['categories']->data as $cat) {
+            if (array_key_exists('cats', self::$entrysel)) {
+                if (!in_array($cat['name'], self::$entrysel['cats'])) {
+                    continue;
+                }
+            }
             $output .= '<wp:category><wp:category_nicename>'.htmlspecialchars($cat['name']).'</wp:category_nicename><wp:category_parent></wp:category_parent><wp:cat_name><![CDATA['.$cat['display'].']]></wp:cat_name></wp:category>'."\n";
             self::$itemcnt++;
         }
@@ -672,6 +679,16 @@ THEEND;
             if ($record['pivx_type'] == 'page') {
                 $PIVOTX['template']->assign('page', $record);
             }
+            // and for some system vars
+            $PIVOTX['template']->assign('paths', $PIVOTX['paths']);
+            // and fake the modifier vars
+            $recmod = array();
+            $recmod['pagetype'] = $recmod['action'] = $record['pivx_type'];
+            $recmod['root'] = $recmod['home'] = null;
+            $recmod['uid'] = $record['uid'];
+            $recmod['weblog'] = self::$defweblog;
+            $recmod['uri'] = $record['uri'];
+            $PIVOTX['template']->assign('modifier', $recmod);
 
 //@@CHANGE REPLACE STRINGS HERE -- start
             // replace some strings in introduction and body before parsing
@@ -696,9 +713,15 @@ THEEND;
                 //echo getcwd() . "/templates/" . self::$defweblog . '/' . $incl_skip . '<br/>';
                 $record = self::replaceIt($record, '[[ include file="' . getcwd() . "/templates/" . self::$defweblog . '/' . $incl_skip . '" ]]', '<!-- Include skipped! -->');
             }
-            // extension imagetools active? (need version 0.8.1 to use this)
+            // extension imagetools active? (need at least version 0.8.1 to use this)
             if (in_array('imagetools',$activeext)) {
                 $record = self::replaceIt($record, '[[ thumbnail ', '[[ thumbnail noencode=1 ');
+                $record = self::replaceIt($record, '[[thumbnail ', '[[ thumbnail noencode=1 ');
+            }
+            // extension bonusforms active? (change the template tag to inactivate because of parsing errors)
+            if (in_array('bonusforms',$activeext)) {
+                $record = self::replaceIt($record, '[[ bonusform ', '[[ noexport_bonusform ');
+                $record = self::replaceIt($record, '[[bonusform ', '[[ noexport_bonusform ');
             }
 
 //@@CHANGE REPLACE STRINGS HERE -- end
@@ -985,6 +1008,11 @@ THEEND;
                               'chaptername' => $chapter['chaptername'],
                               'description' => $chapter['description'],
                               'sortorder' => $chapter['sortorder']);
+            if (array_key_exists('chapters', self::$pagesel)) {
+                if (!in_array($chapinfo['chaptername'], self::$pagesel['chapters'])) {
+                    continue;
+                }
+            }
             if ($chapter['chaptername'] != '') {
                 $output .= self::outputWXR_Chapters($chapinfo);
             }
@@ -1841,6 +1869,9 @@ THEEND;
                     // thumbs are skipped?
                     if (self::$thumb_skip) {
                         $srcsearch = str_replace('.thumb', '', $srcimg);
+                        if (in_array('nivoslider',$activeext)) {
+                            $srcsearch = str_replace('_thumb', '', $srcsearch);
+                        }
                     }
                     // remnants of timthumb syntax? (&w= &h= &zc=) imagetools also uses &fit=1&type=.jpg
                     $srcparts = explode('&',$srcsearch);
@@ -1858,6 +1889,9 @@ THEEND;
                     $uplinfo = self::searchUploadByFilename($UPLFILES, $srcsearch);
                     // replace the thumb string
                     $srcimgth = str_replace('.thumb', self::$thumb_repl, $srcimg);
+                    if (in_array('nivoslider',$activeext)) {
+                        $srcimgth = str_replace('_thumb', self::$thumb_repl, $srcimgth);
+                    }
                     $srcinbetw = '';
                     if ($srcimg != $srcimgth) {
                         $srcinbetw = self::$thumb_repl;

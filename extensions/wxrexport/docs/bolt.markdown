@@ -37,4 +37,6 @@ p = page related
 Checking the result and actions afterwards
 ==========================================
 
-....
+__Excluding exports from import__
+
+If you want to exclude exported parts from the import you can manually edit the generated xml files before import. Just delete the lines beginning with the `<item>` tag and the `</item>` tag and all lines in between.

@@ -37,6 +37,10 @@ p = page related
 Checking the result and actions afterwards
 ==========================================
 
+__[urlhome] - Your main url__
+
+All references to your main url or your aliases (set in the aliases array) in the content of the entries and/or pages will be replaced by [urlhome]. You need to replace that string by the desired new url.
+
 __Excluding exports from import__
 
 If you want to exclude exported parts from the import you can manually edit the generated xml files before import. Just delete the lines beginning with the `<item>` tag and the `</item>` tag and all lines in between.

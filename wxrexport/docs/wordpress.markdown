@@ -69,3 +69,12 @@ Using this shortcode makes the content more portable to other WP's.
 __Excluding exports from import__
 
 If you want to exclude exported parts from the import you can manually edit the generated xml files before import. Just delete the lines beginning with the `<item>` tag and the `</item>` tag and all lines in between.
+
+__Check errors__
+
+If the import reports errors you should check these errors obviously. Also important is to check the id's of the imports just in front of the failing import. The WP importer is known to set these id's to the id of the failing import...... If these imported parts are used somewhere (i.e. connected through its id) then this connection will be wrong. 
+
+__Peculiar things__
+
+1. If the importer encounters an audio file with an image embedded it will create this image as a separate entity. These entities do not have a title. The author of the entity will be the user that does the import (so the user selected is not used).
+2. After import of the uploads check all media for creation of thumbnails. If there is no thumbnail visible in the list it could be that the file name contains unwanted characters.

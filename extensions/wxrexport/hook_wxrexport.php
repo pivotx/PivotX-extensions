@@ -4,7 +4,7 @@
 // - Author: PivotX team 
 // - Site: http://www.pivotx.net
 // - Description: Export content in WXR (WordPress eXtended RSS) format.
-// - Date: 2015-01-11
+// - Date: 2015-01-18
 // - Identifier: wxrexport
 
 
@@ -25,7 +25,7 @@ class pivotxWxrExport
     public static $id_max_org = 0;
     public static $id_min_new = 99999999;
     public static $id_max_new = 0;
-    // @@CHANGE 
+    // Information: 
     // If you are importing into an existing WP then you probably want to add some number to the internal ids
     // so these will be recognisable in future; also ids for pages and entries can be the same in PivotX but in WP
     // they cannot.
@@ -38,6 +38,12 @@ class pivotxWxrExport
     // upload_input is an array where you can specify which subfolder's content should be exported
     // start the value with #ROOT# to get folder from the root (it will be replaced by document root)
     // (value in upload_base_url, pivotx/pics and pivotx/includes/emoticons/trillian will be included automatically)
+    //
+    // upload_toskip contains full file names to have to be skipped for upload export
+    //
+    // upload_toskipext contains extensions that should be skipped for upload export
+    //
+    // upload_yearalways will set an year folder based on the file date if the file is not already in a yyyy-mm folder
     //
     // thumb_repl can contain the replacement string for a thumbnail file whenever it is referenced in the content
     //
@@ -69,6 +75,9 @@ class pivotxWxrExport
     public static $upload_dest_def = '2010/01';
     public static $upload_input = array('images/');  // always end the element with a "/"
     //public static $upload_input = array('images/','media/','#ROOT#/files/');  // example for 2 relative folders and 1 direct from root
+    public static $upload_toskip = array("index.html", ".htaccess", "readme.txt");      // specific files to skip for upload
+    public static $upload_toskipext  = array("fla", "swf");               // specific extensions to skip (e.g. because WP thinks they are dangerous)
+    public static $upload_yearalways = true;               // generate an year folder based on file date if not already in yyyy-mm folder
     public static $thumb_repl = '';  // replacement string within content for thumbnails for images (WP uses "-200x200")
     public static $thumb_skip = true;  // skip the export of thumbnails
     public static $dest_base = '/wordpress';      // default set for WP
@@ -459,6 +468,9 @@ THEEND;
         $output = '';
         $output .= '<item>'."\n";
         $upldate = date('Y-m-d H:i:s');
+        // replace year and month depending on destfolder
+        $upldate = substr_replace($upldate,substr($record['destfolder'],0,4),0,4);
+        $upldate = substr_replace($upldate,substr($record['destfolder'],5,2),5,2);
         $record['post_id'] = $record['uid'];
         $output .= '<!-- Item for upload will have id ' . $record['post_id'] . ' -->'."\n";
         $record['post_parent'] = '0';
@@ -487,7 +499,7 @@ THEEND;
                 'wp:menu_order' => '0',
                 'wp:post_type' => 'attachment',
                 'wp:post_password' => '',
-                'wp:attachment_url' => $record['inputloc'] . rawurlencode($record['filename']),
+                'wp:attachment_url' => array('html', $record['inputloc'] . str_replace(' ', '%20', $record['filename'])), // only spaces have to be replaced by %20
                 'wp:postmeta' => array('html', $attmeta),
             ));
         $output .= '</item>'."\n";
@@ -543,7 +555,7 @@ THEEND;
         $minid_new = self::$id_min_new;
         $maxid_new = self::$id_max_new;
         $extraline = '';
-        if ($exporttype == 'entries' || $exporttype = 'entries and their comments' || $exporttype == 'pages') {
+        if ($exporttype == 'entries' || $exporttype == 'entries and their comments' || $exporttype == 'pages') {
             $extraline .= "\n" . '<!-- Replace [imgpath] and [urlhome] if needed (see docs) -->';
         }
         // check if maximum exceeds any of the other addto... values
@@ -697,8 +709,6 @@ THEEND;
 
 //@@CHANGE REPLACE STRINGS HERE -- start
             // replace some strings in introduction and body before parsing
-            // Scan your xml output for message "Smarty error:"
-            // Also the string Unrecognized template code:  means a template tag was not translated
 
             // Warning: files can be included in included files -- these strings cannot be seen from here
 
@@ -763,6 +773,7 @@ THEEND;
                 foreach($record['extrafields'] as $extrakey=>$extrafield) {
                     // the "normal" image fields
                     if ($extrakey == 'image' || $extrakey == 'afbeelding') {
+                        // not sure whether special characters (like &) are processed correctly / WP doesn't use this tag
                         $image = $PIVOTX['paths']['host'].$PIVOTX['paths']['upload_base_url'] . $extrafield;
                         $uplinfo = self::searchUploadByFilename($UPLFILES, $extrafield);
                         // image found?
@@ -901,27 +912,37 @@ THEEND;
         $output  = '';
         $output .= self::outputWXR_Header('uploads');
 
-        $toskip     = array("index.html", ".htaccess");      // @@CHANGE
-        $toskipext  = array("xyz", "123");                   // @@CHANGE
-
         foreach ($UPLFILES as $uplindex=>$uplfile) {
             $uplinfo    = self::createUplinfo($uplfile, $uplindex + self::$addtoupl);
             $uplinfo['index'] = $uplindex;
             // skip specific files
-            if (in_array($uplinfo['filename'], $toskip)) { continue; }
+            if (in_array($uplinfo['filename'], self::$upload_toskip)) { 
+                $output .= '<!-- Warning! Upload skipped! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
+                self::$warncnt++;
+                continue; 
+            }
             // skip specific extensions
-            if (in_array($uplinfo['fileext'], $toskipext)) { continue; }
-            // skip thumbnails (moved to getuplfiles)
-            //if (substr($uplinfo['postname'], -6) == '.thumb') { continue; }
+            if (in_array($uplinfo['fileext'], self::$upload_toskipext)) {
+                $output .= '<!-- Warning! Upload extension skipped! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
+                self::$warncnt++;
+                continue; 
+            }
+
             $upldupl = self::searchUploadByPostname($UPLFILES, $uplinfo['postname'], $uplinfo['index'] - 1, 0);
             // duplicate file name found?
             if (isset($upldupl['index']) && $uplinfo['index'] != $upldupl['index']) {
                 //echo ($uplinfo['uid'] . ' duplicate of ' . $upldupl['uid'] . '<br/>');
                 // postname has to be unique always
                 $uplinfo['postname'] .= '_dupl.of_' . $upldupl['uid'];
+                $output .= '<!-- Warning! Upload had a duplicate postname! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
+                $output .= '<!--          Other file name info: ' . $upldupl['inputfolder'] . $upldupl['filename'] . ' -->' . "\n";
+                self::$warncnt++;
                 // title has to be unique within same location
                 if ($uplinfo['destfolder'] == $upldupl['destfolder']) {
                     $uplinfo['title'] .= '_dupl.of_' . $upldupl['uid'];
+                    $output .= '<!-- Warning! Upload had a duplicate title! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
+                    $output .= '<!--          Other file name info: ' . $upldupl['inputfolder'] . $upldupl['filename'] . ' -->' . "\n";
+                    self::$warncnt++;
                 }
             }
             $output .= self::outputWXR_Uploads($uplinfo);
@@ -1990,7 +2011,7 @@ THEEND;
                                 //break;  // do not use break here!?
                             }
                         }
-			// plain index.php
+                        // plain index.php
                         if (substr($findsearch,0,strlen($myhost . '/index.php')) == $myhost . '/index.php') {
                             $findsearch = substr_replace($findsearch, $myhost, 0, strlen($myhost . '/index.php'));
                         }
@@ -2179,40 +2200,40 @@ THEEND;
 
         // check/warn for remaining pivotx and other strings
         $contentorg = $content;
-        $content2 = str_replace('/pivotx/', '@@CHANGE', $content, $replcnt);
+        $content2 = str_replace('/pivotx/', '==wxrexport==', $content, $replcnt);
         if ($replcnt != 0) {
             self::$warncnt++;
             $contentorg .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to /pivotx/! -->';
         }
-        $content2 = str_replace('class="pivotx', '@@CHANGE', $content, $replcnt);
+        $content2 = str_replace('class="pivotx', '==wxrexport==', $content, $replcnt);
         if ($replcnt != 0) {
             self::$warncnt++;
             $contentorg .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to class=\"pivotx! (without the back slash) -->';
         }
-        $content2 = str_replace($PIVOTX['paths']['host'], '@@CHANGE', $content, $replcnt);
+        $content2 = str_replace($PIVOTX['paths']['host'], '==wxrexport==', $content, $replcnt);
         if ($replcnt != 0) {
             self::$warncnt++;
             $contentorg .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this host! -->';
         }
         if ($PIVOTX['paths']['host'] != $PIVOTX['paths']['canonical_host']) {
-            $content2 = str_replace($PIVOTX['paths']['canonical_host'], '@@CHANGE', $content, $replcnt);
+            $content2 = str_replace($PIVOTX['paths']['canonical_host'], '==wxrexport==', $content, $replcnt);
             if ($replcnt != 0) {
                 self::$warncnt++;
                 $contentorg .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this canonical host! -->';
             }
         }
-        $content2 = str_replace('Smarty error:', '@@CHANGE', $content, $replcnt);
+        $content2 = str_replace('Smarty error:', '==wxrexport==', $content, $replcnt);
         if ($replcnt != 0) {
             self::$warncnt++;
             $contentorg .= '<br/><!-- Warning! This content contains ' . $replcnt . ' smarty errors! -->';
         }
-        $content2 = str_replace('Unrecognized template code:', '@@CHANGE', $content, $replcnt);
+        $content2 = str_replace('Unrecognized template code:', '==wxrexport==', $content, $replcnt);
         if ($replcnt != 0) {
             self::$warncnt++;
             $contentorg .= '<br/><!-- Warning! This content contains ' . $replcnt . ' unrecognised template codes (spelled unrecognized) -->';
         }
-        $content2 = str_replace('href="mailto:', '@@CHANGE', $content, $replcnt);
-        $content2 = str_replace("href='mailto:", '@@CHANGE', $content, $replcnt2);
+        $content2 = str_replace('href="mailto:', '==wxrexport==', $content, $replcnt);
+        $content2 = str_replace("href='mailto:", '==wxrexport==', $content, $replcnt2);
         if ($replcnt != 0 || $replcnt2 != 0) {
             self::$warncnt++;
             $contentorg .= '<br/><!-- Warning! This content contains ' . ($replcnt+$replcnt2) . ' mailto links -->';
@@ -2244,6 +2265,11 @@ THEEND;
                 $regex = '/\d{4}[-]\d{2}/';   //  yyyy-nn format
                 if (!preg_match($regex, $yearfolder)) {
                     $yearfolder = self::$upload_dest_def;
+                    // put them into yearfolder depending on file date?
+                    if (self::$upload_yearalways === true) {
+                        //echo "$uplfilename was modified: " . date ("F d Y H:i:s.", filemtime($uplfile)) . '<br/>';
+                        $yearfolder = date ("Y/m", filemtime($uplfile));
+                    }
                 } else {
                     $yearparts = explode("-",$yearfolder);
                     if ($yearparts[0] < 1990 || $yearparts[0] > $curryear || $yearparts[1] < 1 || $yearparts[1] > 12) {
@@ -2259,10 +2285,16 @@ THEEND;
             $inpfolder = substr($inpfolder, 3);
         }
         // put extension folder in another folder
-        if ($inpfolder == 'pivotx/extensions/sociable/images/' 
-            || $inpfolder == 'pivotx/extensions/nivoslider/slides/' 
-            || $inpfolder == 'pivotx/extensions/slidingpanel/icons/' 
-            || $inpfolder == 'pivotx/extensions/media/') {
+        if ($inpfolder == 'pivotx/extensions/sociable/images/') {
+            $yearfolder = '2000/07';    //  @@CHANGE
+        }
+        if ($inpfolder == 'pivotx/extensions/nivoslider/slides/') {
+            $yearfolder = '2000/08';    //  @@CHANGE
+        }
+        if ($inpfolder == 'pivotx/extensions/slidingpanel/icons/') {
+            $yearfolder = '2000/09';    //  @@CHANGE
+        }
+        if ($inpfolder == 'pivotx/extensions/media/') {
             $yearfolder = '2000/10';    //  @@CHANGE
         }
         // root location?
@@ -2274,7 +2306,7 @@ THEEND;
             $yearfolder = '2000/11';    //  @@CHANGE
         }
         // put pivotx pics and emoticons in another folder
-        if ($inpfolder == 'pivotx/pics/' || $inpfolder == 'pivotx/includes/emoticons/trillian/') {
+        if (substr($inpfolder,0,12) == 'pivotx/pics/' || $inpfolder == 'pivotx/includes/emoticons/trillian/') {
             $yearfolder = '2000/12';    //  @@CHANGE
         }
 //echo $uplcounter . '|' . $uplfilename . '|' . $yearfolder . '|' . $inpurl . '|' . $inpfolder . '|' . $basefolder . '<br/>';
@@ -2286,6 +2318,7 @@ THEEND;
                          'title' => removeExtension($uplfilename),
                          'postname' => strtolower(str_replace(' ', '-', (removeExtension($uplfilename)))),
                          'rootloc' => $rootloc,
+                         'inputfolder' => $inpfolder,
                          'inputloc' => $inpurl . $inpfolder);
         return $uplinfo;
     }

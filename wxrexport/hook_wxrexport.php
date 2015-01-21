@@ -67,6 +67,8 @@ class pivotxWxrExport
     //
     // pagesel gives you the option to only select specific chapters (also valid for chapter export)
     //
+    // chapdate gives the fixed chapter publish date (needed when you create the import for pages later to keep chapter from created twice)
+    //
     // defweblog is meant to specify the name of your default weblog folder name
     //
     // aliases is meant to specify the urls of your aliases
@@ -94,6 +96,7 @@ class pivotxWxrExport
     //public static $entrysel = array('uid'=>array(75,85),'show'=>20000);   // only specific uids
     public static $pagesel = array();     // all chapters are selected
     //public static $pagesel = array('chapters'=>array('Pages', 'Pages2'));    // only specific chapters (upper case name!)
+    public static $chapdate = '2010-02-14 10:04:00';   // set fixed chapter date
     public static $defweblog = 'weblog';
     // array for your aliases (full urls with http) -- you can also enter your main url if your canonical-host setting is incorrect
     public static $aliases = array();
@@ -263,7 +266,8 @@ THEEND;
             } else {
                 $output .= '<item>'."\n";
                 $record['post_id'] = 0;
-                $efdate = date('Y-m-d H:i:s', strtotime($efdate . ' - 1 day'));  // to be sure that imported item will be published
+                // extrafields have no own publ.date; to be sure that imported item will be published use yesterday
+                $efdate = date('Y-m-d H:i:s', strtotime(' - 1 day'));  
                 $record['post_parent'] = '0';
 
                 $efmeta = self::buildEFMeta('entry', $extrafields);
@@ -296,7 +300,6 @@ THEEND;
 
                 $output .= '<item>'."\n";
                 $record['post_id'] = 0;
-                $efdate = date('Y-m-d H:i:s', strtotime($efdate . ' - 1 day'));  // to be sure that imported item will be published
                 $record['post_parent'] = '0';
 
                 $efmeta = self::buildEFMeta('page', $extrafields);
@@ -345,7 +348,6 @@ THEEND;
             self::$warncnt++;
         } else {
             $record['post_id'] = 0;
-            $galldate = date('Y-m-d H:i:s', strtotime($efdate . ' - 1 day'));  // to be sure that imported item will be published
             $record['post_parent'] = '0';
             foreach ($galleries as $gallery) {
                 self::recordId(0, $gallery['gall_id']);
@@ -356,12 +358,12 @@ THEEND;
                 $output .= self::outputMap(array(
                     'title' => $gallery['title'],
                     'link' => '0',
-                    'pubDate' => $galldate,
+                    'pubDate' => array('date_2822', $gallery['content_uid_date']),
                     'dc:creator' => array('cdata' , 'pivx_galleries'),
                     'guid isPermaLink="false"' => '0',
                     'wp:post_id' => $gallery['gall_id'],
-                    'wp:post_date' => $galldate,
-                    'wp:post_date_gmt' => $galldate,
+                    'wp:post_date' => array('date', $gallery['content_uid_date']),
+                    'wp:post_date_gmt' => array('date_gmt', $gallery['content_uid_date']),
                     'wp:comment_status' => 'closed',
                     'wp:ping_status' => 'closed',
                     'wp:post_name' => $gallery['post_name'],
@@ -426,7 +428,6 @@ THEEND;
 
         $output = '';
         $output .= '<item>'."\n";
-        $chapdate = date('Y-m-d H:i:s', strtotime($chapdate . ' - 1 day'));  // to be sure that imported page will be published
         $record['post_type'] = 'page';
 
         $record['post_id'] = $record['uid'] + self::$addtochap;
@@ -439,15 +440,15 @@ THEEND;
         $output .= self::outputMap(array(
                 'title' => $record['chaptername'],
                 'link' => '0',
-                'pubDate' => $chapdate,
+                'pubDate' => self::$chapdate,
                 'dc:creator' => array('cdata' , 'pivx_chapter'),
                 'guid isPermaLink="true"' => '0',
                 'description' => $record['description'],
                 'excerpt:encoded' => array('cdata', ''),
                 'content:encoded' => array('cdata', 'Chapter: ' . $record['chaptername']),    // @@CHANGE
                 'wp:post_id' => $record['post_id'],
-                'wp:post_date' => $chapdate,
-                'wp:post_date_gmt' => $chapdate,
+                'wp:post_date' => self::$chapdate,
+                'wp:post_date_gmt' => self::$chapdate,
                 'wp:comment_status' => 'closed',
                 'wp:ping_status' => 'closed',
                 'wp:status' => 'publish',
@@ -1651,6 +1652,7 @@ THEEND;
                     $gallarr['content_type'] = 'entry';
                     $gallarr['content_uid'] = $entry['uid'];
                     $gallarr['content_uid_title'] = $entry['title'];
+                    $gallarr['content_uid_date'] = $entry['publish_date'];
                     $galleries[] = $gallarr;
                 }
             }
@@ -1670,6 +1672,7 @@ THEEND;
                         $gallarr['content_type'] = 'page';
                         $gallarr['content_uid'] = $page['uid'];
                         $gallarr['content_uid_title'] = $page['title'];
+                        $gallarr['content_uid_date'] = $page['publish_date'];
                         $galleries[] = $gallarr;
                     }
                 }
@@ -1818,7 +1821,9 @@ THEEND;
     private static function contentReplImg($content, $repldebug) {
         global $PIVOTX;
         global $UPLFILES;
-        // replace upload_base_url by something general (or a shortcode)
+        // replace relative img src code
+        $content = self::contentReplImgRelative($content, 'src=', 'B', $repldebug);
+        // replace upload locations by something general (to be used as a shortcode)
         $content = self::contentReplImgUploads($content, 'src=', '', '[imgpath]/', 'B', $repldebug);
         $content = self::contentReplImgUploads($content, 'href=', '', '[imgpath]/', 'B', $repldebug);
         // the same for fixed location pivotx/pics
@@ -1955,17 +1960,22 @@ THEEND;
         } else {
             $replpfx .= '"';
         }
+        $myhost = $PIVOTX['paths']['canonical_host'];
         foreach (self::$upload_input as $upload_inp) {
             if (substr($upload_inp,0,6) == '#ROOT#') {
                 $upload_inp = str_replace('#ROOT#', $PIVOTX['paths']['canonical_host'], $upload_inp);
             }
-            //echo 'repl ' . $replpfx . '|' . $PIVOTX['paths']['site_url'] . $upload_inp . '<br/>';
+            //echo 'repl ' . $replpfx . '|' . $replbetw . '|' . $PIVOTX['paths']['site_url'] . $upload_inp . '|' . $repldebug . '<br/>';
+            $content = str_replace($replpfx . $replbetw . $myhost . $PIVOTX['paths']['site_url'] . $upload_inp, $replpfx . $replby, $content);
+            $content = str_replace($replpfx . $replbetw . $myhost . '/' . $upload_inp, $replpfx . $replby, $content);
+            // aliases array
+            foreach (self::$aliases as $alias) {
+                $content = str_replace($replpfx . $replbetw . $alias . $PIVOTX['paths']['site_url'] . $upload_inp, $replpfx . $replby, $content);
+                $content = str_replace($replpfx . $replbetw . $alias . '/' . $upload_inp, $replpfx . $replby, $content);
+            }
             $content = str_replace($replpfx . $replbetw . $PIVOTX['paths']['site_url'] . $upload_inp, $replpfx . $replby, $content);
             $content = str_replace($replpfx . $replbetw . $upload_inp, $replpfx . $replby, $content);
-            // sometimes only a slash in front despite other site_url
-            if ($PIVOTX['paths']['site_url'] != '/') {
-                $content = str_replace($replpfx . $replbetw . '/' . $upload_inp, $replpfx . $replby, $content);
-            }
+            $content = str_replace($replpfx . $replbetw . '/' . $upload_inp, $replpfx . $replby, $content);
             // leave out first position of site_url
             $content = str_replace($replpfx . $replbetw . substr($PIVOTX['paths']['site_url'],1) . $upload_inp, $replpfx . $replby, $content);
         }
@@ -1977,12 +1987,61 @@ THEEND;
         return $content;
     }
 
+    private static function contentReplImgRelative($content, $replpfx, $quotetype, $repldebug) {
+        global $PIVOTX;
+        // quote type processing? B = both / D = only double quote / S = only single quote
+        if ($quotetype == 'B') {
+            $content = self::contentReplImgRelative($content, $replpfx, 'D', $repldebug);
+            $content = self::contentReplImgRelative($content, $replpfx, 'S', $repldebug);
+            return $content;
+        }
+        if ($quotetype == 'S') {
+            $replpfx .= $replend = "'";
+        } else {
+            $replpfx .= $replend = '"';
+        }
+        // search for relative references (../../) -- cwd is the same as for the web site display
+        // is there something relative?
+        $content2 = str_replace($replpfx . '../', '==wxrexport==', $content, $replcnt);
+        if ($replcnt != 0) {
+            $reldepth = 5;
+            //echo 'relative found: ' . $repldebug . '<br/>';
+            // how many levels are there? use pivotx_url for that (could be build more efficient as arrays get filled every time)
+            $lvlparts = explode('/',$PIVOTX['paths']['pivotx_url']);
+            $lvlvalid = count($lvlparts) - 2;
+            if ($lvlvalid < 0) { $lvlvalid = 0; }
+            $replthis = array(); $replby = array(); $replstr = $replpfx;
+            for ($i = 1; $i <= $reldepth; $i++) {
+                $replstr .= '../';
+                $replthis[$i] = $replstr;
+                if ($i < $lvlvalid) {
+                    for ($j = 1; $j <= $i; $j++) {
+                        $replby[$i] .= $replpfx . $PIVOTX['paths']['canonical_host'] . '/' . $lvlparts[$j] . '/'; 
+                    }
+                } else {
+                    $replby[$i] = $replpfx . $PIVOTX['paths']['canonical_host'] . '/';
+                }
+            }
+            for ($i = $reldepth; $i > 0; $i--) {
+                $content = str_replace($replthis[$i], $replby[$i], $content, $replcnt);
+            }
+            // something left?
+            $content2 = str_replace($replby[$reldepth].'../', '==wxrexport==', $content, $replcnt);
+            if ($replcnt != 0) {
+                self::$warncnt++;
+                $content .= '<br/><!-- Warning! This content still contains relative src references! Raising var reldepth could help. -->';
+            }
+        }
+        return $content;
+    }
+
     private static function contentReplLink($content, $repldebug) {
         global $PIVOTX;
         // replace the href pointer if needed
         $findthis = 'href=';
         $posbeg = 0; $findlen = strlen($findthis);
         $loopprotect = -1;
+        $myhost = $PIVOTX['paths']['canonical_host'];
         while ($posbeg !== false && $posbeg != $loopprotect) {
             $loopprotect = $posbeg;
             $posbeg = strpos($content, $findthis, $posbeg);
@@ -1993,7 +2052,6 @@ THEEND;
                     if ($posend !== false) {
                         $findsearch = strtolower($findorg = substr($content, $posbeg+$findlen+1, $posend-($posbeg+$findlen+1)));
                         // replace other links to myurl by canonical host value
-                        $myhost = $PIVOTX['paths']['canonical_host'];
                         if (substr($findsearch,0,strlen($PIVOTX['paths']['site_path'])) == $PIVOTX['paths']['site_path']) {
                             $findsearch = substr_replace($findsearch, $myhost, 0, strlen($PIVOTX['paths']['site_path']));
                         }
@@ -2026,7 +2084,15 @@ THEEND;
                         } elseif (substr($findsearch,0,8) == 'https://' && substr($findsearch,0,strlen($myhost)) != $myhost) { // do nothing
                         } elseif (substr($findsearch,0,7) == "mailto:") { // do nothing 
                         } else {
-                            // potential internal link
+                            // findsearch contains potential internal link
+                            //echo $repldebug . '|' . $findsearch . '|' . $findorg . '<br/>';
+                            // strip full url parts (it could also be only a home link)
+                            if (substr($findsearch,0,strlen($myhost.$PIVOTX['paths']['site_url'])) == $myhost.$PIVOTX['paths']['site_url']) {
+                                $findsearch = substr($findsearch, strlen($myhost.$PIVOTX['paths']['site_url']));
+                            }
+                            if (substr($findsearch,0,strlen($myhost.$PIVOTX['paths']['site_url']-1)) == substr($myhost.$PIVOTX['paths']['site_url'],0,-1)) {
+                                $findsearch = substr($findsearch, strlen($myhost.$PIVOTX['paths']['site_url']-1));
+                            }
                             if (substr($findsearch,0,strlen($myhost)) == $myhost) {
                                 $findsearch = substr($findsearch, strlen($myhost));
                             }
@@ -2059,6 +2125,11 @@ THEEND;
                                     }
                                     if (substr($findpart,0,2) == 'a=') {
                                         $findlinktype = 'archive';
+                                        $findlinkvalue = substr($findpart,2);
+                                        break;
+                                    }
+                                    if (substr($findpart,0,2) == 'c=') {
+                                        $findlinktype = 'category';
                                         $findlinkvalue = substr($findpart,2);
                                         break;
                                     }
@@ -2137,7 +2208,7 @@ THEEND;
                                         ($linkentry['uid'] == '' && $linkpage['uid'] == '')) {
                                 $content = substr_replace($content, 'warning_uid_not_found_for_this_entry_or_page_', $posbeg+$findlen+1, 0);
                                 //echo $repldebug . '<br/>';
-                                //echo 'uid not found ' . $findsearch . '|<br/>';
+                                //echo 'uid not found ' . $findsearch . '|' . $findlinktype . '|' . $findlinkvalue . '|<br/>';
                                 self::$warncnt++;
                             } elseif ($findlinktype == 'entry' || ($findlinktype == 'entrypage' && $linkentry['uid'] != '')) {
                                 $relid = $linkentry['uid'] + self::$addtoentry;
@@ -2197,6 +2268,7 @@ THEEND;
     }
 
     private static function contentWarn($content, $repldebug) {
+        global $PIVOTX;
 
         // check/warn for remaining pivotx and other strings
         $contentorg = $content;
@@ -2220,6 +2292,16 @@ THEEND;
             if ($replcnt != 0) {
                 self::$warncnt++;
                 $contentorg .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this canonical host! -->';
+            }
+        }
+        // aliases array
+        foreach (self::$aliases as $alias) {
+            if ($alias != $PIVOTX['paths']['host'] && $alias != $PIVOTX['paths']['canonical)host']) {
+                $content2 = str_replace($alias, '==wxrexport==', $content, $replcnt);
+                if ($replcnt != 0) {
+                    self::$warncnt++;
+                    $contentorg .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to alias ' . $alias . '! -->';
+                }
             }
         }
         $content2 = str_replace('Smarty error:', '==wxrexport==', $content, $replcnt);

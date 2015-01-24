@@ -14,6 +14,12 @@ __Internal ID__
 
 As all internal connections (e.g. which image is added to which post) are done through id's you need to identify a free range of id's not yet used.  
 The easiest way to do that is to identify the current max id in use on your WP installation. For that log in to your SQL back-end (e.g. phpMyAdmin) and navigate to the table(s) where your WP data is in. Find the table that contains the posts (normally called wp_posts) and select it to view the table options. These options will contain the current value for AUTO-INCREMENT. All the new id's that will be imported need to be above this value to be sure that all internal connections are set correctly. If your auto-increment value seems too high you can try to lower it as MySQL will automatically set it to the real value again if your chosen value is too low.
+  
+__Internal ID Category__
+
+***If you do not use category links in your content you can skip this part.***  
+Categories are not normal posts within WP. They are so called taxonomies. These also use internal ids but their value cannot be forced when importing.  
+In the code of wxrexport there is an addtocat variable that works like all other addto variables. But to set its correct value you have to check the value for AUTO-INCREMENT in the table that is normally called wp_terms. Set the value to the value of AUTO-INCREMENT to get the right combination.
 
 __Dummy user__
 

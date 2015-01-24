@@ -31,6 +31,15 @@ class pivotxWxrExport
     // they cannot.
     // These old and new ids can also be used in the chaparray after importing the chapters and exporting the pages.
     // Vars addto... are meant to accomplish this.
+    //
+    // addtocat sets ids based on the sequence in the total collection of categories;
+    // if you use category links in your content please read the documentation on how to use this properly
+    //
+    // addtoupl generates fixed ids based on the sequence in the total collection of uploads;
+    // this is necessary to connect an entry or page's image field to the right WP media id
+    //
+    // addtogall generates fixed ids based on the sequence of encountered galleries;
+    // this is necessary to add these galleries to an entry or page in WP Envira plugin
     // 
     // upload_dest_def is the folder name to set in the export whenever an upload is encountered that is not in a yyyy-nn
     // subfolder (WP only uses that structure)
@@ -54,12 +63,6 @@ class pivotxWxrExport
     // include_skip can contain the include elements in your templates folder that you do not want to include ([[ include tag)
     //
     // include_skip_all can specify whether you do not want to include any element at all ([[ include tag)
-    //
-    // addtoupl generates fixed ids based on the sequence in the total collection of uploads;
-    // this is necessary to connect an entry or page's image field to the right WP media id
-    //
-    // addtogall generates fixed ids based on the sequence of encountered galleries;
-    // this is necessary to add these galleries to an entry or page in WP Envira plugin
     //
     // efprefix is the prefix put in front of the exported extrafield field names
     //
@@ -86,6 +89,7 @@ class pivotxWxrExport
     public static $include_skip = array('skip_this_include.tpl','subfolder/and_this_one_too.php');  // skip include elements in content ([[ include tag)
     public static $include_skip_all = false;  // skip all includes
     public static $addtochap  = 100;
+    public static $addtocat   = 125;    // READ DOC on how to use this one properly!
     public static $addtogall  = 150;
     public static $addtoentry = 200;
     public static $addtopage  = 500;
@@ -219,14 +223,16 @@ THEEND;
     {
         global $PIVOTX;
         $output = '';
-        self::recordId(0, 0);   // so default of minimum gets overwritten
+        $catid = 0 + self::$addtocat;  // category does not have its own uid
         foreach($PIVOTX['categories']->data as $cat) {
             if (array_key_exists('cats', self::$entrysel)) {
                 if (!in_array($cat['name'], self::$entrysel['cats'])) {
                     continue;
                 }
             }
-            $output .= '<wp:category><wp:category_nicename>'.htmlspecialchars($cat['name']).'</wp:category_nicename><wp:category_parent></wp:category_parent><wp:cat_name><![CDATA['.$cat['display'].']]></wp:cat_name></wp:category>'."\n";
+            $catid++;
+            self::recordId(0, $catid);
+            $output .= '<wp:category><wp:term_id>'.$catid.'</wp:term_id><wp:category_nicename>'.htmlspecialchars($cat['name']).'</wp:category_nicename><wp:category_parent></wp:category_parent><wp:cat_name><![CDATA['.$cat['display'].']]></wp:cat_name></wp:category>'."\n";
             self::$itemcnt++;
         }
         return $output;
@@ -572,6 +578,10 @@ THEEND;
             $extraline .= "\n" . '<!-- Warning! This export overlaps the id range for addtochap! -->';
             $warncnt++;
         }
+        if ($maxid_new > self::$addtocat && $minid_new < self::$addtocat) {
+            $extraline .= "\n" . '<!-- Warning! This export overlaps the id range for addtocat! -->';
+            $warncnt++;
+        }
         if ($maxid_new > self::$addtogall && $minid_new < self::$addtogall) {
             $extraline .= "\n" . '<!-- Warning! This export overlaps the id range for addtogall! -->';
             $warncnt++;
@@ -752,10 +762,6 @@ THEEND;
                 $content_encoded .= $record['body'];
             }
             $content_encoded = rawurldecode(html_entity_decode($content_encoded, ENT_QUOTES, "UTF-8"));
-
-            // todo: scan for tag tags in content and replace them
-            // todo: scan for archive links
-            // todo: scan for internal links from the content itself
 
             $repldebug = 'item processing: ' . $record['uid'] . '|' . $record['title'];
             $content_encoded = self::contentReplParts($content_encoded, $parse, $repldebug);
@@ -1634,6 +1640,20 @@ THEEND;
         return $uplfiles;
     }
 
+    private static function getCatKey($catname) {
+        global $PIVOTX;
+        $catkeywxr = 0;
+        $catid = 0 + self::$addtocat;  // category does not have its own uid
+        foreach($PIVOTX['categories']->data as $cat) {
+            $catid++;
+            if ($cat['name'] == $catname) {
+                $catkeywxr = $catid;
+                break;
+            }
+        }
+        return $catkeywxr;
+    }
+
     public static function getGalleries() {
         global $PIVOTX;
         global $EXTRAFIELDS;
@@ -1729,6 +1749,10 @@ THEEND;
         $gallery['galllines'] = array();
         foreach ($galllines as $gallline) {
             $gallparts = explode('###',trim($gallline));
+            $gallimg['data']  = '';
+            $gallimg['alt']   = '';
+            $gallimg['title'] = '';
+            $gallimg['image'] = '';
             switch (count($gallparts)) {
             case 4:
                 $gallimg['data']  = trim($gallparts[3]);
@@ -1759,6 +1783,16 @@ THEEND;
             array_push($gallids, strval($gallline['upl_uid']));
             $gallidsdatasrc['src'] = $gallurl . $gallline['upl_destfolder'] . '/' . $gallline['upl_filename'];
             $gallidsdatasrc['link'] = $gallidsdatasrc['src'];
+            // @@CHANGE Interpretation of data attribute
+            if ($gallline['data'] != '') {
+                // ennn or pnnn = entry uid or page uid
+                if (substr($gallline['data'],0,1) == 'e' && is_numeric(substr($gallline['data'],1))) {
+                    $gallidsdatasrc['link'] = '?p=' . (substr($gallline['data'],1) + self::$addtoentry);
+                }
+                if (substr($gallline['data'],0,1) == 'p' && is_numeric(substr($gallline['data'],1))) {
+                    $gallidsdatasrc['link'] = '?page_id=' . (substr($gallline['data'],1) + self::$addtopage);
+                }
+            }
             $gallidsdatasrc['title'] = $gallline['title'];
             $gallidsdatasrc['alt'] = $gallline['alt'];
             $gallidsdata['gallery'][$gallline['upl_uid']] = $gallidsdatasrc;
@@ -2199,7 +2233,7 @@ THEEND;
                             if ($findlinktype == 'page' || $findlinktype == 'entrypage') {
                                 $linkpage = $PIVOTX['pages']->getPageByUri($findlinkvalue);
                             }
-                            $unsupported_types = array('visitor','archive','category','weblog');
+                            $unsupported_types = array('visitor','weblog');
                             if ($findlinktype == 'entrypage' && $linkentry['uid'] != '' && $linkpage['uid'] != '') {
                                 $content = substr_replace($content, 'warning_link_found_for_both_entry_and_page_', $posbeg+$findlen+1, 0);
                                 //echo 'entry + page link? ' . $findsearch . '|<br/>';
@@ -2218,6 +2252,27 @@ THEEND;
                                 $content = substr_replace($content, '?page_id=' . $relid . $findhash, $posbeg+$findlen+1, strlen($findorg));
                             } elseif ($findlinktype == 'tag') {
                                 $content = substr_replace($content, '?tag=' . $findlinkvalue . $findhash, $posbeg+$findlen+1, strlen($findorg));
+                            } elseif ($findlinktype == 'category') {
+                                $catid = self::getCatKey($findlinkvalue);
+                                if ($catid == 0) {
+                                    $content = substr_replace($content, 'warning_cat_not_found_', $posbeg+$findlen+1, 0);
+                                    self::$warncnt++;
+                                } else {
+                                    $content = substr_replace($content, '?cat=' . $catid . $findhash, $posbeg+$findlen+1, strlen($findorg));
+                                }
+                            } elseif ($findlinktype == 'archive') {
+                                $archyear = substr($findlinkvalue,0,4);
+                                $archtype = substr($findlinkvalue,4,2);
+                                $archmonth = substr($findlinkvalue,6,2);
+                                if ($archtype != '-y' && $archtype != '-m') {
+                                    $content = substr_replace($content, 'warning_this_archive_type_not_supported_', $posbeg+$findlen+1, 0);
+                                    self::$warncnt++;
+                                } else {
+                                    if ($archtype == '-y') {
+                                        $archmonth = '';
+                                    }
+                                    $content = substr_replace($content, '?m=' . $archyear . $archmonth . $findhash, $posbeg+$findlen+1, strlen($findorg));
+                                }
                             } elseif (in_array($findlinktype, $unsupported_types)) {
                                 $content = substr_replace($content, 'warning_linktype_'.$findlinktype.'_unsupported_', $posbeg+$findlen+1, 0);
                                 self::$warncnt++;

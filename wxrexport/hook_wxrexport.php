@@ -4,7 +4,7 @@
 // - Author: PivotX team 
 // - Site: http://www.pivotx.net
 // - Description: Export content in WXR (WordPress eXtended RSS) format.
-// - Date: 2015-01-18
+// - Date: 2015-02-07
 // - Identifier: wxrexport
 
 
@@ -814,6 +814,54 @@ THEEND;
                         if ($gallsel == 'yes' && $extrafieldtype == 'gallery') {
                             $gallkey = self::getGallKey($extrakey, $record['pivx_type'], $record['uid']);
                             if ($gallkey != 0) {
+                                // add code for several gallery options; intention is that importer selects manually what they want
+                                $content_encoded .= '<!-- Warning! Select the gallery code you want to use; see documentation for more details. -->';
+                                self::$warncnt++;
+                                $galllines = self::gallLines($extrafield, false);
+                                $gallids   = array();
+                                $galltitle = array();
+                                $swgtitle  = 'N';
+                                $gallalt   = array();
+                                $swgalt     = 'N';
+                                $galldata  = array();
+                                $swgdata   = 'N';
+                                foreach ($galllines as $gallline) {
+                                    array_push($gallids, $gallline['upl_uid']);
+                                    array_push($galltitle, $gallline['title']);
+                                    if ($gallline['title'] != '') { $swgtitle = 'Y'; }
+                                    array_push($gallalt, $gallline['alt']);
+                                    if ($gallline['alt'] != '') { $swgalt = 'Y'; }
+                                    array_push($galldata, $gallline['data']);
+                                    if ($gallline['data'] != '') { $swgdata = 'Y'; }
+                                }
+                                $gallidsstring = implode(',',$gallids);
+                                $gallparms = '';
+                                $gallmlaadd = '';
+                                if ($swgtitle == 'Y') {
+                                    $gallparms .= ' mla_fixed_title="';
+                                    $gallparms .= implode(',',$galltitle) . '"';
+                                    $gallmlaadd .= ' mla_link_attributes="title={+mla_fixed_title+}"';
+                                    $gallmlaadd .= ' mla_image_attributes="title={+mla_fixed_title+}';
+                                }
+                                if ($swgalt == 'Y') {
+                                    $gallparms .= ' mla_fixed_alt="';
+                                    $gallparms .= implode(',',$gallalt) . '"';
+                                    if ($swgtitle == 'Y') {
+                                        $gallmlaadd .= ' alt={+mla_fixed_alt+}';
+                                    } else {
+                                        $gallmlaadd .= ' mla_image_attributes="alt={+mla_fixed_alt+}';
+                                    }
+                                }
+                                if ($swgdata == 'Y') {
+                                    $gallparms .= ' mla_fixed_data="';
+                                    $gallparms .= implode(',',$galldata) . '"';
+                                }
+                                $gallmlaadd .= '"';
+                                // plain gallery code with not supported parms to show the set values
+                                $content_encoded .= '<br/>[gallery ids="' . $gallidsstring . '"' . str_replace('mla_', 'nosupp_', $gallparms) . ']';
+                                // mla gallery code with not supported parms to show the set values
+                                $content_encoded .= '<br/>[mla_gallery ids="' . $gallidsstring . '"' . $gallparms . $gallmlaadd . ']';
+                                // envira gallery
                                 $content_encoded .= '<br/>[envira-gallery id="' . $gallkey . '"]';
                             } else {
                                 $content_encoded .= '<!-- Warning! Gallery id not found! ' . $extrakey . ' -->';
@@ -1716,6 +1764,18 @@ THEEND;
         return $gallkeywxr;
     }
 
+    private static function getGallery($gallkey) {
+        global $GALLERIES;
+        $gallrslt = array();
+        foreach($GALLERIES as $gallery) {
+            if ($gallery['gall_id'] == $gallkey) {
+                $gallrslt = $gallery;
+                break;
+            }
+        }
+        return $gallrslt;
+    }
+
     public static function buildGallMeta($gallery) {
         global $UPLFILES;
 
@@ -1745,9 +1805,47 @@ THEEND;
             'thumb' => ''
         );
 
-        $galllines = preg_split('|[\r\n]+|',trim($gallery['gall_value']));
-        $gallery['galllines'] = array();
-        foreach ($galllines as $gallline) {
+        $gallery['galllines'] = self::gallLines($gallery['gall_value'], true);
+
+        $gallurl = self::$dest_base . '/wp-content/uploads/';
+        foreach ($gallery['galllines'] as $gallline) {
+            array_push($gallids, strval($gallline['upl_uid']));
+            $gallidsdatasrc['src'] = $gallurl . $gallline['upl_destfolder'] . '/' . $gallline['upl_filename'];
+            $gallidsdatasrc['link'] = $gallidsdatasrc['src'];
+            // @@CHANGE Interpretation of data attribute
+            if ($gallline['data'] != '') {
+                // ennn or pnnn = entry uid or page uid
+                if (substr($gallline['data'],0,1) == 'e' && is_numeric(substr($gallline['data'],1))) {
+                    $gallidsdatasrc['link'] = '?p=' . (substr($gallline['data'],1) + self::$addtoentry);
+                }
+                if (substr($gallline['data'],0,1) == 'p' && is_numeric(substr($gallline['data'],1))) {
+                    $gallidsdatasrc['link'] = '?page_id=' . (substr($gallline['data'],1) + self::$addtopage);
+                }
+            }
+            $gallidsdatasrc['title'] = $gallline['title'];
+            $gallidsdatasrc['alt'] = $gallline['alt'];
+            $gallidsdata['gallery'][$gallline['upl_uid']] = $gallidsdatasrc;
+        }
+        // _eg_ meta is meant for envira gallery WP plug-in
+        $gallmeta .= "\n" . self::outputMap(array(
+            'wp:meta_key' => '_eg_in_gallery',
+            'wp:meta_value' => array('cdata', serialize($gallids)),
+            ));
+        $gallmeta .= '</wp:postmeta>';
+
+        $gallmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
+            'wp:meta_key' => '_eg_gallery_data',
+            'wp:meta_value' => array('cdata', serialize($gallidsdata)),
+            ));
+
+        return $gallmeta;
+    }
+
+    private static function gallLines($gall_value, $gall_warn) {
+        global $UPLFILES;
+        $gallvalues = preg_split('|[\r\n]+|',trim($gall_value));
+        $galllines  = array();
+        foreach ($gallvalues as $gallline) {
             $gallparts = explode('###',trim($gallline));
             $gallimg['data']  = '';
             $gallimg['alt']   = '';
@@ -1773,43 +1871,13 @@ THEEND;
                 $gallimg['upl_uid'] = '0';
                 $gallimg['upl_destfolder'] = 'notknown';
                 $gallimg['upl_filename'] = 'warning_notfound_' . $gallimg['image'];
-                self::$warncnt++;
-            }
-            array_push($gallery['galllines'], $gallimg);
-        }
-
-        $gallurl = self::$dest_base . '/wp-content/uploads/';
-        foreach ($gallery['galllines'] as $gallline) {
-            array_push($gallids, strval($gallline['upl_uid']));
-            $gallidsdatasrc['src'] = $gallurl . $gallline['upl_destfolder'] . '/' . $gallline['upl_filename'];
-            $gallidsdatasrc['link'] = $gallidsdatasrc['src'];
-            // @@CHANGE Interpretation of data attribute
-            if ($gallline['data'] != '') {
-                // ennn or pnnn = entry uid or page uid
-                if (substr($gallline['data'],0,1) == 'e' && is_numeric(substr($gallline['data'],1))) {
-                    $gallidsdatasrc['link'] = '?p=' . (substr($gallline['data'],1) + self::$addtoentry);
-                }
-                if (substr($gallline['data'],0,1) == 'p' && is_numeric(substr($gallline['data'],1))) {
-                    $gallidsdatasrc['link'] = '?page_id=' . (substr($gallline['data'],1) + self::$addtopage);
+                if ($gall_warn) {
+                    self::$warncnt++;
                 }
             }
-            $gallidsdatasrc['title'] = $gallline['title'];
-            $gallidsdatasrc['alt'] = $gallline['alt'];
-            $gallidsdata['gallery'][$gallline['upl_uid']] = $gallidsdatasrc;
+            array_push($galllines, $gallimg);
         }
-
-        $gallmeta .= "\n" . self::outputMap(array(
-            'wp:meta_key' => '_eg_in_gallery',
-            'wp:meta_value' => array('cdata', serialize($gallids)),
-            ));
-        $gallmeta .= '</wp:postmeta>';
-
-        $gallmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
-            'wp:meta_key' => '_eg_gallery_data',
-            'wp:meta_value' => array('cdata', serialize($gallidsdata)),
-            ));
-
-        return $gallmeta;
+        return $galllines;
     }
 
     private static function replaceIt($record, $replthis, $replby) {

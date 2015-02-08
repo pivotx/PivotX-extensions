@@ -27,7 +27,7 @@ To be able to attach some of the imports to a dummy user in stead of letting the
 
 __Additional plugins__
 
-If you are going to export your Extrafields and their values you need to install plugin ACF (Advanced Custom Fields) and if your going to export your Galleries you need to install plugin Envira (Lite). 
+If you are going to export your Extrafields and their values you need to install plugin ACF (Advanced Custom Fields) and if your going to export your Galleries you can install plugin Envira (Lite) or Media Library Assistant. 
 
 Preparation on the PivotX side
 ==============================
@@ -78,7 +78,20 @@ If you want to exclude exported parts from the import you can manually edit the 
 
 __Check errors__
 
-If the import reports errors you should check these errors obviously. Also important is to check the id's of the imports just in front of the failing import. The WP importer is known to set these id's to the id of the failing import...... If these imported parts are used somewhere (i.e. connected through its id) then this connection will be wrong. 
+If the import reports errors you should check these errors obviously. Also important is to check the ids of the imports just in front of the failing import. The WP importer is known to set these ids to the id of the failing import...... If these imported parts are used somewhere (i.e. connected through its id) then this connection will be wrong. 
+In the footer of the generated export the number of warnings is displayed. Check for the string "warning" in the generated file to see what the warning is about.
+
+__Galleries__
+
+If you select to export the galleries together with your entries or pages there a several gallery codes to be found in the end result. You can find those by searching for "Select the gallery code you want to use".
+Currently there are 3 possibilities:  
+
+1. Plain Gallery code (WP built in)  
+ The title/alt/data attributes are displayed as nosupp_ (not supported) parms. So you can see what has been set but it will have no effect in WP itself. 
+2. Gallery code for WP plugin Media Library Assistant.  
+To get the accompanying parms active you need to install mla\_fixed\_values add on which is in the examples of the plug-in itself. This example is also in this extension. Just upload the folder to the wp-content/plugins and activate it in the WP dashboard.
+3. Gallery code for Envira (Lite) plugin code  
+This sets the pointer to the gallery defined in Envira. You need to export galleries too for this to work.
 
 __Peculiar things__
 

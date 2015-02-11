@@ -827,40 +827,50 @@ THEEND;
                                 $swgdata   = 'N';
                                 foreach ($galllines as $gallline) {
                                     array_push($gallids, $gallline['upl_uid']);
-                                    array_push($galltitle, $gallline['title']);
+                                    array_push($galltitle, self::replaceQuotes($gallline['title']));
                                     if ($gallline['title'] != '') { $swgtitle = 'Y'; }
-                                    array_push($gallalt, $gallline['alt']);
+                                    array_push($gallalt, self::replaceQuotes($gallline['alt']));
                                     if ($gallline['alt'] != '') { $swgalt = 'Y'; }
-                                    array_push($galldata, $gallline['data']);
-                                    if ($gallline['data'] != '') { $swgdata = 'Y'; }
+                                    if ($gallline['data'] != '') {
+                                        // @@CHANGE Interpretation of data attribute
+                                        // ennn or pnnn = entry uid or page uid
+                                        if (substr($gallline['data'],0,1) == 'e' && is_numeric(substr($gallline['data'],1))) {
+                                            $gallline['data'] = '?p=' . (substr($gallline['data'],1) + self::$addtoentry);
+                                        } else {
+                                            if (substr($gallline['data'],0,1) == 'p' && is_numeric(substr($gallline['data'],1))) {
+                                                $gallline['data'] = '?page_id=' . (substr($gallline['data'],1) + self::$addtopage);
+                                            }
+                                        }
+                                        array_push($galldata, self::replaceQuotes($gallline['data']));
+                                        $swgdata = 'Y'; 
+                                    } else {
+                                        array_push($galldata, '?attachment_id=' . $gallline['upl_uid']);
+                                    }
                                 }
                                 $gallidsstring = implode(',',$gallids);
                                 $gallparms = '';
-                                $gallmlaadd = '';
+                                $gallmlalnk = '';
+                                $gallmlaimg = '';
+                                $gallmlahrf = '';
+                                if ($swgdata == 'Y') {
+                                    $gallparms  .= ' mla_fixed_data="';
+                                    $gallparms  .= "array('" . implode("','",$galldata) . "')" . '"';
+                                    $gallmlahrf .= ' mla_link_href="{+site_url+}/{+mla_fixed_data+}"';
+                                }
                                 if ($swgtitle == 'Y') {
                                     $gallparms .= ' mla_fixed_title="';
-                                    $gallparms .= implode(',',$galltitle) . '"';
-                                    $gallmlaadd .= ' mla_link_attributes="title={+mla_fixed_title+}"';
-                                    $gallmlaadd .= ' mla_image_attributes="title={+mla_fixed_title+}';
+                                    $gallparms .= "array('" . implode("','",$galltitle) . "')" . '"';
+                                    $gallmlalnk .= ' mla_link_attributes="title=' . "'" . '{+mla_fixed_title+}' . "'" . '"';
                                 }
                                 if ($swgalt == 'Y') {
                                     $gallparms .= ' mla_fixed_alt="';
-                                    $gallparms .= implode(',',$gallalt) . '"';
-                                    if ($swgtitle == 'Y') {
-                                        $gallmlaadd .= ' alt={+mla_fixed_alt+}';
-                                    } else {
-                                        $gallmlaadd .= ' mla_image_attributes="alt={+mla_fixed_alt+}';
-                                    }
+                                    $gallparms .= "array('" . implode("','",$gallalt) . "')" . '"';
+                                    $gallmlaimg .= ' mla_image_attributes="alt=' . "'" . '{+mla_fixed_alt+}' . "'" . '"';
                                 }
-                                if ($swgdata == 'Y') {
-                                    $gallparms .= ' mla_fixed_data="';
-                                    $gallparms .= implode(',',$galldata) . '"';
-                                }
-                                $gallmlaadd .= '"';
                                 // plain gallery code with not supported parms to show the set values
-                                $content_encoded .= '<br/>[gallery ids="' . $gallidsstring . '"' . str_replace('mla_', 'nosupp_', $gallparms) . ']';
-                                // mla gallery code with not supported parms to show the set values
-                                $content_encoded .= '<br/>[mla_gallery ids="' . $gallidsstring . '"' . $gallparms . $gallmlaadd . ']';
+                                $content_encoded .= '<br/>[gallery ids="' . $gallidsstring . '" link=file' . str_replace('mla_', 'nosupp_', $gallparms) . ']';
+                                // mla gallery code with parms meant for fixed values add on
+                                $content_encoded .= '<br/>[mla_gallery ids="' . $gallidsstring . '" link=file' . $gallparms . $gallmlahrf . $gallmlalnk . $gallmlaimg . ']';
                                 // envira gallery
                                 $content_encoded .= '<br/>[envira-gallery id="' . $gallkey . '"]';
                             } else {
@@ -1884,6 +1894,12 @@ THEEND;
         $record['introduction'] = str_replace($replthis, $replby, $record['introduction']);
         $record['body']         = str_replace($replthis, $replby, $record['body']);
         return $record;
+    }
+
+    private static function replaceQuotes($text) {
+        $text = str_replace("'", "&#39;", $text);
+        $text = str_replace('"', "&quot;", $text);
+        return $text;
     }
 
     private static function recordId($uid_org, $uid_new) {

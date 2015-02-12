@@ -865,7 +865,7 @@ THEEND;
                                 if ($swgalt == 'Y') {
                                     $gallparms .= ' mla_fixed_alt="';
                                     $gallparms .= "array('" . implode("','",$gallalt) . "')" . '"';
-                                    $gallmlaimg .= ' mla_image_attributes="alt=' . "'" . '{+mla_fixed_alt+}' . "'" . '"';
+                                    $gallmlaimg .= ' mla_image_alt="' . "'" . '{+mla_fixed_alt+}' . "'" . '"';
                                 }
                                 // plain gallery code with not supported parms to show the set values
                                 $content_encoded .= '<br/>[gallery ids="' . $gallidsstring . '" link=file' . str_replace('mla_', 'nosupp_', $gallparms) . ']';

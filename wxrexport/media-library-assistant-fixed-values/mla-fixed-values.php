@@ -69,7 +69,7 @@ class MLAFixedValuesExample {
      * before they are merged with the default arguments used for the gallery display.
      *
      * The $shortcode_attributes array is where you will find your own parameters that
-	 * are coded in the shortcode, e.g., [mla_gallery mla_fixed_title="my title"].
+	 * are coded in the shortcode, e.g., [mla_gallery mla_fixed_title="array('my title','my other title')" mla_image_attributes="title='{+mla_fixed_title+}'"].
      */
     public static function mla_gallery_attributes_filter( $shortcode_attributes ) {
         /*

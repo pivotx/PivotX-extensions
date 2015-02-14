@@ -4,7 +4,7 @@
 // - Author: PivotX team 
 // - Site: http://www.pivotx.net
 // - Description: Export content in WXR (WordPress eXtended RSS) format.
-// - Date: 2015-02-07
+// - Date: 2015-02-14
 // - Identifier: wxrexport
 
 
@@ -76,6 +76,8 @@ class pivotxWxrExport
     //
     // aliases is meant to specify the urls of your aliases
     //
+    // todo: set default value examples for importing into Bolt
+    // todo: identify WP specific code by eye catcher
     // @@CHANGE
     public static $upload_dest_def = '2010/01';
     public static $upload_input = array('images/');  // always end the element with a "/"
@@ -471,7 +473,7 @@ THEEND;
 
     private static function outputWXR_Uploads($upload)
     {
-        $record = $upload;
+        $record = $upload; // is $uplinfo
         $output = '';
         $output .= '<item>'."\n";
         $upldate = date('Y-m-d H:i:s');
@@ -482,16 +484,17 @@ THEEND;
         $output .= '<!-- Item for upload will have id ' . $record['post_id'] . ' -->'."\n";
         $record['post_parent'] = '0';
         self::recordId(0, $record['post_id']);
+        // todo: decide whether this meta is really needed as it looks like it is generated when importing
         $attmeta = "\n" . self::outputMap(array(
                 'wp:meta_key' => '_wp_attached_file',
-                'wp:meta_value' => array('cdata', $record['destfolder'] . '/' . $record['filename']),
+                'wp:meta_value' => array('cdata', $record['destfolder'] . '/' . $record['filename_new']),
             ));
         $output .= self::outputMap(array(
-                'title' => $record['title'],
+                'title' => $record['basename'],
                 'link' => '0',
                 'pubDate' => $upldate,
                 'dc:creator' => array('cdata' , 'pivx_upload'),
-                'guid isPermaLink="false"' => 'uploads/' . $record['destfolder'] . '/' . $record['filename'],
+                'guid isPermaLink="false"' => 'uploads/' . $record['destfolder'] . '/' . $record['filename_new'],
                 'description' => '',
                 'excerpt:encoded' => '',
                 'content:encoded' => '',
@@ -762,6 +765,8 @@ THEEND;
                 $content_encoded .= $record['body'];
             }
             $content_encoded = rawurldecode(html_entity_decode($content_encoded, ENT_QUOTES, "UTF-8"));
+            // replace CR LF (they can come in with included files) 
+            $content_encoded = preg_replace( "/\r|\n/", " ", $content_encoded );
 
             $repldebug = 'item processing: ' . $record['uid'] . '|' . $record['title'];
             $content_encoded = self::contentReplParts($content_encoded, $parse, $repldebug);
@@ -978,7 +983,7 @@ THEEND;
         $output .= self::outputWXR_Header('uploads');
 
         foreach ($UPLFILES as $uplindex=>$uplfile) {
-            $uplinfo    = self::createUplinfo($uplfile, $uplindex + self::$addtoupl);
+            $uplinfo = self::createUplinfo($uplfile, $uplindex + self::$addtoupl);
             $uplinfo['index'] = $uplindex;
             // skip specific files
             if (in_array($uplinfo['filename'], self::$upload_toskip)) { 
@@ -1004,7 +1009,8 @@ THEEND;
                 self::$warncnt++;
                 // title has to be unique within same location
                 if ($uplinfo['destfolder'] == $upldupl['destfolder']) {
-                    $uplinfo['title'] .= '_dupl.of_' . $upldupl['uid'];
+                    $uplinfo['basename'] .= '_dupl.of_' . $upldupl['uid'];
+                    $uplinfo['basename_new'] .= '_dupl.of_' . $upldupl['uid'];
                     $output .= '<!-- Warning! Upload had a duplicate title! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
                     $output .= '<!--          Other file name info: ' . $upldupl['inputfolder'] . $upldupl['filename'] . ' -->' . "\n";
                     self::$warncnt++;
@@ -1159,7 +1165,7 @@ THEEND;
                 $extrafield['description'] = ltrim($extrafield['description'], '<br>');
                 // replace CR LF from description (they block the import)
                 $extrafield['description'] = preg_replace( "/\r|\n/", " ", $extrafield['description'] );
-                // to do: strip other html from description (like <em> <b> <i>)
+                // todo: strip other html from description (like <em> <b> <i>)
 
                 $extrafieldkey = self::getEFKey($extrafield['fieldkey'],$extrafield['contenttype'],$extrafields);
 
@@ -1876,7 +1882,7 @@ THEEND;
             if (isset($uplinfo['index'])) {
                 $gallimg['upl_uid'] = $uplinfo['uid'];
                 $gallimg['upl_destfolder'] = $uplinfo['destfolder'];
-                $gallimg['upl_filename'] = $uplinfo['filename'];
+                $gallimg['upl_filename'] = $uplinfo['filename_new'];
             } else {
                 $gallimg['upl_uid'] = '0';
                 $gallimg['upl_destfolder'] = 'notknown';
@@ -2046,7 +2052,7 @@ THEEND;
                         $srcinbetw = self::$thumb_repl;
                     }
                     if (isset($uplinfo['index'])) {
-                        $srcrepl = $uplinfo['destfolder'] . '/' .  $uplinfo['title'] . $srcinbetw . '.' . $uplinfo['fileext'];
+                        $srcrepl = $uplinfo['destfolder'] . '/' .  $uplinfo['basename_new'] . $srcinbetw . '.' . $uplinfo['fileext'];
                     } else {
                         $srcrepl = 'notknown' . '/warning_notfound_' . $srcimg;
                         self::$warncnt++;
@@ -2530,14 +2536,18 @@ THEEND;
         if (substr($inpfolder,0,12) == 'pivotx/pics/' || $inpfolder == 'pivotx/includes/emoticons/trillian/') {
             $yearfolder = '2000/12';    //  @@CHANGE
         }
-//echo $uplcounter . '|' . $uplfilename . '|' . $yearfolder . '|' . $inpurl . '|' . $inpfolder . '|' . $basefolder . '<br/>';
+        //echo $uplcounter . '|' . $uplfilename . '|' . $yearfolder . '|' . $inpurl . '|' . $inpfolder . '|' . $basefolder . '<br/>';
+        // sanitize file name with code similar to found in WP formatting / WP converts extension to lower case when uploading
+        $uplfilename_new = self::sanitizeFileName(removeExtension($uplfilename))  . '.' . strtolower(getExtension($uplfilename));
         $uplinfo = array('uid' => $uplcounter,
                          'destfolder' => $yearfolder,
                          'filename' => $uplfilename,
+                         'filename_new' => $uplfilename_new,
                          'basefolder' => $basefolder,
-                         'fileext' => $path_parts['extension'],
-                         'title' => removeExtension($uplfilename),
-                         'postname' => strtolower(str_replace(' ', '-', (removeExtension($uplfilename)))),
+                         'fileext' => strtolower($path_parts['extension']),
+                         'basename' => removeExtension($uplfilename),
+                         'basename_new' => removeExtension($uplfilename_new),
+                         'postname' => strtolower(removeExtension($uplfilename_new)),
                          'rootloc' => $rootloc,
                          'inputfolder' => $inpfolder,
                          'inputloc' => $inpurl . $inpfolder);
@@ -2604,6 +2614,16 @@ THEEND;
             }
         }
         return $uplsrch;
+    }
+    private static function sanitizeFileName($filename) {
+        // code similar to WP formatting.php
+        $special_chars = array("?", "[", "]", "/", "\\", "=", "<", ">", ":", ";", ",", "'", "\"", "&", "$", "#", "*", "(", ")", "|", "~", "`", "!", "{", "}", chr(0));
+        $filename = preg_replace( "#\x{00a0}#siu", ' ', $filename );
+        $filename = str_replace( $special_chars, '', $filename );
+        $filename = str_replace( array( '%20', '+' ), '-', $filename );
+        $filename = preg_replace( '/[\r\n\t -]+/', '-', $filename );
+        $filename = trim( $filename, '.-_' );
+        return $filename;
     }
 }
 

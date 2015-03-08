@@ -66,6 +66,8 @@ class pivotxWxrExport
     //
     // efprefix is the prefix put in front of the exported extrafield field names
     //
+    // efskip gives you the option to skip the export of specific extrafields
+    //
     // entrysel gives you the option to only select specific categories (also valid for category export) or uids
     //
     // pagesel gives you the option to only select specific chapters (also valid for chapter export)
@@ -97,6 +99,7 @@ class pivotxWxrExport
     public static $addtopage  = 500;
     public static $addtoupl   = 800;
     public static $efprefix = 'pivx_';   // only lower case!
+    public static $efskip   = array('ef_skip1','ef_skip2);   // extrafields to exclude from export
     public static $entrysel = array('show'=>20000);   //  all categories are selected
     //public static $entrysel = array('cats'=>array('default', 'linkdump'),'show'=>20000);   // only specific categories
     //public static $entrysel = array('uid'=>array(75,85),'show'=>20000);   // only specific uids
@@ -737,6 +740,7 @@ THEEND;
             // skip all includes?
             if (self::$include_skip_all) {
                 $record = self::replaceIt($record, '[[ include', '[[*include');
+                $record = self::replaceIt($record, '[[include', '[[*include');
             }
             foreach (self::$include_skip as $incl_skip) {
                 //echo getcwd() . "/templates/" . self::$defweblog . '/' . $incl_skip . '<br/>';
@@ -783,6 +787,9 @@ THEEND;
             // process extrafields
             if ($record['extrafields'] != '') {
                 foreach($record['extrafields'] as $extrakey=>$extrafield) {
+                    if (in_array($extrakey,self::$efskip)) {
+                        continue;
+                    }
                     // the "normal" image fields
                     if ($extrakey == 'image' || $extrakey == 'afbeelding') {
                         // not sure whether special characters (like &) are processed correctly / WP doesn't use this tag
@@ -1157,6 +1164,9 @@ THEEND;
         $efselcnt = -1;
         foreach($extrafields as $extrafield) {
             //echo "extrafield: " . $extrafield['name'] . "/" . $extrafield['contenttype'] . "/" . $extrafield['type'] . "<br/>";
+            if (in_array($extrafield['fieldkey'],self::$efskip)) {
+                continue;
+            }
             if ($extrafield['contenttype'] == $efsel) {
                 $efselcnt = $efselcnt + 1;
                 // remove leading break (sometimes there to get description below field
@@ -1248,13 +1258,16 @@ THEEND;
         global $UPLFILES;
         $extrafieldkey = self::getEFKey($extrakey, $pivx_type, $extrafields);
         $efmeta = '';
-        if ($extrafieldkey == '0') {
-            $efmeta .= '<!-- Warning! Extrafields key not found! ' . $extrakey . ' -->';
+        if ($extrafieldkey == 'skip') {
+            return;
+        }
+        if ($extrafieldkey == 'nope') {
+            $efmeta .= '<!-- Warning! Extrafields key not found! ' . $extrakey . '. Value: ' . $extrafield . ' Extension inactive? Check code to find fields. -->' . "\n" ;
             self::$warncnt++;
         } else {
             $extrafieldtype = self::getEFType($extrakey, $pivx_type, $extrafields);
             if ($extrafieldtype == 'gallery') {
-                $efmeta .= '<!-- Warning! Extrafields gallery skipped! ' . $extrakey . ' -->';
+                $efmeta .= '<!-- Warning! Extrafields gallery skipped! ' . $extrakey . ' -->' . "\n" ;
                 self::$warncnt++;
             } else {
                 if ($extrafcnt > 0) {
@@ -1317,7 +1330,10 @@ THEEND;
     }
 
     private static function getEFKey($efkey, $efctype, $extrafields) {
-        $efkeycnt = 0; $efkeywxr = 0;
+        $efkeycnt = 0; $efkeywxr = 'nope';
+        if (in_array($efkey,self::$efskip)) {
+            return 'skip';
+        }
         foreach($extrafields as $extrafield) {
             $efkeycnt = $efkeycnt + 1;
             if ($extrafield['contenttype'] == $efctype && $extrafield['fieldkey'] == $efkey) {
@@ -1553,50 +1569,50 @@ THEEND;
         $extadd['name'] = 'Subtitle';
         $extadd['fieldkey'] = 'subtitle';
         $extadd['contenttype'] = 'entry';
-        array_push($extrafields, $extadd);
+        $extrafields = self::addToEF($extrafields, $extadd);
         $extadd['contenttype'] = 'page';
-        array_push($extrafields, $extadd);
+        $extrafields = self::addToEF($extrafields, $extadd);
         // extension seo active?
         if (in_array('seo',$activeext)) {
             $extadd['name'] = 'SEO description';
             $extadd['fieldkey'] = 'seodescription';
             $extadd['contenttype'] = 'entry';
-            array_push($extrafields, $extadd);
+            $extrafields = self::addToEF($extrafields, $extadd);
             $extadd['contenttype'] = 'page';
-            array_push($extrafields, $extadd);
+            $extrafields = self::addToEF($extrafields, $extadd);
             $extadd['name'] = 'SEO keywords';
             $extadd['fieldkey'] = 'seokeywords';
             $extadd['contenttype'] = 'entry';
-            array_push($extrafields, $extadd);
+            $extrafields = self::addToEF($extrafields, $extadd);
             $extadd['contenttype'] = 'page';
-            array_push($extrafields, $extadd);
+            $extrafields = self::addToEF($extrafields, $extadd);
             $extadd['name'] = 'SEO title';
             $extadd['fieldkey'] = 'seotitle';
             $extadd['contenttype'] = 'entry';
-            array_push($extrafields, $extadd);
+            $extrafields = self::addToEF($extrafields, $extadd);
             $extadd['contenttype'] = 'page';
-            array_push($extrafields, $extadd);
+            $extrafields = self::addToEF($extrafields, $extadd);
         }
         // extension starrating active?
         if (in_array('starrating',$activeext)) {
             $extadd['name'] = 'Ratings';
             $extadd['fieldkey'] = 'ratings';
             $extadd['contenttype'] = 'entry';
-            array_push($extrafields, $extadd);
+            $extrafields = self::addToEF($extrafields, $extadd);
             $extadd['contenttype'] = 'page';
-            array_push($extrafields, $extadd);
+            $extrafields = self::addToEF($extrafields, $extadd);
             $extadd['name'] = 'Rating average';
             $extadd['fieldkey'] = 'ratingaverage';
             $extadd['contenttype'] = 'entry';
-            array_push($extrafields, $extadd);
+            $extrafields = self::addToEF($extrafields, $extadd);
             $extadd['contenttype'] = 'page';
-            array_push($extrafields, $extadd);
+            $extrafields = self::addToEF($extrafields, $extadd);
             $extadd['name'] = 'Rating count';
             $extadd['fieldkey'] = 'ratingcount';
             $extadd['contenttype'] = 'entry';
-            array_push($extrafields, $extadd);
+            $extrafields = self::addToEF($extrafields, $extadd);
             $extadd['contenttype'] = 'page';
-            array_push($extrafields, $extadd);
+            $extrafields = self::addToEF($extrafields, $extadd);
         }
         // extension depublish active?
         if (in_array('depublish',$activeext)) {
@@ -1604,11 +1620,36 @@ THEEND;
             $extadd['fieldkey'] = 'date_depublish';
             $extadd['type'] = 'date';
             $extadd['contenttype'] = 'entry';
-            array_push($extrafields, $extadd);
+            $extrafields = self::addToEF($extrafields, $extadd);
             $extadd['contenttype'] = 'page';
-            array_push($extrafields, $extadd);
+            $extrafields = self::addToEF($extrafields, $extadd);
+            $extadd['type'] = 'input_text';  /* back to default */
+        }
+        // extension hitcounter active?
+        if (in_array('hitcounter',$activeext)) {
+            $extadd['name'] = 'Hit count last week';
+            $extadd['fieldkey'] = 'last_week';
+            $extadd['type'] = 'number';
+            $extadd['contenttype'] = 'entry';
+            $extrafields = self::addToEF($extrafields, $extadd);
+            $extadd['contenttype'] = 'page';
+            $extrafields = self::addToEF($extrafields, $extadd);
+            $extadd['name'] = 'Hit count last month';
+            $extadd['fieldkey'] = 'last_month';
+            $extadd['contenttype'] = 'entry';
+            $extrafields = self::addToEF($extrafields, $extadd);
+            $extadd['contenttype'] = 'page';
+            $extrafields = self::addToEF($extrafields, $extadd);
+            $extadd['type'] = 'input_text';  /* back to default */
         }
 //echo print_r($extrafields) . '<br/>';
+        return $extrafields;
+    }
+
+    public static function addToEF($extrafields, $extadd) {
+        if (!in_array($extadd['fieldkey'],self::$efskip)) {
+            array_push($extrafields, $extadd);
+        }
         return $extrafields;
     }
 
@@ -1726,6 +1767,9 @@ THEEND;
         $entries = $PIVOTX['db']->read_entries(self::$entrysel);
         foreach($entries as $entry) {
             foreach($entry['extrafields'] as $extrakey=>$extrafield) {
+                if (in_array($extrakey,self::$efskip)) {
+                    continue;
+                }
                 $extrafieldtype = self::getEFType($extrakey, 'entry', $EXTRAFIELDS);
                 if ($extrafieldtype == 'gallery') {
                     $gallcnt++;
@@ -1746,6 +1790,9 @@ THEEND;
             foreach($chapter['pages'] as $page) {
                 $page = $PIVOTX['pages']->getPage($page['uid']);
                 foreach($page['extrafields'] as $extrakey=>$extrafield) {
+                    if (in_array($extrakey,self::$efskip)) {
+                        continue;
+                    }
                     $extrafieldtype = self::getEFType($extrakey, 'page', $EXTRAFIELDS);
                     if ($extrafieldtype == 'gallery') {
                         $gallcnt++;
@@ -2187,6 +2234,8 @@ THEEND;
                             $findsearch = substr_replace($findsearch, $myhost, 0, strlen('../pivotx/index.php'));
                         }
                         // aliases array
+                        //echo 'checking href: ' . $findsearch . '<br/>';
+                        //echo 'host: ' . $myhost . '<br/>';
                         foreach (self::$aliases as $alias) {
                             if (substr($findsearch,0,strlen($alias)) == $alias) {
                                 $findsearch = substr_replace($findsearch, $myhost, 0, strlen($alias));
@@ -2200,7 +2249,7 @@ THEEND;
                         // skip the ones that are (already) OK
                         if (substr($findsearch,0,9) == '[imgpath]') { // do nothing (img link)
                         } elseif (substr($findsearch,0,1) == '#') { // do nothing (only hash found)
-                        } elseif (substr($findsearch,0,3) == '../') { // do nothing (cannot be an internal link)
+                        //} elseif (substr($findsearch,0,3) == '../') { // do nothing (cannot be an internal link) -- apparently it can be?  todo check it
                         } elseif (substr($findsearch,0,11) == 'javascript:') { // do nothing (js call)
                         } elseif (substr($findsearch,0,1) == '"') { // do nothing (potential js var?)
                         } elseif (substr($findsearch,0,1) == "'") { // do nothing (potential js var?)
@@ -2228,10 +2277,12 @@ THEEND;
                                 $findhash = '#' . $findhash;
                             }
                             $findlinktype = ''; $findlinkvalue = '';
+                            if (substr($findsearch,0,1) == '/') {  // sometimes a double slash after host?
+                                $findsearch = substr($findsearch,1);
+                            }
                             if (substr($findsearch,0,1) == '?') {
                                 $findparts = explode('&',substr($findsearch,1));
                                 foreach ($findparts as $findpart) {
-                                    // tag
                                     if (substr($findpart,0,2) == 't=') {
                                         $findlinktype = 'tag';
                                         $findlinkvalue = substr($findpart,2);
@@ -2273,7 +2324,6 @@ THEEND;
                                 $findparts = explode('/',$findsearch);
                                 foreach ($findparts as $findkey=>$findpart) {
                                     //echo 'lpart: ' . $findkey . '|' . $findpart . '<br/>';
-                                    // tag
                                     if ($findpart == 'tag') {
                                         $findlinktype = 'tag';
                                         $findlinkvalue = $findparts[$findkey+1];
@@ -2309,13 +2359,28 @@ THEEND;
                                         $findlinkvalue = $findparts[$findkey+1];
                                         break;
                                     }
+                                    // old pivot structure? (is still working)
+                                    if (substr($findpart,0,13) == 'entry.php?id=') {
+                                        $findlinktype = 'entry';
+                                        $findlinkvalue = substr($findpart,13);
+                                        break;
+                                    }
                                 }
                                 if ($findlinktype == '' && ($findsearch != '' && $findsearch != '/')) {
                                     $findlinktype = 'entrypage';
                                     $findlinkvalue = $findparts[0];
                                 }
                             }
-                            //echo 'linktype: ' . $findlinktype . '|' . $findlinkvalue . '|' . $findsearch . '|<br/>';
+                            // can contain query part
+                            $findpure = explode('?',$findlinkvalue);
+                            $findlinkvalue = $findpure[0];
+                            unset($findpure[0]);
+                            $findquery = implode('?',$findpure);
+                            if ($findquery != '') {
+                                $findquery = '&' . $findquery;
+                            }
+                            $findadd = $findquery . $findhash;
+                            //echo 'linktype: ' . $findlinktype . '|' . $findlinkvalue . '|' . $findadd . '|' . $findsearch . '|<br/>';
                             $linkentry = array(); $linkpage = array();
                             if ($findlinktype == 'entry' || $findlinktype == 'entrypage') {
                                 $linkentry = $PIVOTX['db']->read_entry($findlinkvalue);
@@ -2336,19 +2401,19 @@ THEEND;
                                 self::$warncnt++;
                             } elseif ($findlinktype == 'entry' || ($findlinktype == 'entrypage' && $linkentry['uid'] != '')) {
                                 $relid = $linkentry['uid'] + self::$addtoentry;
-                                $content = substr_replace($content, '?p=' . $relid . $findhash, $posbeg+$findlen+1, strlen($findorg));
+                                $content = substr_replace($content, '?p=' . $relid . $findadd, $posbeg+$findlen+1, strlen($findorg));
                             } elseif ($findlinktype == 'page' || ($findlinktype == 'entrypage' && $linkpage['uid'] != '')) {
                                 $relid = $linkpage['uid'] + self::$addtopage;
-                                $content = substr_replace($content, '?page_id=' . $relid . $findhash, $posbeg+$findlen+1, strlen($findorg));
+                                $content = substr_replace($content, '?page_id=' . $relid . $findadd, $posbeg+$findlen+1, strlen($findorg));
                             } elseif ($findlinktype == 'tag') {
-                                $content = substr_replace($content, '?tag=' . $findlinkvalue . $findhash, $posbeg+$findlen+1, strlen($findorg));
+                                $content = substr_replace($content, '?tag=' . $findlinkvalue . $findadd, $posbeg+$findlen+1, strlen($findorg));
                             } elseif ($findlinktype == 'category') {
                                 $catid = self::getCatKey($findlinkvalue);
                                 if ($catid == 0) {
                                     $content = substr_replace($content, 'warning_cat_not_found_', $posbeg+$findlen+1, 0);
                                     self::$warncnt++;
                                 } else {
-                                    $content = substr_replace($content, '?cat=' . $catid . $findhash, $posbeg+$findlen+1, strlen($findorg));
+                                    $content = substr_replace($content, '?cat=' . $catid . $findadd, $posbeg+$findlen+1, strlen($findorg));
                                 }
                             } elseif ($findlinktype == 'archive') {
                                 $archyear = substr($findlinkvalue,0,4);
@@ -2361,7 +2426,7 @@ THEEND;
                                     if ($archtype == '-y') {
                                         $archmonth = '';
                                     }
-                                    $content = substr_replace($content, '?m=' . $archyear . $archmonth . $findhash, $posbeg+$findlen+1, strlen($findorg));
+                                    $content = substr_replace($content, '?m=' . $archyear . $archmonth . $findadd, $posbeg+$findlen+1, strlen($findorg));
                                 }
                             } elseif (in_array($findlinktype, $unsupported_types)) {
                                 $content = substr_replace($content, 'warning_linktype_'.$findlinktype.'_unsupported_', $posbeg+$findlen+1, 0);
@@ -2375,7 +2440,7 @@ THEEND;
                                     }
                                     self::$warncnt++;
                                 } else {
-                                    $content = substr_replace($content, '[urlhome]' . $findhash, $posbeg+$findlen+1, strlen($findorg));
+                                    $content = substr_replace($content, '[urlhome]' . $findadd, $posbeg+$findlen+1, strlen($findorg));
                                 }
                             }
                         }
@@ -2438,6 +2503,20 @@ THEEND;
                 self::$warncnt++;
                 $contentorg .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this canonical host! -->';
             }
+        }
+        // CDATA in content?
+        $content2 = str_replace('<![CDATA[','==wxrexport==',$content, $replcnt);
+        if ($replcnt != 0) {
+            self::$warncnt++;
+            $contentorg = str_replace('<![CDATA[','@@@CDATA_BEG@@@',$contentorg);
+            $contentorg .= '<br/><!-- Warning! This content contained ' . $replcnt . ' CDATA occurrences! These are replaced by "@@@CDATA_BEG@@@" -->';
+        }
+        // END tag in content? Potentially belonging to CDATA?
+        $content2 = str_replace(']]','==wxrexport==',$content, $replcnt);
+        if ($replcnt != 0) {
+            self::$warncnt++;
+            $contentorg = str_replace(']]','@@@CDATA_END?@@@',$contentorg);
+            $contentorg .= '<br/><!-- Warning! This content contained ' . $replcnt . ' END TAG "]]" occurrences! These are replaced by "@@@CDATA_END?@@@" -->';
         }
         // aliases array
         foreach (self::$aliases as $alias) {

@@ -78,8 +78,13 @@ class pivotxWxrExport
     //
     // aliases is meant to specify the urls of your aliases
     //
+    // gallselect is meant to select what kind of gallery code you want in your content
+    //         currently supported: default - standard code
+    //                              mla     - media library assistant WP plugin (WPeyec)
+    //                              envira  - envira lite WP plugin (WPeyec)
+    //
     // todo: set default value examples for importing into Bolt
-    // todo: identify WP specific code by eye catcher
+    // todo: identify WP specific code by eye catcher: WPeyec
     // @@CHANGE
     public static $upload_dest_def = '2010/01';
     public static $upload_input = array('images/');  // always end the element with a "/"
@@ -87,19 +92,20 @@ class pivotxWxrExport
     public static $upload_toskip = array("index.html", ".htaccess", "readme.txt");      // specific files to skip for upload
     public static $upload_toskipext  = array("fla", "swf");               // specific extensions to skip (e.g. because WP thinks they are dangerous)
     public static $upload_yearalways = true;               // generate an year folder based on file date if not already in yyyy-mm folder
-    public static $thumb_repl = '';  // replacement string within content for thumbnails for images (WP uses "-200x200")
+    public static $thumb_repl = '';  // replacement string for thumbnails of images (WP: Settings/Media/Thumbnail size; defaults to "-150x150")
     public static $thumb_skip = true;  // skip the export of thumbnails
     public static $dest_base = '/wordpress';      // default set for WP
     public static $include_skip = array('skip_this_include.tpl','subfolder/and_this_one_too.php');  // skip include elements in content ([[ include tag)
     public static $include_skip_all = false;  // skip all includes
     public static $addtochap  = 100;
-    public static $addtocat   = 125;    // READ DOC on how to use this one properly!
-    public static $addtogall  = 150;
-    public static $addtoentry = 200;
-    public static $addtopage  = 500;
-    public static $addtoupl   = 800;
+    public static $addtocat   = 125;    // READ DOC on how to use the addto parameters properly!
+    public static $addtouser  = 150;
+    public static $addtogall  = 200;
+    public static $addtoentry = 250;
+    public static $addtopage  = 600;
+    public static $addtoupl   = 900;
     public static $efprefix = 'pivx_';   // only lower case!
-    public static $efskip   = array('ef_skip1','ef_skip2);   // extrafields to exclude from export
+    public static $efskip   = array('ef_skip1','ef_skip2');   // extrafields to exclude from export
     public static $entrysel = array('show'=>20000);   //  all categories are selected
     //public static $entrysel = array('cats'=>array('default', 'linkdump'),'show'=>20000);   // only specific categories
     //public static $entrysel = array('uid'=>array(75,85),'show'=>20000);   // only specific uids
@@ -110,6 +116,8 @@ class pivotxWxrExport
     // array for your aliases (full urls with http) -- you can also enter your main url if your canonical-host setting is incorrect
     public static $aliases = array();
     //public static $aliases = array('http://www.myurl.com','http://www.my-url.com');
+    // selector to decide which kind of gallery code you want in your exported content (see above for detailed description)
+    public static $gallselect = array('default','mla','envira');
     
     public static function adminTab(&$form_html)
     {
@@ -127,6 +135,9 @@ class pivotxWxrExport
     </a></li>
     <li><a href="?page=wxrexport&amp;type=chapters">
         Export Chapters as plain pages that can be used to parent the PivotX pages
+    </a></li>
+    <li><a href="?page=wxrexport&amp;type=users">
+        Export Users
     </a></li>
     <li><a href="?page=wxrexport&amp;type=uploads">
         Export Uploads
@@ -228,7 +239,7 @@ THEEND;
     {
         global $PIVOTX;
         $output = '';
-        $catid = 0 + self::$addtocat;  // category does not have its own uid
+        $catid = 0 + self::$addtocat;  // category does not have its own uid in PivotX
         foreach($PIVOTX['categories']->data as $cat) {
             if (array_key_exists('cats', self::$entrysel)) {
                 if (!in_array($cat['name'], self::$entrysel['cats'])) {
@@ -255,6 +266,29 @@ THEEND;
                     $output .= '<category domain="category" nicename="'.htmlspecialchars($cat['name']).'"><![CDATA['.$cat['display'].']]></category>'."\n";
                 }
             }
+        }
+        return $output;
+    }
+
+    private static function outputWXR_Users()
+    {
+        global $PIVOTX;
+        $output = '';
+        $userid = 0 + self::$addtouser;  // user does not have its own uid in PivotX
+        $userlvl = array('Inactive user','Moblogger','Normal','Advanced','Administrator','Superadmin');
+        foreach($PIVOTX['users']->data as $user) {
+            //echo 'userlvl : ' . $user['userlevel']. '<br/>';
+            // salt / password / lastseen / text_processing not used
+            $userid++;
+            self::recordId(0, $userid);
+            $output .= '<wp:author>'."\n";
+            $output .= '<wp:author_id>'.$userid.'</wp:author_id><wp:author_login>'.$user['username'].'</wp:author_login><wp:author_display_name><![CDATA['.htmlspecialchars($user['nickname']).']]></wp:author_display_name><wp:author_email>'.$user['email'].'</wp:author_email><wp:author_first_name><![CDATA[]]></wp:author_first_name><wp:author_last_name><![CDATA[]]></wp:author_last_name>'."\n";
+            $output .= '<!-- this user additional specifications: -->'."\n";
+            $output .= '<!-- language: ' . $user['language'] . ' -->'."\n";
+            $output .= '<!-- image: ' . $user['image'] . ' -->'."\n";
+            $output .= '<!-- level: ' . $userlvl[$user['userlevel']+1]. ' -->'."\n";
+            $output .= '</wp:author>'."\n";
+            self::$itemcnt++;
         }
         return $output;
     }
@@ -349,6 +383,7 @@ THEEND;
     private static function outputWXR_Galleries()
     {
         global $PIVOTX;
+        // This entire routine is meant only for WP plugin Envira lite!   WPeyec
         $output = '';
         $activeext = $PIVOTX['extensions']->getActivated();
         $galleries = self::getGalleries();
@@ -360,6 +395,11 @@ THEEND;
         } else {
             $record['post_id'] = 0;
             $record['post_parent'] = '0';
+            if (!in_array('envira', self::$gallselect)) {  // code is only meant for WP plugin envira lite
+                $output = '<!-- Warning! "envira" not selected in parm "gallselect"! -->'."\n";
+                self::$warncnt++;
+                return $output;
+            }
             foreach ($galleries as $gallery) {
                 self::recordId(0, $gallery['gall_id']);
                 $output .= '<item>'."\n";
@@ -528,11 +568,11 @@ THEEND;
         $created = date('Y-m-d H:i');
 
         $channel_info = self::outputMap(array(
-            'title' => '',
+            'title' => 'PivotX export in wxr format for ' . $exporttype,
             'link' => $PIVOTX['paths']['canonical_host'].$PIVOTX['paths']['site_url'],
             'description' => '',
             'pubDate' => '',
-            'generator' => '',
+            'generator' => 'PivotX/WXR-Export',
             'language' => '',
             'wp:wxr_version' => '1.0',
             'wp:base_site_url' => '',
@@ -586,6 +626,10 @@ THEEND;
         }
         if ($maxid_new > self::$addtocat && $minid_new < self::$addtocat) {
             $extraline .= "\n" . '<!-- Warning! This export overlaps the id range for addtocat! -->';
+            $warncnt++;
+        }
+        if ($maxid_new > self::$addtouser && $minid_new < self::$addtouser) {
+            $extraline .= "\n" . '<!-- Warning! This export overlaps the id range for addtouser! -->';
             $warncnt++;
         }
         if ($maxid_new > self::$addtogall && $minid_new < self::$addtogall) {
@@ -826,9 +870,11 @@ THEEND;
                         if ($gallsel == 'yes' && $extrafieldtype == 'gallery') {
                             $gallkey = self::getGallKey($extrakey, $record['pivx_type'], $record['uid']);
                             if ($gallkey != 0) {
-                                // add code for several gallery options; intention is that importer selects manually what they want
-                                $content_encoded .= '<!-- Warning! Select the gallery code you want to use; see documentation for more details. -->';
-                                self::$warncnt++;
+                                // add code for the gallery or galleries (intention is then that importer selects manually what they like best)
+                                if (count(self::$gallselect) > 0) {
+                                    $content_encoded .= '<!-- Warning! Select the gallery code you want to use; see documentation for more details. -->';
+                                    self::$warncnt++;
+                                }
                                 $galllines = self::gallLines($extrafield, false);
                                 $gallids   = array();
                                 $galltitle = array();
@@ -879,12 +925,22 @@ THEEND;
                                     $gallparms .= "array('" . implode("','",$gallalt) . "')" . '"';
                                     $gallmlaimg .= ' mla_image_alt="' . "'" . '{+mla_fixed_alt+}' . "'" . '"';
                                 }
-                                // plain gallery code with not supported parms to show the set values
-                                $content_encoded .= '<br/>[gallery ids="' . $gallidsstring . '" link=file' . str_replace('mla_', 'nosupp_', $gallparms) . ']';
-                                // mla gallery code with parms meant for fixed values add on
-                                $content_encoded .= '<br/>[mla_gallery ids="' . $gallidsstring . '" link=file' . $gallparms . $gallmlahrf . $gallmlalnk . $gallmlaimg . ']';
-                                // envira gallery
-                                $content_encoded .= '<br/>[envira-gallery id="' . $gallkey . '"]';
+                                if (in_array('default', self::$gallselect)) {
+                                    // plain gallery code with not supported parms to show the set values
+                                    $content_encoded .= '<br/>[gallery ids="' . $gallidsstring . '" link=file' . str_replace('mla_', 'nosupp_', $gallparms) . ']';
+                                }
+                                if (in_array('mla', self::$gallselect)) {
+                                    // mla gallery code with parms meant for fixed values add on
+                                    $content_encoded .= '<br/>[mla_gallery ids="' . $gallidsstring . '" link=file' . $gallparms . $gallmlahrf . $gallmlalnk . $gallmlaimg . ']';
+                                }
+                                if (in_array('envira', self::$gallselect)) {
+                                    // envira lite gallery
+                                    $content_encoded .= '<br/>[envira-gallery id="' . $gallkey . '"]';
+                                }
+                                if (count(self::$gallselect) == 0) {
+                                    $content_encoded .= '<!-- Warning! A gallery was skipped here. -->';
+                                    self::$warncnt++;
+                                }
                             } else {
                                 $content_encoded .= '<!-- Warning! Gallery id not found! ' . $extrakey . ' -->';
                                 self::$warncnt++;
@@ -977,6 +1033,18 @@ THEEND;
         $output .= self::outputWXR_Header('categories');
         $output .= self::outputWXR_Categories();
         $output .= self::outputWXR_Footer('categories');
+
+        return $output;
+    }
+
+    public static function exportUsers()
+    {
+        global $PIVOTX;
+
+        $output  = '';
+        $output .= self::outputWXR_Header('users');
+        $output .= self::outputWXR_Users();
+        $output .= self::outputWXR_Footer('users');
 
         return $output;
     }
@@ -2739,6 +2807,10 @@ function pageWxrexport()
             case 'categories':
                 $filename = 'categories.xml';
                 $output   = pivotxWxrExport::exportCategories();
+                break;
+            case 'users':
+                $filename = 'users.xml';
+                $output   = pivotxWxrExport::exportUsers();
                 break;
             case 'uploads':
                 $filename = 'uploads.xml';

@@ -25,6 +25,10 @@ __Dummy user__
 
 To be able to attach some of the imports to a dummy user in stead of letting the accompanying userid be defined when importing, it is handy to define some dummy user.
 
+__Thumbnail size__
+
+If you want to set the replacement string thumb_repl correctly first check out your setting of it by looking into Settings / Media / Thumbnail size. By default it is set to 150x150 but you can select another value. If you do then set the replacement string in the code to the same value (if you want to use it of course). 
+
 __Additional plugins__
 
 If you are going to export your Extrafields and their values you need to install plugin ACF (Advanced Custom Fields) and if your going to export your Galleries you can install plugin Envira (Lite) or Media Library Assistant. 
@@ -33,15 +37,16 @@ Preparation on the PivotX side
 ==============================
 
 Before you start creating xml files in the extension itself you should set the different variables, especially the "addto" ones for the id's, to a desired value. Search file *hook_wxrexport.php* for string **@@CHANGE** to see the parts of the code where you can customize (this is not only at the beginning of the file!).  
-Then decide what you want to export. It is a good approach to first create all the xml's you want to use and check their content for the warnings generated (just search for string **Warning!**; at the end of each xml file generated there is also a count of warnings issued).
+Then decide what you want to export. It is a good approach to first create all the xml's you want to use and check their content for the warnings generated (just search for string **warning**; at the end of each xml file generated there is also a total count of warnings issued).
 
-Executing the Export
-====================
+Executing the Export/Import
+===========================
 
 To export everything you need to execute this in sequence (export means create the export file and import that into WP):
 
  * Export Categories (e)
  * Export Chapters (p)
+ * Export Users (s)
  * Export Uploads (e+p)
  * Export Extrafields (e+p)
  * Export Galleries (e+p)
@@ -49,7 +54,8 @@ To export everything you need to execute this in sequence (export means create t
  * Export Entries and Galleries including Comments (e)
 
 e = entry related  
-p = page related
+p = page related  
+s = system related
 
 Checking the result and actions afterwards
 ==========================================
@@ -81,9 +87,28 @@ __Check errors__
 If the import reports errors you should check these errors obviously. Also important is to check the ids of the imports just in front of the failing import. The WP importer is known to set these ids to the id of the failing import...... If these imported parts are used somewhere (i.e. connected through its id) then this connection will be wrong. 
 In the footer of the generated export the number of warnings is displayed. Check for the string "warning" in the generated file to see what the warning is about.
 
+__Users__
+
+Exporting and importing your users can be done too. If you change nothing on WP side the users will only be defined with their login names. The rest is skipped. Better is that also email and display name are defined.  
+For that an add on to the WP importer has been created: pivx\_wp\_import\_users.php  
+Put this file in the same folder as wordpress-importer is in.  
+After that you need to change the code of wordpress-importer.php around line 355: 
+
+	 } else if ( $create_users ) {
+         if ( ! empty($_POST['user_new'][$i]) ) {
+             // add extra code for PivotX user import
+             include dirname( __FILE__ ) . '/pivx_wp_import_users.php';
+             $user_id = wp_create_user( $_POST['user_new'][$i], wp_generate_password() );
+
+If you use this code the normal importer will give an error message because the user has already been defined by pivx\_wp\_import\_users.
+
+Note: imported users will always have level "Subscriber". See the export file to see what their original level was and change manually in WP accordingly.  
+
+Note 2: PivotX does not support first and last names. The export file already has the tags for that so you fill them before importing.
+
 __Galleries__
 
-If you select to export the galleries together with your entries or pages there a several gallery codes to be found in the end result. You can find those by searching for "Select the gallery code you want to use".
+If you select to export the galleries together with your entries or pages there can be several gallery codes to be found in the end result depending on the values you set in parameter $gallselect in the code (defaults to all possible). You can find those by searching for string "Select the gallery code you want to use" in your output xml files.
 Currently there are 3 possibilities:  
 
 1. Plain Gallery code (WP built in)  

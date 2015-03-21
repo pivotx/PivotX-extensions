@@ -43,10 +43,11 @@ Executing the Export/Import
 ===========================
 
 To export everything you need to execute this in sequence (export means create the export file and import that into WP):
-
+ 
+ * Export Users (s)
+ * Export Registered Visitors (s)
  * Export Categories (e)
  * Export Chapters (p)
- * Export Users (s)
  * Export Uploads (e+p)
  * Export Extrafields (e+p)
  * Export Galleries (e+p)
@@ -87,9 +88,9 @@ __Check errors__
 If the import reports errors you should check these errors obviously. Also important is to check the ids of the imports just in front of the failing import. The WP importer is known to set these ids to the id of the failing import...... If these imported parts are used somewhere (i.e. connected through its id) then this connection will be wrong. 
 In the footer of the generated export the number of warnings is displayed. Check for the string "warning" in the generated file to see what the warning is about.
 
-__Users__
+__Users & Registered Visitors__
 
-Exporting and importing your users can be done too. If you change nothing on WP side the users will only be defined with their login names. The rest is skipped. Better is that also email and display name are defined.  
+Exporting and importing your users/visitors can be done too. If you change nothing on WP side the users will only be defined with their login names. The rest is skipped. Better is that also email and display name are defined.  
 For that an add on to the WP importer has been created: pivx\_wp\_import\_users.php  
 Put this file in the same folder as wordpress-importer is in.  
 After that you need to change the code of wordpress-importer.php around line 355: 
@@ -104,7 +105,9 @@ If you use this code the normal importer will give an error message because the 
 
 Note: imported users will always have level "Subscriber". See the export file to see what their original level was and change manually in WP accordingly.  
 
-Note 2: PivotX does not support first and last names. The export file already has the tags for that so you fill them before importing.
+Note 2: imported visitors (verified or not disabled) will not have their url defined. If set this url is to be found in the export file.
+
+Note 3: PivotX does not support first and last names. The export file already has the tags for that so you fill them before importing.
 
 __Galleries__
 

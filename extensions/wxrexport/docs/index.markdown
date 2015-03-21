@@ -12,9 +12,9 @@ need.
 Currently the following export choices exists:
 
  * Optional actions before exporting content
-   * Export Categories
-   * Export Chapters as plain pages that can be used to parent the PivotX pages
    * Export Users
+   * Export Registered Visitors
+   * Export Chapters as plain pages that can be used to parent the PivotX pages
    * Export Uploads
    * Export Extrafields definitions like e.g. Bonusfields extension for use in ACF plugin for WP (galleries will be skipped)
    * Export Extrafields galleries for use in Envira (Lite) plugin for WP

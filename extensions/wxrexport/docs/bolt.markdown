@@ -23,9 +23,10 @@ Executing the Export/Import
 
 To export everything you need to execute this in sequence (export means create the export file and import that into Bolt):
 
+ * Export Users (s)
+ * Export Registered Visitors (s)
  * Export Categories (e)
  * Export Chapters (p)
- * Export Users (s)
  * Export Uploads (e+p)
  * Export Extrafields (e+p)
  * Export Galleries (e+p)

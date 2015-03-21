@@ -1041,7 +1041,7 @@ THEEND;
                 'title' => $record['title'],
                 'link' => $record['link'],
                 'pubDate' => array('date_2822', $record['publish_date']),
-                'dc:creator' => array('cdata', $record['user']),
+                'dc:creator' => array('cdata', self::sanitizeUserName($record['user'])),
                 '#1' => self::outputWXR_ItemCategories($categories),
                 '#2' => self::outputWXR_ItemTags($record['keywords']),
                 'guid isPermaLink="true"' => $record['link'],

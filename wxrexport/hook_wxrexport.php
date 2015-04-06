@@ -714,6 +714,7 @@ THEEND;
         if ($item['new_uid'] != '') {
             $item['post_id'] = $item['new_uid'];
         }
+        $item['post_name'] = $item['uri'];
 
         if (array_key_exists($item['chapter'], $chaparray)) {
             $item['post_parent'] = $chaparray[$item['chapter']];
@@ -736,6 +737,7 @@ THEEND;
         $item['pivx_type'] = 'entry';
 
         $item['post_id'] = $item['uid'] + self::$addtoentry;
+        $item['post_name'] = ''; // Entries doesn't have slug/post_name
 
         $item['post_parent'] = '0'; 
         return $item;
@@ -1050,6 +1052,7 @@ THEEND;
                 'excerpt:encoded' => array('cdata', $excerpt_encoded),
                 'content:encoded' => array('cdata', $content_encoded),
                 'wp:post_id' => $record['post_id'],
+                'wp:post_name' => $record['post_name'],
                 'wp:post_date' => array('date', $record['publish_date']),
                 'wp:post_date_gmt' => array('date_gmt', $record['publish_date']),
                 'wp:comment_status' => (isset($record['allow_comments']) && $record['allow_comments']) ? 'open' : 'closed',

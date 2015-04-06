@@ -105,7 +105,7 @@ class pivotxWxrExport
     public static $addtogall  = 250;
     public static $addtoentry = 300;
     public static $addtoupl   = 600;
-    public static $efprefix = 'pivx_';   // only lower case!
+    public static $efprefix = 'pivx_extrafield_';   // only lower case!
     public static $efskip   = array('ef_skip1','ef_skip2');   // extrafields to exclude from export
     public static $entrysel = array('show'=>20000);   //  all categories are selected
     //public static $entrysel = array('cats'=>array('default', 'linkdump'),'show'=>20000);   // only specific categories
@@ -484,7 +484,6 @@ THEEND;
 
     private static function outputWXR_ItemTags($tags)
     {
-        global $PIVOTX;
         $output = '';
         if ($tags != '') {
             $tag_arr = explode(' ', $tags);
@@ -794,8 +793,6 @@ THEEND;
         foreach($data as &$record) {
 
             $record = call_user_func($callback, $record, $comments); 
-            // xiao: something goes wrong here with the comments!!!!
-            // harm: I tested with comments and all seems to process well?
 
             // set the $entry.field.field fields that can be used directly in the content
             if ($record['pivx_type'] == 'entry') {
@@ -1076,8 +1073,6 @@ THEEND;
 
     public static function exportCategories()
     {
-        global $PIVOTX;
-
         $output  = '';
         $output .= self::outputWXR_Header('categories');
         $output .= self::outputWXR_Categories();
@@ -1088,8 +1083,6 @@ THEEND;
 
     public static function exportUsers()
     {
-        global $PIVOTX;
-
         $output  = '';
         $output .= self::outputWXR_Header('users');
         $output .= self::outputWXR_Users();
@@ -1100,8 +1093,6 @@ THEEND;
 
     public static function exportVisitors()
     {
-        global $PIVOTX;
-
         $output  = '';
         $output .= self::outputWXR_Header('visitors');
         $output .= self::outputWXR_Visitors();
@@ -1161,8 +1152,6 @@ THEEND;
 
     public static function exportExtrafields()
     {
-        global $PIVOTX;
-
         $output  = '';
         $output .= self::outputWXR_Header('extrafields');
         $output .= self::outputWXR_Extrafields();
@@ -1173,8 +1162,6 @@ THEEND;
 
     public static function exportGalleries()
     {
-        global $PIVOTX;
-
         $output  = '';
         $output .= self::outputWXR_Header('galleries');
         $output .= self::outputWXR_Galleries();

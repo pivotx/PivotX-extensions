@@ -737,7 +737,7 @@ THEEND;
         $item['pivx_type'] = 'entry';
 
         $item['post_id'] = $item['uid'] + self::$addtoentry;
-        $item['post_name'] = ''; // Entries doesn't have slug/post_name
+        $item['post_name'] = $item['uri'];
 
         $item['post_parent'] = '0'; 
         return $item;

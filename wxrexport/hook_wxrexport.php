@@ -1355,8 +1355,14 @@ THEEND;
         if ($efsel == 'page') { $wpsel = 'page'; }
         $efmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
             'wp:meta_key' => 'rule',
-            'wp:meta_value' => array('cdata', 'a:5:{s:5:"param";s:9:"post_type";s:8:"operator";s:2:"==";s:5:"value";s:4:"' .
-            $wpsel . '";s:8:"order_no";i:0;s:8:"group_no";i:0;}'),
+            'wp:meta_value' => array('cdata', serialize(array(
+                'param'=>'post_type', 
+                'operator' => '==', 
+                'value' => $wpsel, 
+                'order_no' => 0, 
+                'group_no' => 0
+                ))
+            ),
         ));
         $efmeta .= '</wp:postmeta>';
         $efmeta .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
@@ -1406,7 +1412,7 @@ THEEND;
                 if ($extrafieldtype == 'checkbox' || $extrafieldtype == 'checkbox_multiple') {
                     if ($extrafield == 'on') {
                         $extrafielddata = self::getEFData($extrakey, $pivx_type, $extrafields, true);
-                        $extrafield = 'a:1:{i:0;s:' . strlen($extrafielddata) . ':"' . $extrafielddata . '";}';
+                        $extrafield = serialize(array($extrafielddata));
                     }
                 }
                 if ($extrafieldtype == 'choose_entry') {

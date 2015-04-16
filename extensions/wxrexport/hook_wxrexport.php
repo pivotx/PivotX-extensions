@@ -119,6 +119,7 @@ class pivotxWxrExport
     //public static $aliases = array('http://www.myurl.com','http://www.my-url.com');
     // selector to decide which kind of gallery code you want in your exported content (see above for detailed description)
     public static $gallselect = array('default','mla','envira');
+    //public static $gallselect = array();
     public static $user_locale = '';    // if the language you use for your users is German or Danish set this var to de_DE or da_DK to get the right translation
     
     public static function adminTab(&$form_html)
@@ -840,10 +841,10 @@ THEEND;
                 $record = self::replaceIt($record, '[[ thumbnail ', '[[ thumbnail noencode=1 ');
                 $record = self::replaceIt($record, '[[thumbnail ', '[[ thumbnail noencode=1 ');
             }
-            // extension bonusforms active? (change the template tag to inactivate because of parsing errors)
+            // extension bonusforms active? (change the template tag to inactivate because of parsing errors -- leave the rest of the parms)
             if (in_array('bonusforms',$activeext)) {
-                $record = self::replaceIt($record, '[[ bonusform ', '[[ noexport_bonusform ');
-                $record = self::replaceIt($record, '[[bonusform ', '[[ noexport_bonusform ');
+                $record = self::replaceIt($record, '[[ bonusform ', '[[ldelim]] noexport_bonusform ');
+                $record = self::replaceIt($record, '[[bonusform ', '[[ldelim]] noexport_bonusform ');
             }
 
 //@@CHANGE REPLACE STRINGS HERE -- end
@@ -1463,7 +1464,8 @@ THEEND;
                 $effill = '';
                 if ($efkeycnt < 100) { $effill = '000'; }
                 if ($efkeycnt < 10) { $effill = '0000'; }
-                $efkeywxr = 'field_20141116' . $effill . $efkeycnt;
+                // part random key
+                $efkeywxr = 'field_5467c15f' . $effill . $efkeycnt;                   
                 break;
             }
         }
@@ -2756,7 +2758,7 @@ THEEND;
     }
 
     private static function searchUploadByPostname($uplfiles, $postname, $start, $end) {
-        $start = $start ?: 0;
+        if (!isset($start)) { $start = 0; }
         if (!isset($end)) { $end = (count($uplfiles) - 1); }
         $uplsrch = array();
         if ($start < $end) {
@@ -2784,7 +2786,7 @@ THEEND;
     }
 
     private static function searchUploadByFilename($uplfiles, $filename, $start, $end) {
-        $start = $start ?: 0;
+        if (!isset($start)) { $start = 0; }
         if (!isset($end)) { $end = (count($uplfiles) - 1); }
         $uplsrch = array();
         $path_parts = pathinfo($filename);

@@ -711,7 +711,7 @@ THEEND;
         $item['post_type'] = 'page';
         $item['pivx_type'] = 'page';
         $item['post_id'] = $item['uid'] + self::$addtopage;
-        if ($item['new_uid'] != '') {
+        if (isset($item['new_uid'])) {
             $item['post_id'] = $item['new_uid'];
         }
         $item['post_name'] = $item['uri'];
@@ -767,7 +767,7 @@ THEEND;
         return $output;
     }
 
-    private static function outputWXR_Items(&$data, $comments, $callback)
+    private static function outputWXR_Items($data, $comments, $callback)
     {
         global $PIVOTX;
         global $UPLFILES;
@@ -1057,7 +1057,7 @@ THEEND;
                 'wp:ping_status' => 'closed',
                 'wp:status' => $recstatus,
                 'wp:post_parent' => $record['post_parent'],
-                'wp:menu_order' => $record['sortorder'],
+                'wp:menu_order' => isset($record['sortorder']) ? $record['sortorder'] : '',
                 'wp:post_type' => $record['post_type'],
                 'wp:post_password' => $password,
                 'wp:postmeta' => array('html', $extrafmeta),
@@ -1890,6 +1890,9 @@ THEEND;
         $gallcnt = 0 + self::$addtogall;
         $entries = $PIVOTX['db']->read_entries(self::$entrysel);
         foreach($entries as $entry) {
+            if (!is_array($entry['extrafields'])) {
+                continue;
+            } 
             foreach($entry['extrafields'] as $extrakey=>$extrafield) {
                 if (in_array($extrakey,self::$efskip)) {
                     continue;
@@ -1913,6 +1916,9 @@ THEEND;
         foreach($chapters as $chapter) {
             foreach($chapter['pages'] as $page) {
                 $page = $PIVOTX['pages']->getPage($page['uid']);
+                if (!is_array($page['extrafields'])) {
+                    continue;
+                } 
                 foreach($page['extrafields'] as $extrakey=>$extrafield) {
                     if (in_array($extrakey,self::$efskip)) {
                         continue;

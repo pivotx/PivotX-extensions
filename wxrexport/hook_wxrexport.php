@@ -852,8 +852,8 @@ THEEND;
             $excerpt_encoded = ''; 
 
             if ($parse != 'no') {
-                $content_encoded = parse_intro_or_body($record['introduction']); 
-                $content_encoded .= parse_intro_or_body($record['body']); 
+                $content_encoded = parse_intro_or_body($record['introduction'], false, $record['convert_lb']);
+                $content_encoded .= parse_intro_or_body($record['body'], false, $record['convert_lb']);
             } else {
                 $content_encoded = $record['introduction'];
                 $content_encoded .= $record['body'];

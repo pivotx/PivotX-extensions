@@ -90,7 +90,7 @@ class pivotxWxrExport
     public static $upload_input = array('images/');  // always end the element with a "/"
     //public static $upload_input = array('images/','media/','#ROOT#/files/');  // example for 2 relative folders and 1 direct from root
     public static $upload_toskip = array("index.html", ".htaccess", "readme.txt");      // specific files to skip for upload
-    public static $upload_toskipext  = array("fla", "swf");               // specific extensions to skip (e.g. because WP thinks they are dangerous)
+    public static $upload_toskipext  = array("fla", "swf", "php");      // specific extensions to skip (e.g. because WP thinks they are dangerous)
     public static $upload_yearalways = true;               // generate an year folder based on file date if not already in yyyy-mm folder
     public static $thumb_repl = '';  // replacement string for thumbnails of images (WP: Settings/Media/Thumbnail size; defaults to "-150x150")
     public static $thumb_skip = true;  // skip the export of thumbnails
@@ -544,7 +544,7 @@ THEEND;
                 'wp:post_date_gmt' => self::$chapdate,
                 'wp:comment_status' => 'closed',
                 'wp:ping_status' => 'closed',
-                'wp:status' => 'publish',
+                'wp:status' => $record['status'],
                 'wp:post_parent' => $record['post_parent'],
                 'wp:menu_order' => $record['sortorder'],
                 'wp:post_type' => $record['post_type'],
@@ -917,7 +917,7 @@ THEEND;
                             $gallkey = self::getGallKey($extrakey, $record['pivx_type'], $record['uid']);
                             if ($gallkey != 0) {
                                 // add code for the gallery or galleries (intention is then that importer selects manually what they like best)
-                                if (count(self::$gallselect) > 0) {
+                                if (count(self::$gallselect) > 1) {
                                     $content_encoded .= '<!-- Warning! Select the gallery code you want to use; see documentation for more details. -->';
                                     self::$warncnt++;
                                 }
@@ -1196,10 +1196,26 @@ THEEND;
             $chapinfo = array('uid' => $chapter['uid'],
                               'chaptername' => $chapter['chaptername'],
                               'description' => $chapter['description'],
-                              'sortorder' => $chapter['sortorder']);
+                              'sortorder' => $chapter['sortorder'],
+                              'status' => 'publish');
             if (array_key_exists('chapters', self::$pagesel)) {
                 if (!in_array($chapinfo['chaptername'], self::$pagesel['chapters'])) {
                     continue;
+                }
+            }
+            // check for empty chapter
+            if (count($chapter['pages']) == 0) {
+                $chapinfo['status'] = 'pending';
+            } else {
+                // check for chapter with only hold pages
+                $chkcount = 0;
+                foreach($chapter['pages'] as $chkpage) {
+                    if ($chkpage['status'] == 'hold') {
+                        $chkcount = $chkcount + 1;
+                    }
+                }
+                if (count($chapter['pages']) == $chkcount) {
+                    $chapinfo['status'] = 'pending';
                 }
             }
             // put version of the chapter page in front of the child pages so import knows it is OK (otherwise it won't work)
@@ -1208,7 +1224,6 @@ THEEND;
                 $chapinfo['forpage'] = 1;
                 $output .= self::outputWXR_Chapters($chapinfo);
             }
-
             $output .= self::outputWXR_Items($chapter['pages'], false, array('pivotxWxrExport','convertPageToItem'));
         }
         $output .= self::outputWXR_Footer('pages');
@@ -1228,10 +1243,26 @@ THEEND;
             $chapinfo = array('uid' => $chapter['uid'],
                               'chaptername' => $chapter['chaptername'],
                               'description' => $chapter['description'],
-                              'sortorder' => $chapter['sortorder']);
+                              'sortorder' => $chapter['sortorder'],
+                              'status' => 'publish');
             if (array_key_exists('chapters', self::$pagesel)) {
                 if (!in_array($chapinfo['chaptername'], self::$pagesel['chapters'])) {
                     continue;
+                }
+            }
+            // check for empty chapter
+            if (count($chapter['pages']) == 0) {
+                $chapinfo['status'] = 'pending';
+            } else {
+                // check for chapter with only hold pages
+                $chkcount = 0;
+                foreach($chapter['pages'] as $chkpage) {
+                    if ($chkpage['status'] == 'hold') {
+                        $chkcount = $chkcount + 1;
+                    }
+                }
+                if (count($chapter['pages']) == $chkcount) {
+                    $chapinfo['status'] = 'pending';
                 }
             }
             if ($chapter['chaptername'] != '') {

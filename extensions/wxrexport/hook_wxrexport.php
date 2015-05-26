@@ -852,18 +852,28 @@ THEEND;
             $excerpt_encoded = ''; 
 
             if ($parse != 'no') {
-                $content_encoded = parse_intro_or_body($record['introduction'], false, $record['convert_lb']);
-                $content_encoded .= parse_intro_or_body($record['body'], false, $record['convert_lb']);
+                $content_encoded_i = parse_intro_or_body($record['introduction'], false, $record['convert_lb']);
+                $content_encoded_b = parse_intro_or_body($record['body'], false, $record['convert_lb']);
             } else {
-                $content_encoded = $record['introduction'];
-                $content_encoded .= $record['body'];
+                $content_encoded_i = $record['introduction'];
+                $content_encoded_b = $record['body'];
             }
-            $content_encoded = rawurldecode(html_entity_decode($content_encoded, ENT_QUOTES, "UTF-8"));
-            // replace CR LF (they can come in with included files) 
-            $content_encoded = preg_replace( "/\r|\n/", " ", $content_encoded );
 
-            $repldebug = 'item processing: ' . $record['uid'] . '|' . $record['title'];
-            $content_encoded = self::contentReplParts($content_encoded, $parse, $repldebug);
+            $content_encoded_i = rawurldecode(html_entity_decode($content_encoded_i, ENT_QUOTES, "UTF-8"));
+            // replace CR LF (they can come in with included files) 
+            $content_encoded_i = preg_replace( "/\r|\n/", " ", $content_encoded_i );
+            $repldebug = 'item processing intro: ' . $record['uid'] . '|' . $record['title'];
+            $content_encoded_i = self::contentReplParts($content_encoded_i, $parse, $repldebug);
+
+            $content_encoded_b = rawurldecode(html_entity_decode($content_encoded_b, ENT_QUOTES, "UTF-8"));
+            // replace CR LF (they can come in with included files) 
+            $content_encoded_b = preg_replace( "/\r|\n/", " ", $content_encoded_b );
+            $repldebug = 'item processing body: ' . $record['uid'] . '|' . $record['title'];
+            $content_encoded_b = self::contentReplParts($content_encoded_b, $parse, $repldebug);
+
+            $content_encoded = $content_encoded_i . $content_encoded_b;
+            // get the word count for the introduction
+            $introwcnt = self::getIntroWcnt($content_encoded_i, $record['uid']);
 
             $image = '';
             $password = '';
@@ -874,6 +884,9 @@ THEEND;
             }
             $extrafmeta = '';
             $extrafcnt  = 0;
+            // introduction word count length
+            $extrafmeta .= self::processEFExtra('intro_wordcount', $record['pivx_type'], $EXTRAFIELDS, $introwcnt, $extrafcnt);
+            $extrafcnt   = $extrafcnt + 1;
             // process extrafields
             if ($record['extrafields'] != '') {
                 foreach($record['extrafields'] as $extrakey=>$extrafield) {
@@ -1723,6 +1736,13 @@ THEEND;
         // add subtitle
         $extadd['name'] = 'Subtitle';
         $extadd['fieldkey'] = 'subtitle';
+        $extadd['contenttype'] = 'entry';
+        $extrafields = self::addToEF($extrafields, $extadd);
+        $extadd['contenttype'] = 'page';
+        $extrafields = self::addToEF($extrafields, $extadd);
+        // add intro_wordcount
+        $extadd['name'] = 'Intro word count';
+        $extadd['fieldkey'] = 'intro_wordcount';
         $extadd['contenttype'] = 'entry';
         $extrafields = self::addToEF($extrafields, $extadd);
         $extadd['contenttype'] = 'page';
@@ -2856,6 +2876,31 @@ THEEND;
         return $uplsrch;
     }
 
+    private static function getIntroWcnt($contentforintrocnt, $uid) {
+        // $uid is added so you can debug specific uids
+        $introwcnt = 0;
+        // replace &nbsp; is UTF-8 "\xc2\xa0"
+        $contentforintrocnt = str_replace("\xc2\xa0", " ", $contentforintrocnt);
+        // strip tags
+        $contentforintrocnt = strip_tags( trim($contentforintrocnt) );
+        // sanitize it?
+        $contentforintrocnt = self::remove_accents($contentforintrocnt);
+        $introwcnt = str_word_count($contentforintrocnt);
+        //echo 'introcnt sanitize: ' . $introwcnt . '<br/>';
+        //echo $contentforintrocnt . '<br/>';
+        /*
+        WP also removes in its own js all punctuation before counting the words
+        In PHP not needed die str_word_count?
+        preg_replace string used by WP js is [0-9.(),;:!?%#$¿'"_+=\\/-]
+
+        If other problems arise with this count perhaps removing double spaces could help as well
+        $patterns = array("/\s+/", "/\s([?.!])/");
+        $replacer = array(" ","$1");
+        preg_replace( $patterns, $replacer, $contentforintrocnt );
+        */
+        return $introwcnt;
+    }
+
     private static function sanitizeFileName($filename) {
         // code similar to WP formatting.php  (WPeyec)
         $special_chars = array("?", "[", "]", "/", "\\", "=", "<", ">", ":", ";", ",", "'", "\"", "&", "$", "#", "*", "(", ")", "|", "~", "`", "!", "{", "}", chr(0));
@@ -2867,12 +2912,42 @@ THEEND;
         return $filename;
     }
 
-    private static function sanitizeUserName($username) {
+    private static function sanitizeUserName( $username, $strict = false ) {
         // code similar to WP formatting.php (WPeyec)
-        $username = preg_replace( '@<(script|style)[^>]*?>.*?</\\1>@si', '', $username );
-        $username = strip_tags($username);
-    
-        if ( preg_match('/[\x80-\xff]/', $username) ) {
+        $raw_username = $username;
+        $username = self::wp_strip_all_tags( $username );
+        $username = self::remove_accents( $username );
+        // Kill octets
+        $username = preg_replace( '|%([a-fA-F0-9][a-fA-F0-9])|', '', $username );
+        $username = preg_replace( '/&.+?;/', '', $username ); // Kill entities
+
+        // If strict, reduce to ASCII for max portability.
+        if ( $strict )
+            $username = preg_replace( '|[^a-z0-9 _.\-@]|i', '', $username );
+
+        $username = trim( $username );
+        // Consolidate contiguous whitespace
+        $username = preg_replace( '|\s+|', ' ', $username );
+        return $username;
+    }
+    private static function wp_strip_all_tags($string, $remove_breaks = false) {
+        // code similar to WP formatting.php (WPeyec)
+        $string = preg_replace( '@<(script|style)[^>]*?>.*?</\\1>@si', '', $string );
+        $string = strip_tags($string);
+
+        if ( $remove_breaks )
+            $string = preg_replace('/[\r\n\t ]+/', ' ', $string);
+
+        return trim( $string );
+    }
+    private static function remove_accents($string) {
+        // code similar to WP formatting.php (WPeyec)
+        if ( !preg_match('/[\x80-\xff]/', $string) ) {
+            //echo 'leave!<br/>';
+            return $string;
+        }
+        if (self::seems_utf8($string)) {
+            //echo 'seems utf8<br/>';
             $chars = array(
             // Decompositions for Latin-1 Supplement
             chr(194).chr(170) => 'a', chr(194).chr(186) => 'o',
@@ -3048,8 +3123,12 @@ THEEND;
             // grave accent
             chr(199).chr(155) => 'U', chr(199).chr(156) => 'u',
             );
+
             // Used for locale-specific rules
-            if ( 'de_DE' == self::$user_locale ) {
+            //$locale = get_locale();
+            $locale = self::$user_locale;   // WPeyec - changed code
+
+            if ( 'de_DE' == $locale ) {
                 $chars[ chr(195).chr(132) ] = 'Ae';
                 $chars[ chr(195).chr(164) ] = 'ae';
                 $chars[ chr(195).chr(150) ] = 'Oe';
@@ -3057,7 +3136,7 @@ THEEND;
                 $chars[ chr(195).chr(156) ] = 'Ue';
                 $chars[ chr(195).chr(188) ] = 'ue';
                 $chars[ chr(195).chr(159) ] = 'ss';
-            } elseif ( 'da_DK' === self::$user_locale ) {
+            } elseif ( 'da_DK' === $locale ) {
                 $chars[ chr(195).chr(134) ] = 'Ae';
                 $chars[ chr(195).chr(166) ] = 'ae';
                 $chars[ chr(195).chr(152) ] = 'Oe';
@@ -3065,17 +3144,56 @@ THEEND;
                 $chars[ chr(195).chr(133) ] = 'Aa';
                 $chars[ chr(195).chr(165) ] = 'aa';
             }
-            $username = strtr($username, $chars);
+
+            $string = strtr($string, $chars);
+        } else {
+            //echo 'assume iso-8859-1<br/>';
+            $chars = array();
+            // Assume ISO-8859-1 if not UTF-8
+            $chars['in'] = chr(128).chr(131).chr(138).chr(142).chr(154).chr(158)
+                .chr(159).chr(162).chr(165).chr(181).chr(192).chr(193).chr(194)
+                .chr(195).chr(196).chr(197).chr(199).chr(200).chr(201).chr(202)
+                .chr(203).chr(204).chr(205).chr(206).chr(207).chr(209).chr(210)
+                .chr(211).chr(212).chr(213).chr(214).chr(216).chr(217).chr(218)
+                .chr(219).chr(220).chr(221).chr(224).chr(225).chr(226).chr(227)
+                .chr(228).chr(229).chr(231).chr(232).chr(233).chr(234).chr(235)
+                .chr(236).chr(237).chr(238).chr(239).chr(241).chr(242).chr(243)
+                .chr(244).chr(245).chr(246).chr(248).chr(249).chr(250).chr(251)
+                .chr(252).chr(253).chr(255);
+
+            $chars['out'] = "EfSZszYcYuAAAAAACEEEEIIIINOOOOOOUUUUYaaaaaaceeeeiiiinoooooouuuuyy";
+
+            $string = strtr($string, $chars['in'], $chars['out']);
+            $double_chars = array();
+            $double_chars['in'] = array(chr(140), chr(156), chr(198), chr(208), chr(222), chr(223), chr(230), chr(240), chr(254));
+            $double_chars['out'] = array('OE', 'oe', 'AE', 'DH', 'TH', 'ss', 'ae', 'dh', 'th');
+            $string = str_replace($double_chars['in'], $double_chars['out'], $string);
         }
-        // Kill octets
-        $username = preg_replace( '|%([a-fA-F0-9][a-fA-F0-9])|', '', $username );
-        $username = preg_replace( '/&.+?;/', '', $username ); // Kill entities
-        $username = preg_replace( '|[^a-z0-9 _.\-@]|i', '', $username );
-        $username = trim( $username );
-        // Consolidate contiguous whitespace
-        $username = preg_replace( '|\s+|', ' ', $username );
-        return $username;
+        return $string;
     }
+    private static function seems_utf8($str) {
+        // code similar to WP formatting.php (WPeyec)
+        //mbstring_binary_safe_encoding();     // WPeyec commented out
+        $length = strlen($str);
+        //reset_mbstring_encoding();           // WPeyec commented out
+        for ($i=0; $i < $length; $i++) {
+            $c = ord($str[$i]);
+            if ($c < 0x80) $n = 0; // 0bbbbbbb
+            elseif (($c & 0xE0) == 0xC0) $n=1; // 110bbbbb
+            elseif (($c & 0xF0) == 0xE0) $n=2; // 1110bbbb
+            elseif (($c & 0xF8) == 0xF0) $n=3; // 11110bbb
+            elseif (($c & 0xFC) == 0xF8) $n=4; // 111110bb
+            elseif (($c & 0xFE) == 0xFC) $n=5; // 1111110b
+            else return false; // Does not match any model
+            for ($j=0; $j<$n; $j++) { // n bytes matching 10bbbbbb follow ?
+                if ((++$i == $length) || ((ord($str[$i]) & 0xC0) != 0x80))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+// end private functions
 }
 
 /**

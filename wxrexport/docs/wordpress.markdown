@@ -109,6 +109,10 @@ Note 2: imported visitors (verified or not disabled) will not have their url def
 
 Note 3: PivotX does not support first and last names. The export file already has the tags for that so you fill them before importing.
 
+__Introduction and Body__
+
+WP doesn't know this differentiation in content as PivotX does. So in the export the two are combined to one. To be able to know what part originally was the Introduction an extrafield named 'intro_wordcount' (with the prefix as defined in the export tool) has been defined. This field will contain the number of words of the Introduction. It is not absolutely sure that this calculation will always be right!
+
 __Galleries__
 
 If you select to export the galleries together with your entries or pages there can be several gallery codes to be found in the end result depending on the values you set in parameter $gallselect in the code (defaults to all possible). You can find those by searching for string "Select the gallery code you want to use" in your output xml files.

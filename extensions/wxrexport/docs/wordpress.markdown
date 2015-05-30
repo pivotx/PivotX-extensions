@@ -109,9 +109,9 @@ Note 2: imported visitors (verified or not disabled) will not have their url def
 
 Note 3: PivotX does not support first and last names. The export file already has the tags for that so you fill them before importing.
 
-__Introduction and Body__
+__Introduction and Body (word count)__
 
-WP doesn't know this differentiation in content as PivotX does. So in the export the two are combined to one. To be able to know what part originally was the Introduction an extrafield named 'intro_wordcount' (with the prefix as defined in the export tool) has been defined. This field will contain the number of words of the Introduction. It is not absolutely sure that this calculation will always be right!
+WP doesn't know this differentiation in content as PivotX does. So in the export the two are combined to one. To be able to know what part originally was the Introduction an extrafield named 'intro_wordcount' (with the prefix as defined in the export tool) has been defined. This field will contain the number of words of the Introduction. It is not absolutely sure that this calculation will always be right! WP's PHP functions for excerpt and wp\_trim\_words seem to work fine with it; the number of words displayed in the editor is calculated by WP in a totally different way!
 
 __Galleries__
 

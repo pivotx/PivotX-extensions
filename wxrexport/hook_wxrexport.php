@@ -871,7 +871,8 @@ THEEND;
             $repldebug = 'item processing body: ' . $record['uid'] . '|' . $record['title'];
             $content_encoded_b = self::contentReplParts($content_encoded_b, $parse, $repldebug);
 
-            $content_encoded = $content_encoded_i . $content_encoded_b;
+            // add a space in between for close p and start p tag
+            $content_encoded = $content_encoded_i . ' ' . $content_encoded_b;
             // get the word count for the introduction
             $introwcnt = self::getIntroWcnt($content_encoded_i, $record['uid']);
 
@@ -2655,6 +2656,8 @@ THEEND;
         $content = str_replace('class="pivotx-popup', 'class="wxr-popup', $content);
         $content = str_replace('class="pivotx-download', 'class="wxr-download', $content);
         $content = str_replace("class='pivotx-taglink'", 'class="wxr-taglink"', $content);    // quotes set differently for this link
+        // space in between so words are not considered as one
+        $content = str_replace('</p><p', '</p> <p', $content);
         return $content;
     }
 
@@ -2879,26 +2882,84 @@ THEEND;
     private static function getIntroWcnt($contentforintrocnt, $uid) {
         // $uid is added so you can debug specific uids
         $introwcnt = 0;
-        // replace &nbsp; is UTF-8 "\xc2\xa0"
-        $contentforintrocnt = str_replace("\xc2\xa0", " ", $contentforintrocnt);
-        // strip tags
-        $contentforintrocnt = strip_tags( trim($contentforintrocnt) );
-        // sanitize it?
-        $contentforintrocnt = self::remove_accents($contentforintrocnt);
-        $introwcnt = str_word_count($contentforintrocnt);
-        //echo 'introcnt sanitize: ' . $introwcnt . '<br/>';
-        //echo $contentforintrocnt . '<br/>';
-        /*
-        WP also removes in its own js all punctuation before counting the words
-        In PHP not needed die str_word_count?
-        preg_replace string used by WP js is [0-9.(),;:!?%#$¿'"_+=\\/-]
 
-        If other problems arise with this count perhaps removing double spaces could help as well
+        // strip tags
+        $contentforintrocnt = self::wp_strip_all_tags( trim($contentforintrocnt) );
+
+        // replace &nbsp; is UTF-8 "\xc2\xa0"  (commented out for the moment)
+        //$contentforintrocnt = str_replace("\xc2\xa0", " ", $contentforintrocnt);
+
+        // remove accents? (only works properly when it is in UTF-8) (commented out for the moment)
+        //$contentforintrocnt = self::remove_accents($contentforintrocnt);
+        
+        //$introwcnt = str_word_count($contentforintrocnt);
+        // instead of use str_word_count use the method used by WP to count the words (WPeyec)
+        $words_array = preg_split( "/[\n\r\t ]+/", $contentforintrocnt, 0, PREG_SPLIT_NO_EMPTY );
+        $introwcnt = count ( $words_array );
+
+        /*
+        WPeyec: the word count used in WP is done either by a js for the editor side or by excerpt functions and the wp_trim_words function.
+                I am sorry to say that these 3 approaches give different results. So the word count done here has been coded to result
+                as close as possible for the excerpt functions assuming that these will be used the most together with this word count value.
+                WP removes in its own js all punctuation and accents before counting the words but in the php functions this does not happen. 
+                preg_replace string used by WP word-count.js is /[0-9.(),;:!?%#$¿'"_+=\\/-]+/g
+                The WP php functions can be found in formatting.php file.
+
+        If other problems arise with this count perhaps removing double spaces could help as well:
         $patterns = array("/\s+/", "/\s([?.!])/");
         $replacer = array(" ","$1");
         preg_replace( $patterns, $replacer, $contentforintrocnt );
         */
         return $introwcnt;
+    }
+
+
+    /**
+    * Strip punctuation from utf-8 text. (Source: http://nadeausoftware.com/articles/2007/9/php_tip_how_strip_punctuation_characters_web_page)
+    * (This function is not used but left here to possibly cope in future with wrong word counts)
+    */
+    private static function strip_punctuation( $text ) {
+    $urlbrackets    = '\[\]\(\)';
+    $urlspacebefore = ':;\'_\*%@&?!' . $urlbrackets;
+    $urlspaceafter  = '\.,:;\'\-_\*@&\/\\\\\?!#' . $urlbrackets;
+    $urlall         = '\.,:;\'\-_\*%@&\/\\\\\?!#' . $urlbrackets;
+ 
+    $specialquotes  = '\'"\*<>';
+ 
+    $fullstop       = '\x{002E}\x{FE52}\x{FF0E}';
+    $comma          = '\x{002C}\x{FE50}\x{FF0C}';
+    $arabsep        = '\x{066B}\x{066C}';
+    $numseparators  = $fullstop . $comma . $arabsep;
+ 
+    $numbersign     = '\x{0023}\x{FE5F}\x{FF03}';
+    $percent        = '\x{066A}\x{0025}\x{066A}\x{FE6A}\x{FF05}\x{2030}\x{2031}';
+    $prime          = '\x{2032}\x{2033}\x{2034}\x{2057}';
+    $nummodifiers   = $numbersign . $percent . $prime;
+ 
+    return preg_replace(
+        array(
+        // Remove separator, control, formatting, surrogate,
+        // open/close quotes.
+            '/[\p{Z}\p{Cc}\p{Cf}\p{Cs}\p{Pi}\p{Pf}]/u',
+        // Remove other punctuation except special cases
+            '/\p{Po}(?<![' . $specialquotes .
+                $numseparators . $urlall . $nummodifiers . '])/u',
+        // Remove non-URL open/close brackets, except URL brackets.
+            '/[\p{Ps}\p{Pe}](?<![' . $urlbrackets . '])/u',
+        // Remove special quotes, dashes, connectors, number
+        // separators, and URL characters followed by a space
+            '/[' . $specialquotes . $numseparators . $urlspaceafter .
+                '\p{Pd}\p{Pc}]+((?= )|$)/u',
+        // Remove special quotes, connectors, and URL characters
+        // preceded by a space
+            '/((?<= )|^)[' . $specialquotes . $urlspacebefore . '\p{Pc}]+/u',
+        // Remove dashes preceded by a space, but not followed by a number
+            '/((?<= )|^)\p{Pd}+(?![\p{N}\p{Sc}])/u',
+        // Remove consecutive spaces
+            '/ +/',
+        ),
+        ' ',
+        $text );
     }
 
     private static function sanitizeFileName($filename) {

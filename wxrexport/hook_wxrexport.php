@@ -940,10 +940,12 @@ THEEND;
                                 $galltitle = array();
                                 $swgtitle  = 'N';
                                 $gallalt   = array();
-                                $swgalt     = 'N';
+                                $swgalt    = 'N';
                                 $galldata  = array();
                                 $swgdata   = 'N';
                                 foreach ($galllines as $gallline) {
+                                    // no urlhome here because it cannot be replaced properly (length on serialized array field should also change
+                                    // leaving the short code there does not work in gallery plug in
                                     array_push($gallids, $gallline['upl_uid']);
                                     array_push($galltitle, self::replaceQuotes($gallline['title']));
                                     if ($gallline['title'] != '') { $swgtitle = 'Y'; }
@@ -2058,6 +2060,8 @@ THEEND;
             $gallidsdatasrc['src'] = $gallurl . $gallline['upl_destfolder'] . '/' . $gallline['upl_filename'];
             $gallidsdatasrc['link'] = $gallidsdatasrc['src'];
             // @@CHANGE Interpretation of data attribute
+            // no urlhome here because it cannot be replaced properly (length on serialized array field should also change
+            // leaving the short code there does not work in gallery plug in
             if ($gallline['data'] != '') {
                 // ennn or pnnn = entry uid or page uid
                 if (substr($gallline['data'],0,1) == 'e' && is_numeric(substr($gallline['data'],1))) {
@@ -2100,9 +2104,9 @@ THEEND;
             case 4:
                 $gallimg['data']  = trim($gallparts[3]);
             case 3:
-                $gallimg['alt']   = trim($gallparts[2]);
+                $gallimg['alt']   = htmlentities(trim($gallparts[2]), ENT_COMPAT, 'UTF-8');
             case 2:
-                $gallimg['title'] = trim($gallparts[1]);
+                $gallimg['title'] = htmlentities(trim($gallparts[1]), ENT_COMPAT, 'UTF-8');
             case 1:
                 $gallimg['image'] = trim($gallparts[0]);
                 break;
@@ -2583,19 +2587,19 @@ THEEND;
                                 self::$warncnt++;
                             } elseif ($findlinktype == 'entry' || ($findlinktype == 'entrypage' && $linkentry['uid'] != '')) {
                                 $relid = $linkentry['uid'] + self::$addtoentry;
-                                $content = substr_replace($content, '?p=' . $relid . $findadd, $posbeg+$findlen+1, strlen($findorg));
+                                $content = substr_replace($content, '[urlhome]?p=' . $relid . $findadd, $posbeg+$findlen+1, strlen($findorg));
                             } elseif ($findlinktype == 'page' || ($findlinktype == 'entrypage' && $linkpage['uid'] != '')) {
                                 $relid = $linkpage['uid'] + self::$addtopage;
-                                $content = substr_replace($content, '?page_id=' . $relid . $findadd, $posbeg+$findlen+1, strlen($findorg));
+                                $content = substr_replace($content, '[urlhome]?page_id=' . $relid . $findadd, $posbeg+$findlen+1, strlen($findorg));
                             } elseif ($findlinktype == 'tag') {
-                                $content = substr_replace($content, '?tag=' . $findlinkvalue . $findadd, $posbeg+$findlen+1, strlen($findorg));
+                                $content = substr_replace($content, '[urlhome]?tag=' . $findlinkvalue . $findadd, $posbeg+$findlen+1, strlen($findorg));
                             } elseif ($findlinktype == 'category') {
                                 $catid = self::getCatKey($findlinkvalue);
                                 if ($catid == 0) {
                                     $content = substr_replace($content, 'warning_cat_not_found_', $posbeg+$findlen+1, 0);
                                     self::$warncnt++;
                                 } else {
-                                    $content = substr_replace($content, '?cat=' . $catid . $findadd, $posbeg+$findlen+1, strlen($findorg));
+                                    $content = substr_replace($content, '[urlhome]?cat=' . $catid . $findadd, $posbeg+$findlen+1, strlen($findorg));
                                 }
                             } elseif ($findlinktype == 'archive') {
                                 $archyear = substr($findlinkvalue,0,4);
@@ -2608,7 +2612,7 @@ THEEND;
                                     if ($archtype == '-y') {
                                         $archmonth = '';
                                     }
-                                    $content = substr_replace($content, '?m=' . $archyear . $archmonth . $findadd, $posbeg+$findlen+1, strlen($findorg));
+                                    $content = substr_replace($content, '[urlhome]?m=' . $archyear . $archmonth . $findadd, $posbeg+$findlen+1, strlen($findorg));
                                 }
                             } elseif (in_array($findlinktype, $unsupported_types)) {
                                 $content = substr_replace($content, 'warning_linktype_'.$findlinktype.'_unsupported_', $posbeg+$findlen+1, 0);

@@ -65,9 +65,16 @@ Obviously all imports have to result in no errors reported. If all is well your 
 
 __[urlhome] - Your main url__
 
-All references to your main url or your aliases (set in the aliases array) in the content of the entries and/or pages will be replaced by [urlhome]. You need to replace that string by the desired new url.
+All references to your main url or your aliases (set in the aliases array) in the content of the entries and/or pages will be replaced by [urlhome]. You need to replace that string by the desired new url. Another possibility is to define a shortcode for it in functions.php of your theme:
 
-__[imgpath] - Defining the shortcode__
+    //url home
+    function myHome() {
+    	return home_url();
+    }
+    add_shortcode('urlhome', 'myHome');
+
+
+__[imgpath] - Your upload path__
 
 When exporting entries and pages their content is scanned for image references. These are replaced by the correct pointer to the exported upload. This pointer contains a shortcode [imgpath] which can be replaced manually in the xml file by the url you are importing on but can also be used as a shortcode in WP. This shortcode has to be defined in functions.php of your theme so it can be displayed correctly (the image will not be shown in the visual editor):
 

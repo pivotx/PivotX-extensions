@@ -4,7 +4,7 @@
 // - Author: PivotX team 
 // - Site: http://www.pivotx.net
 // - Description: Export content in WXR (WordPress eXtended RSS) format.
-// - Date: 2015-03-21
+// - Date: 2015-06-01
 // - Identifier: wxrexport
 
 
@@ -25,6 +25,8 @@ class pivotxWxrExport
     public static $id_max_org = 0;
     public static $id_min_new = 99999999;
     public static $id_max_new = 0;
+    public static $size_min = 99999999;
+    public static $size_max = 0;
     // Information: 
     // If you are importing into an existing WP then you probably want to add some number to the internal ids
     // so these will be recognisable in future; also ids for pages and entries can be the same in PivotX but in WP
@@ -53,6 +55,12 @@ class pivotxWxrExport
     // upload_toskipext contains extensions that should be skipped for upload export
     //
     // upload_yearalways will set an year folder based on the file date if the file is not already in a yyyy-mm folder
+    //
+    // upload_small / upload_medium / upload_big specify the file size (in bytes) to be used as a maximum for the group selected
+    //       so small will only contain uploaded files that are smaller or equal than that value
+    //       medium files will have a size bigger than the small value and smaller or equal than the specified value
+    //       big files will have a size bigger than the medium value and smaller or equal than the specified value
+    //       if a file is identified to have a size even bigger than the big value than a warning will be generated
     //
     // thumb_repl can contain the replacement string for a thumbnail file whenever it is referenced in the content
     //
@@ -92,6 +100,9 @@ class pivotxWxrExport
     public static $upload_toskip = array("index.html", ".htaccess", "readme.txt");      // specific files to skip for upload
     public static $upload_toskipext  = array("fla", "swf", "php");      // specific extensions to skip (e.g. because WP thinks they are dangerous)
     public static $upload_yearalways = true;               // generate an year folder based on file date if not already in yyyy-mm folder
+    public static $upload_small  = 0500000;          // file size <= this size
+    public static $upload_medium = 2500000;          // file size > small size and <= this size
+    public static $upload_big    = 5000000;          // file size > medium size and <= this size (warning will be generated if something bigger comes along!)
     public static $thumb_repl = '';  // replacement string for thumbnails of images (WP: Settings/Media/Thumbnail size; defaults to "-150x150")
     public static $thumb_skip = true;  // skip the export of thumbnails
     public static $dest_base = '/wordpress';      // default set for WP
@@ -145,9 +156,14 @@ class pivotxWxrExport
     <li><a href="?page=wxrexport&amp;type=chapters">
         Export Chapters as plain pages that can be used to parent the PivotX pages
     </a></li>
-    <li><a href="?page=wxrexport&amp;type=uploads">
-        Export Uploads
-    </a></li>
+    <li>Export Uploads
+    <ul>
+        <li><a href="?page=wxrexport&amp;type=uploads&amp;size=all">All</a></li>
+        <li><a href="?page=wxrexport&amp;type=uploads&amp;size=small">Small</a></li>
+        <li><a href="?page=wxrexport&amp;type=uploads&amp;size=medium">Medium</a></li>
+        <li><a href="?page=wxrexport&amp;type=uploads&amp;size=big">Big</a></li>
+    </ul>
+    </li>
     <li><a href="?page=wxrexport&amp;type=extrafields">
         Export Extrafields definitions like e.g. Bonusfields extension for use in ACF plugin for WP (galleries will be skipped)
     </a></li>
@@ -567,8 +583,10 @@ THEEND;
         $upldate = substr_replace($upldate,substr($record['destfolder'],5,2),5,2);
         $record['post_id'] = $record['uid'];
         $output .= '<!-- Item for upload will have id ' . $record['post_id'] . ' -->'."\n";
+        $output .= '<!-- Its file size is: ' . $record['filesize'] . ' bytes -->'."\n";
         $record['post_parent'] = '0';
         self::recordId(0, $record['post_id']);
+        self::recordSize($record['filesize']);
         // todo: decide whether this meta is really needed as it looks like it is generated when importing
         $attmeta = "\n" . self::outputMap(array(
                 'wp:meta_key' => '_wp_attached_file',
@@ -649,9 +667,14 @@ THEEND;
         $maxid_org = self::$id_max_org;
         $minid_new = self::$id_min_new;
         $maxid_new = self::$id_max_new;
+        $minsize = self::$size_min;
+        $maxsize = self::$size_max;
         $extraline = '';
         if ($exporttype == 'entries' || $exporttype == 'entries and their comments' || $exporttype == 'pages') {
             $extraline .= "\n" . '<!-- Replace [imgpath] and [urlhome] if needed (see docs) -->';
+        }
+        if ($exporttype == 'uploads') {
+            $extraline .= "\n" . '<!-- File sizes - minimum: ' . $minsize . ' maximum: ' . $maxsize . ' bytes -->';
         }
         // check if maximum exceeds any of the other addto... values
         if ($maxid_new > self::$addtoentry && $minid_new < self::$addtoentry) {
@@ -1129,6 +1152,29 @@ THEEND;
         foreach ($UPLFILES as $uplindex=>$uplfile) {
             $uplinfo = self::createUplinfo($uplfile, $uplindex + self::$addtoupl);
             $uplinfo['index'] = $uplindex;
+            $uplsize = isset( $_GET['size'] ) ? $_GET['size'] : 'all';
+            // check file size
+            if ($uplsize == 'small') {
+                if ($uplinfo['filesize'] > self::$upload_small) { 
+                    continue; 
+                }
+            } elseif ($uplsize == 'medium') {
+                if ($uplinfo['filesize'] > self::$upload_medium || $uplinfo['filesize'] <= self::$upload_small) { 
+                    continue; 
+                }
+            } elseif ($uplsize == 'big') {
+                if ($uplinfo['filesize'] > self::$upload_big) { 
+                    $output .= '<!-- Warning! File encountered that is larger than value set by upload_big -->'."\n";
+                    $output .= '<!-- Item: ' . $uplinfo['inputloc'] . $uplinfo['filename'] . ' -->'."\n";
+                    $output .= '<!-- Size: ' . $uplinfo['filesize'] . ' bytes -->'."\n";
+                    $output .= '<!-- New id should be: ' . $uplinfo['index'] . ' -->'."\n";
+                    self::$warncnt++;
+                    continue; 
+                }
+                if ($uplinfo['filesize'] <= self::$upload_medium) { 
+                    continue; 
+                }
+            }
             // skip specific files
             if (in_array($uplinfo['filename'], self::$upload_toskip)) { 
                 $output .= '<!-- Warning! Upload skipped! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
@@ -2149,6 +2195,12 @@ THEEND;
         return;
     }
 
+    private static function recordSize($size) {
+        if ($size < self::$size_min) { self::$size_min = $size; }
+        if ($size > self::$size_max) { self::$size_max = $size; }
+        return;
+    }
+
     private static function repairEmot() {
         // "repair" emoticons table (format should specify double quotes in stead of single) -- fixed in lib.php revision 4410)
         global $emot;
@@ -2587,19 +2639,19 @@ THEEND;
                                 self::$warncnt++;
                             } elseif ($findlinktype == 'entry' || ($findlinktype == 'entrypage' && $linkentry['uid'] != '')) {
                                 $relid = $linkentry['uid'] + self::$addtoentry;
-                                $content = substr_replace($content, '[urlhome]?p=' . $relid . $findadd, $posbeg+$findlen+1, strlen($findorg));
+                                $content = substr_replace($content, '[urlhome]/?p=' . $relid . $findadd, $posbeg+$findlen+1, strlen($findorg));
                             } elseif ($findlinktype == 'page' || ($findlinktype == 'entrypage' && $linkpage['uid'] != '')) {
                                 $relid = $linkpage['uid'] + self::$addtopage;
-                                $content = substr_replace($content, '[urlhome]?page_id=' . $relid . $findadd, $posbeg+$findlen+1, strlen($findorg));
+                                $content = substr_replace($content, '[urlhome]/?page_id=' . $relid . $findadd, $posbeg+$findlen+1, strlen($findorg));
                             } elseif ($findlinktype == 'tag') {
-                                $content = substr_replace($content, '[urlhome]?tag=' . $findlinkvalue . $findadd, $posbeg+$findlen+1, strlen($findorg));
+                                $content = substr_replace($content, '[urlhome]/?tag=' . $findlinkvalue . $findadd, $posbeg+$findlen+1, strlen($findorg));
                             } elseif ($findlinktype == 'category') {
                                 $catid = self::getCatKey($findlinkvalue);
                                 if ($catid == 0) {
                                     $content = substr_replace($content, 'warning_cat_not_found_', $posbeg+$findlen+1, 0);
                                     self::$warncnt++;
                                 } else {
-                                    $content = substr_replace($content, '[urlhome]?cat=' . $catid . $findadd, $posbeg+$findlen+1, strlen($findorg));
+                                    $content = substr_replace($content, '[urlhome]/?cat=' . $catid . $findadd, $posbeg+$findlen+1, strlen($findorg));
                                 }
                             } elseif ($findlinktype == 'archive') {
                                 $archyear = substr($findlinkvalue,0,4);
@@ -2612,7 +2664,7 @@ THEEND;
                                     if ($archtype == '-y') {
                                         $archmonth = '';
                                     }
-                                    $content = substr_replace($content, '[urlhome]?m=' . $archyear . $archmonth . $findadd, $posbeg+$findlen+1, strlen($findorg));
+                                    $content = substr_replace($content, '[urlhome]/?m=' . $archyear . $archmonth . $findadd, $posbeg+$findlen+1, strlen($findorg));
                                 }
                             } elseif (in_array($findlinktype, $unsupported_types)) {
                                 $content = substr_replace($content, 'warning_linktype_'.$findlinktype.'_unsupported_', $posbeg+$findlen+1, 0);
@@ -2742,6 +2794,7 @@ THEEND;
         $inpurl   = $PIVOTX['paths']['canonical_host'] . $PIVOTX['paths']['site_url'];
         $uplinfo  = array();
         $path_parts = pathinfo($uplfile);
+        $filesize = filesize($uplfile);
         $uplfilename = $path_parts['basename'];
         $inpfolder   = $path_parts['dirname'] . '/';
         $yearfolder  = self::$upload_dest_def;
@@ -2811,6 +2864,7 @@ THEEND;
                          'filename' => $uplfilename,
                          'filename_new' => $uplfilename_new,
                          'basefolder' => $basefolder,
+                         'filesize' => $filesize,
                          'fileext' => strtolower($path_parts['extension']),
                          'basename' => removeExtension($uplfilename),
                          'basename_new' => removeExtension($uplfilename_new),
@@ -3303,7 +3357,8 @@ function pageWxrexport()
                 $output   = pivotxWxrExport::exportVisitors();
                 break;
             case 'uploads':
-                $filename = 'uploads.xml';
+                $uplsize = isset( $_GET['size'] ) ? $_GET['size'] : 'all';
+                $filename = 'uploads_'.$uplsize.'.xml';
                 $UPLFILES = pivotxWxrExport::getUplfiles();
                 $output   = pivotxWxrExport::exportUploads();
                 break;

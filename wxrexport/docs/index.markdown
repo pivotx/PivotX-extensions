@@ -16,16 +16,26 @@ Currently the following export choices exists:
    * Export Registered Visitors
    * Export Chapters as plain pages that can be used to parent the PivotX pages
    * Export Uploads
+	   * All
+	   * Small
+	   * Medium
+	   * Big
    * Export Extrafields definitions like e.g. Bonusfields extension for use in ACF plugin for WP (galleries will be skipped)
    * Export Extrafields galleries for use in Envira (Lite) plugin for WP
  * With parsing of introduction and body content
    * Export Pages
    * Export Pages and Galleries
-   * Export Entries (with and without comments)
-   * Export Entries and Galleries (with and without comments)
+   * Export Entries
+	   * Without comments
+	   * Including comments
+   * Export Entries and Galleries
+	   * Without comments
+	   * Including comments
  * Without parsing of introduction and body content (so you can check where template tags or smarty variables are used)
    * Export Pages
-   * Export Entries (with and without comments)
+   * Export Entries
+	   * Without comments
+	   * Including comments
 
 Remarks:
 

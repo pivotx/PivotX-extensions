@@ -25,9 +25,13 @@ __Dummy user__
 
 To be able to attach some of the imports to a dummy user in stead of letting the accompanying userid be defined when importing, it is handy to define some dummy user.
 
-__Thumbnail size__
+__Thumbnail generation and initial size (use small/medium/big)__
 
-If you want to set the replacement string thumb_repl correctly first check out your setting of it by looking into Settings / Media / Thumbnail size. By default it is set to 150x150 but you can select another value. If you do then set the replacement string in the code to the same value (if you want to use it of course). 
+If there are big files in your uploads you could get into problems when importing those. Active plug-ins and themes can force generation of thumbnails right after upload stretching the total time for the upload to complete. There is a limit set in the importer of 30 seconds. So together with a slow source site the total import of the uploads could fail. So if you are in that situation it is best to switch of those plug-ins and activate a basic WP theme (which also can contain this thumbnail feature by the way -- look in its functions.php for set_post_thumbnail_size; you could switch that temporarily off). Also set your thumbnail sizes in Settings / Media all to width 0 and height 0 (remember their original values!). After the import you can set them back to their original or desired values and use Regenerate thumbnails to create them again.  
+
+When you have those problems it is probably better to not use the Upload all export but use the other 3 (small/medium/big). Their values are set in the export php. Especially look at the warnings in the "big" file because files that are even larger than the setting for big will be skipped from export.
+
+If you want to set the replacement string thumb_repl correctly first check out your setting of it by looking into Settings / Media / Thumbnail size. By default it is set to 150x150 but you can select another value. If you do then set the replacement string in the code to the same value (if you want to use it of course). Whenever there is a thumbnail reference in the PivotX content it will point to this new file name.  
 
 __Additional plugins__
 

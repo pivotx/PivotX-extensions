@@ -1197,14 +1197,16 @@ THEEND;
                 $output .= '<!-- Warning! Upload had a duplicate postname! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
                 $output .= '<!--          Other file name info: ' . $upldupl['inputfolder'] . $upldupl['filename'] . ' -->' . "\n";
                 self::$warncnt++;
+            }
+            $uplduplloc = self::searchUploadByDestination($UPLFILES, ($uplinfo['destfolder'] . '/' . $uplinfo['filename_new']), $uplinfo['index'] - 1, 0);
+            // duplicate location found?
+            if (isset($uplduplloc['index']) && $uplinfo['index'] != $uplduplloc['index']) {
                 // title has to be unique within same location
-                if ($uplinfo['destfolder'] == $upldupl['destfolder']) {
-                    $uplinfo['basename'] .= '_dupl.of_' . $upldupl['uid'];
-                    $uplinfo['basename_new'] .= '_dupl.of_' . $upldupl['uid'];
-                    $output .= '<!-- Warning! Upload had a duplicate title! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
-                    $output .= '<!--          Other file name info: ' . $upldupl['inputfolder'] . $upldupl['filename'] . ' -->' . "\n";
-                    self::$warncnt++;
-                }
+                $uplinfo['basename'] .= '_dupl.of_' . $upldupl['uid'];
+                $uplinfo['basename_new'] .= '_dupl.of_' . $upldupl['uid'];
+                $output .= '<!-- Warning! Upload had a duplicate title! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
+                $output .= '<!--          Other file name info: ' . $upldupl['inputfolder'] . $upldupl['filename'] . ' -->' . "\n";
+                self::$warncnt++;
             }
             $output .= self::outputWXR_Uploads($uplinfo);
         }
@@ -2894,6 +2896,34 @@ THEEND;
             for ($i = $start; $i >= $end; $i--) {
                 $uplsrch = self::createUplinfo($uplfiles[$i], $i + self::$addtoupl);
                 if ($postname == $uplsrch['postname']) {
+                    $uplsrch['index'] = $i;
+                    //echo ('found it!' . $uplsrch['index'] . '<br/>');
+                    return $uplsrch;
+                }
+            }
+        }
+        return $uplsrch;
+    }
+
+    private static function searchUploadByDestination($uplfiles, $destination, $start, $end) {
+        if (!isset($start)) { $start = 0; }
+        if (!isset($end)) { $end = (count($uplfiles) - 1); }
+        $uplsrch = array();
+        if ($start < $end) {
+            //echo ('search up for ' . $destination . ' start-end: ' . $start . '-' . $end . '<br/>');
+            for ($i = $start; $i <= $end; $i++) {
+                $uplsrch = self::createUplinfo($uplfiles[$i], $i + self::$addtoupl);
+                if ($destination == $uplsrch['destfolder'] . '/' . $uplsrch['filename_new']) {
+                    $uplsrch['index'] = $i;
+                    //echo ('found it!' . $uplsrch['index'] . '<br/>');
+                    return $uplsrch;
+                }
+            }
+        } else {
+            //echo ('search down for ' . $destination . ' start-end: ' . $start . '-' . $end . '<br/>');
+            for ($i = $start; $i >= $end; $i--) {
+                $uplsrch = self::createUplinfo($uplfiles[$i], $i + self::$addtoupl);
+                if ($destination == $uplsrch['destfolder'] . '/' . $uplsrch['filename_new']) {
                     $uplsrch['index'] = $i;
                     //echo ('found it!' . $uplsrch['index'] . '<br/>');
                     return $uplsrch;

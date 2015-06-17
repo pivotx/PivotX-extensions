@@ -969,6 +969,12 @@ THEEND;
                                 foreach ($galllines as $gallline) {
                                     // no urlhome here because it cannot be replaced properly (length on serialized array field should also change
                                     // leaving the short code there does not work in gallery plug in
+                                    if (in_array(strval($gallline['upl_uid']), $gallids)) {
+                                        self::$warncnt++;
+                                        $new_uid = max($gallids) + 1;
+                                        $content_encoded .= '<br/><!-- Warning! Id ' . strval($gallline['upl_uid']) . ' already used in this gallery! Changed it to '. $new_uid .' so something could be displayed after import. -->';
+                                        $gallline['upl_uid'] = $new_uid;
+                                    }
                                     array_push($gallids, $gallline['upl_uid']);
                                     array_push($galltitle, self::replaceQuotes($gallline['title']));
                                     if ($gallline['title'] != '') { $swgtitle = 'Y'; }
@@ -1413,6 +1419,7 @@ THEEND;
                     $extrafield['name'] . '" of contenttype ' . $extrafield['contenttype'] .
                     ' is of type gallery. This type cannot be imported in this way. Use export galleries instead -->';
                     self::$warncnt++;
+                    $efselcnt = $efselcnt - 1;
                     $efmetacdata = '';
                 }
                 // add warning for some non processed extrafield parts
@@ -2104,6 +2111,12 @@ THEEND;
 
         $gallurl = self::$dest_base . '/wp-content/uploads/';
         foreach ($gallery['galllines'] as $gallline) {
+            if (in_array(strval($gallline['upl_uid']), $gallids)) {
+                self::$warncnt++;
+                $new_uid = max($gallids) + 1;
+                $gallmeta .= '<!-- Warning! Id ' . strval($gallline['upl_uid']) . ' already used in this gallery! Changed it to '. $new_uid .' so something could be displayed after import. -->';
+                $gallline['upl_uid'] = $new_uid;
+            }
             array_push($gallids, strval($gallline['upl_uid']));
             $gallidsdatasrc['src'] = $gallurl . $gallline['upl_destfolder'] . '/' . $gallline['upl_filename'];
             $gallidsdatasrc['link'] = $gallidsdatasrc['src'];

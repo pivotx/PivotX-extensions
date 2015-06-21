@@ -1,10 +1,10 @@
 <?php
 // - Extension: WXR Export
-// - Version: 0.2
+// - Version: 0.2.1
 // - Author: PivotX team 
 // - Site: http://www.pivotx.net
 // - Description: Export content in WXR (WordPress eXtended RSS) format.
-// - Date: 2015-06-01
+// - Date: 2015-06-21
 // - Identifier: wxrexport
 
 
@@ -91,6 +91,12 @@ class pivotxWxrExport
     //                              mla     - media library assistant WP plugin (WPeyec)
     //                              envira  - envira lite WP plugin (WPeyec)
     //
+    // seoselect is meant to select what type of export you want for your data set through extension seo
+    //         currently supported: extrafield - as an extrafield meant for import into WP plug-in ACF
+    //                              aioseop    - meant for All in One SEO Pack WP plug-in
+    //
+    // user_locale can be used to local language
+    //
     // todo: set default value examples for importing into Bolt
     // todo: identify WP specific code by eye catcher: WPeyec
     // @@CHANGE
@@ -131,6 +137,8 @@ class pivotxWxrExport
     // selector to decide which kind of gallery code you want in your exported content (see above for detailed description)
     public static $gallselect = array('default','mla','envira');
     //public static $gallselect = array();
+    public static $seoselect = array('extrafield');
+    //public static $seoselect = array('aioseop');
     public static $user_locale = '';    // if the language you use for your users is German or Danish set this var to de_DE or da_DK to get the right translation
     
     public static function adminTab(&$form_html)
@@ -1486,6 +1494,14 @@ THEEND;
         if ($extrafieldkey == 'skip') {
             return;
         }
+        // SEO special?
+        $extra_array = array('seodescription','seotitle','seokeywords');
+        if (in_array($extrakey, $extra_array) & in_array('aioseop',self::$seoselect)) {
+            $efmeta .= self::buildSEOMeta($extrakey, $extrafield, $extrafcnt);
+            if ($extrafieldkey == 'nope') {
+                return $efmeta;
+            }
+        }
         if ($extrafieldkey == 'nope') {
             $efmeta .= '<!-- Warning! Extrafields key not found! ' . $extrakey . '. Value: ' . $extrafield . ' Extension inactive? Check code to find fields. -->' . "\n" ;
             self::$warncnt++;
@@ -1806,7 +1822,7 @@ THEEND;
         $extadd['contenttype'] = 'page';
         $extrafields = self::addToEF($extrafields, $extadd);
         // extension seo active?
-        if (in_array('seo',$activeext)) {
+        if (in_array('seo',$activeext) & in_array('extrafield',self::$seoselect)) {
             $extadd['name'] = 'SEO description';
             $extadd['fieldkey'] = 'seodescription';
             $extadd['contenttype'] = 'entry';
@@ -2188,6 +2204,30 @@ THEEND;
             array_push($galllines, $gallimg);
         }
         return $galllines;
+    }
+
+    private static function buildSEOMeta($extrakey, $extrafield, $extrafcnt) {
+        $seometa = '';
+        $seometakey = '';
+        if ($extrakey == 'seokeywords') {
+            $seometakey = '_aioseop_keywords';
+        }
+        if ($extrakey == 'seotitle') {
+            $seometakey = '_aioseop_title';
+        }
+        if ($extrakey == 'seodescription') {
+            $seometakey = '_aioseop_description';
+        }
+        if ($seometakey != '') {
+            if ($extrafcnt > 0) {
+                $seometa .= '</wp:postmeta>';
+            }
+            $seometa .= "\n" . '<wp:postmeta>' . "\n" . self::outputMap(array(
+            'wp:meta_key' => $seometakey,
+            'wp:meta_value' => array('cdata', $extrafield),
+            ));
+        }
+        return $seometa;
     }
 
     private static function replaceIt($record, $replthis, $replby) {

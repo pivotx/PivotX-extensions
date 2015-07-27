@@ -1,10 +1,10 @@
 <?php
 // - Extension: WXR Export
-// - Version: 0.2.1
+// - Version: 0.2.2
 // - Author: PivotX team 
 // - Site: http://www.pivotx.net
 // - Description: Export content in WXR (WordPress eXtended RSS) format.
-// - Date: 2015-06-21
+// - Date: 2015-07-18
 // - Identifier: wxrexport
 
 
@@ -54,6 +54,13 @@ class pivotxWxrExport
     //
     // upload_toskipext contains extensions that should be skipped for upload export
     //
+    // upload_internal_images specifies whether you want the internal images of PivotX to be included
+    //
+    // upload_extension_images specifies whether you want the images going with extensions to be included
+    //
+    // upload_user_name / upload_user_pw; if the attachments to be imported are behind a userid/pw you can specify these
+    //                                    the attachment url will constructed with them
+    //
     // upload_yearalways will set an year folder based on the file date if the file is not already in a yyyy-mm folder
     //
     // upload_small / upload_medium / upload_big specify the file size (in bytes) to be used as a maximum for the group selected
@@ -98,13 +105,16 @@ class pivotxWxrExport
     // user_locale can be used to local language
     //
     // todo: set default value examples for importing into Bolt
-    // todo: identify WP specific code by eye catcher: WPeyec
     // @@CHANGE
     public static $upload_dest_def = '2010/01';
     public static $upload_input = array('images/');  // always end the element with a "/"
     //public static $upload_input = array('images/','media/','#ROOT#/files/');  // example for 2 relative folders and 1 direct from root
     public static $upload_toskip = array("index.html", ".htaccess", "readme.txt");      // specific files to skip for upload
     public static $upload_toskipext  = array("fla", "swf", "php");      // specific extensions to skip (e.g. because WP thinks they are dangerous)
+    public static $upload_internal_images = false;       // also pick the media from internal pivotx structures
+    public static $upload_extension_images = true;      // also pick the media going with extensions
+    public static $upload_user_name = '';    // user name to use for attachment_url (WPeyec: read how to update http.php to import)
+    public static $upload_user_pw = '';         // password to use for attachment_url
     public static $upload_yearalways = true;               // generate an year folder based on file date if not already in yyyy-mm folder
     public static $upload_small  = 0500000;          // file size <= this size
     public static $upload_medium = 2500000;          // file size > small size and <= this size
@@ -941,8 +951,11 @@ THEEND;
                             'wp:meta_value' => array('cdata', $uplinfo['uid']),
                             ));
                         } else {
-                            $extrafmeta .= '<!-- Warning! extrafields image not found! ' . $extrafield . ' -->';
-                            self::$warncnt++;
+                            // value can also be space?
+                            if ($extrafield != '') {
+                                $extrafmeta .= '<!-- Warning! extrafields image not found! ' . $extrafield . ' -->';
+                                self::$warncnt++;
+                            }
                         }
                     // password protected?
                     } elseif ($extrakey == 'passwordprotect') {
@@ -952,7 +965,7 @@ THEEND;
                         $password = $extrafield;
                         continue;
                     // skip these ones   todo: find a solution for them
-                    } elseif ($extrakey == 'image_description') {
+                    } elseif ($extrakey == 'image_description' || $extrakey == 'description') {
                         //echo 'skip extrafield ' . $extrakey . '/' . $extrafield . '<br/>';
                         continue;
                     } else {
@@ -1763,10 +1776,10 @@ THEEND;
 
     public static function getExtrafields() {
         global $PIVOTX;
-        $extrafields = false;
+        $extrafields = array();   // there will always be some fields
 
         $activeext = $PIVOTX['extensions']->getActivated();
-//echo print_r($activeext) . '<br/>';
+        //echo print_r($activeext) . '<br/>';
         // extension bonusfields active?
         if (in_array('bonusfields',$activeext)) {
             //echo 'bonusfields active!' . '<br/>';
@@ -1776,16 +1789,13 @@ THEEND;
                 $config = loadSerialize($PIVOTX['paths']['db_path'].'ser_bonusfields.php', true);
             }
             if ($config == true) {
-                $extrafields = array();
                 foreach($config['definition'] as $array_field) {
                     $extrafield = new bonusfieldsDefinition();
                     $extrafield->importFromArray($array_field);
                     $extrafields[] = $extrafield;
                 }
                 $efcount = count($extrafields);
-                if ($efcount < 1) {
-                    $extrafields = $efcount;
-                } else {
+                if ($efcount > 0) {
                     $extrafields2 = array();
                     foreach($extrafields as $extrafield) {
                         $extrafields2[] = $extrafield->exportToArray();
@@ -1821,6 +1831,18 @@ THEEND;
         $extrafields = self::addToEF($extrafields, $extadd);
         $extadd['contenttype'] = 'page';
         $extrafields = self::addToEF($extrafields, $extadd);
+        // extension extra-image-field active?
+        // currently no real extrafield as it is interpreted as featured image
+        //if (in_array('extra-image-field',$activeext)) {
+        //    $extadd['name'] = 'Extra image field';
+        //    $extadd['fieldkey'] = 'image';
+        //    $extadd['contenttype'] = 'entry';
+        //    $extadd['type'] = 'image';
+        //    $extrafields = self::addToEF($extrafields, $extadd);
+        //    $extadd['contenttype'] = 'page';
+        //    $extrafields = self::addToEF($extrafields, $extadd);
+        //    $extadd['type'] = 'input_text';  /* back to default */
+        //}
         // extension seo active?
         if (in_array('seo',$activeext) & in_array('extrafield',self::$seoselect)) {
             $extadd['name'] = 'SEO description';
@@ -1891,6 +1913,11 @@ THEEND;
             $extrafields = self::addToEF($extrafields, $extadd);
             $extadd['type'] = 'input_text';  /* back to default */
         }
+        $efcount = count($extrafields);
+        if ($efcount < 1) {
+            $extrafields = false;
+        }
+//echo 'these are the extrafields:' . '<br/>';
 //echo print_r($extrafields) . '<br/>';
         return $extrafields;
     }
@@ -1930,64 +1957,68 @@ THEEND;
                 }
             }
         }
-        // add the pivotx/pics
-        $globfiles = _wxrexport_glob_recursive('../pivotx/pics/' . "*");
-        foreach ($globfiles as $globfile) {
-            if (!is_dir($globfile)) {
-                if (self::$thumb_skip && (strpos($globfile, '.thumb.') !== false)) {
-                    continue;
-                } else {
-                    $uplfiles[] = $globfile;
-                }
-            }
-        }
-        // add the pivotx/includes/emoticons/trillian
-        $globfiles = _wxrexport_glob_recursive('../pivotx/includes/emoticons/trillian/' . "*.gif");
-        foreach ($globfiles as $globfile) {
-            if (!is_dir($globfile)) {
-                if (self::$thumb_skip && (strpos($globfile, '.thumb.') !== false)) {
-                    continue;
-                } else {
-                    $uplfiles[] = $globfile;
-                }
-            }
-        }
-        $activeext = $PIVOTX['extensions']->getActivated();
-        // extension media active?
-        if (in_array('media',$activeext)) {
-            $globfiles = _wxrexport_glob_recursive('../pivotx/extensions/media/' . "*.jpg");
+        if (self::$upload_internal_images) {
+            // add the pivotx/pics
+            $globfiles = _wxrexport_glob_recursive('../pivotx/pics/' . "*");
             foreach ($globfiles as $globfile) {
                 if (!is_dir($globfile)) {
-                    $uplfiles[] = $globfile;
+                    if (self::$thumb_skip && (strpos($globfile, '.thumb.') !== false)) {
+                        continue;
+                    } else {
+                        $uplfiles[] = $globfile;
+                    }
                 }
             }
-        }
-        // extension sociable active?
-        if (in_array('sociable',$activeext)) {
-            $globfiles = _wxrexport_glob_recursive('../pivotx/extensions/sociable/images/' . "*");
+            // add the pivotx/includes/emoticons/trillian
+            $globfiles = _wxrexport_glob_recursive('../pivotx/includes/emoticons/trillian/' . "*.gif");
             foreach ($globfiles as $globfile) {
                 if (!is_dir($globfile)) {
-                    $uplfiles[] = $globfile;
+                    if (self::$thumb_skip && (strpos($globfile, '.thumb.') !== false)) {
+                        continue;
+                    } else {
+                        $uplfiles[] = $globfile;
+                    }
                 }
             }
         }
-        // extension nivoslider active?
-        if (in_array('nivoslider',$activeext)) {
-            $globfiles = _wxrexport_glob_recursive('../pivotx/extensions/nivoslider/slides/' . "*");
-            foreach ($globfiles as $globfile) {
-                if (self::$thumb_skip && (strpos($globfile, '_thumb.') !== false)) {
-                    continue;
-                } else {
-                    $uplfiles[] = $globfile;
+        if (self::$upload_extension_images) {
+            $activeext = $PIVOTX['extensions']->getActivated();
+            // extension media active?
+            if (in_array('media',$activeext)) {
+                $globfiles = _wxrexport_glob_recursive('../pivotx/extensions/media/' . "*.jpg");
+                foreach ($globfiles as $globfile) {
+                    if (!is_dir($globfile)) {
+                        $uplfiles[] = $globfile;
+                    }
                 }
             }
-        }
-        // extension slidingpanel active?
-        if (in_array('slidingpanel',$activeext)) {
-            $globfiles = _wxrexport_glob_recursive('../pivotx/extensions/slidingpanel/icons/' . "*");
-            foreach ($globfiles as $globfile) {
-                if (!is_dir($globfile)) {
-                    $uplfiles[] = $globfile;
+            // extension sociable active?
+            if (in_array('sociable',$activeext)) {
+                $globfiles = _wxrexport_glob_recursive('../pivotx/extensions/sociable/images/' . "*");
+                foreach ($globfiles as $globfile) {
+                    if (!is_dir($globfile)) {
+                        $uplfiles[] = $globfile;
+                    }
+                }
+            }
+            // extension nivoslider active?
+            if (in_array('nivoslider',$activeext)) {
+                $globfiles = _wxrexport_glob_recursive('../pivotx/extensions/nivoslider/slides/' . "*");
+                foreach ($globfiles as $globfile) {
+                    if (self::$thumb_skip && (strpos($globfile, '_thumb.') !== false)) {
+                        continue;
+                    } else {
+                        $uplfiles[] = $globfile;
+                    }
+                }
+            }
+            // extension slidingpanel active?
+            if (in_array('slidingpanel',$activeext)) {
+                $globfiles = _wxrexport_glob_recursive('../pivotx/extensions/slidingpanel/icons/' . "*");
+                foreach ($globfiles as $globfile) {
+                    if (!is_dir($globfile)) {
+                        $uplfiles[] = $globfile;
+                    }
                 }
             }
         }
@@ -2310,46 +2341,48 @@ THEEND;
         $findsrc = 'href="' . $PIVOTX['paths']['pivotx_url'] . 'includes/timwrapper.php?src=';
         $content = str_replace($findsrc, 'href="[imgpath]/', $content);
 
-        $activeext = $PIVOTX['extensions']->getActivated();
-        // extension media active?
-        if (in_array('media',$activeext)) {
-            // try to replace some of the flash vars
-            $content = self::contentReplImgUploads($content, 'file: ' , '', '[imgpath]/', 'D', $repldebug);
-            $content = self::contentReplImgUploads($content, 'soundFile: ' , '', '[imgpath]/', 'D', $repldebug);
-            $content = self::contentReplImgUploads($content, 'image: ' , '', '[imgpath]/', 'D', $repldebug);
-            $findsrc = 'image: "' . $PIVOTX['paths']['pivotx_url'] . 'extensions/media/';
-            $content = str_replace($findsrc, 'image: "[imgpath]/', $content);
-            $findsrc = 'image: "../../../' . substr($PIVOTX['paths']['upload_base_url'],strlen($PIVOTX['paths']['site_url']));
-            $content = str_replace($findsrc, 'image: "[imgpath]/', $content);
-            // Put in warning for the swf files to be replaced
-            $findsrc = $PIVOTX['paths']['pivotx_url'] . 'extensions/media/' . 'expressInstall.swf';
-            $content = str_replace($findsrc, 'Warning! Replace the flash swf files yourself! expressInstall.swf', $content, $replcnt);
-            self::$warncnt = self::$warncnt + $replcnt;
-            $findsrc = $PIVOTX['paths']['pivotx_url'] . 'extensions/media/' . 'audioplayer.swf';
-            $content = str_replace($findsrc, 'Warning! Replace the flash swf files yourself! audioplayer.swf', $content, $replcnt);
-            self::$warncnt = self::$warncnt + $replcnt;
-            $findsrc = $PIVOTX['paths']['pivotx_url'] . 'extensions/media/' . 'videoplayer.swf';
-            $content = str_replace($findsrc, 'Warning! Replace the flash swf files yourself! videoplayer.swf', $content, $replcnt);
-            self::$warncnt = self::$warncnt + $replcnt;
-        }
-        // extension sociable active?
-        if (in_array('sociable',$activeext)) {
-            $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'extensions/sociable/images/';
-            $content = str_replace($findsrc, 'src="[imgpath]/', $content);
-            $findsrc = 'src="' . '/sociable/images/';
-            $content = str_replace($findsrc, 'src="[imgpath]/', $content);
-        }
-        // extension nivoslider active?
-        if (in_array('nivoslider',$activeext)) {
-            $findsrc = "data-thumb='" . $PIVOTX['paths']['pivotx_url'] . 'extensions/nivoslider/slides/';
-            $content = str_replace($findsrc, "data-thumb='[imgpath]/", $content);
-            $findsrc = "src='" . $PIVOTX['paths']['pivotx_url'] . 'extensions/nivoslider/slides/';
-            $content = str_replace($findsrc, "src='[imgpath]/", $content);
-        }
-        // extension slidingpanel active?
-        if (in_array('slidingpanel',$activeext)) {
-            $findsrc = 'src="' . $PIVOTX['paths']['host'] . $PIVOTX['paths']['pivotx_url'] . 'extensions/slidingpanel/icons/';
-            $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+        if (self::$upload_internal_images) {
+            $activeext = $PIVOTX['extensions']->getActivated();
+            // extension media active?
+            if (in_array('media',$activeext)) {
+                // try to replace some of the flash vars
+                $content = self::contentReplImgUploads($content, 'file: ' , '', '[imgpath]/', 'D', $repldebug);
+                $content = self::contentReplImgUploads($content, 'soundFile: ' , '', '[imgpath]/', 'D', $repldebug);
+                $content = self::contentReplImgUploads($content, 'image: ' , '', '[imgpath]/', 'D', $repldebug);
+                $findsrc = 'image: "' . $PIVOTX['paths']['pivotx_url'] . 'extensions/media/';
+                $content = str_replace($findsrc, 'image: "[imgpath]/', $content);
+                $findsrc = 'image: "../../../' . substr($PIVOTX['paths']['upload_base_url'],strlen($PIVOTX['paths']['site_url']));
+                $content = str_replace($findsrc, 'image: "[imgpath]/', $content);
+                // Put in warning for the swf files to be replaced
+                $findsrc = $PIVOTX['paths']['pivotx_url'] . 'extensions/media/' . 'expressInstall.swf';
+                $content = str_replace($findsrc, 'Warning! Replace the flash swf files yourself! expressInstall.swf', $content, $replcnt);
+                self::$warncnt = self::$warncnt + $replcnt;
+                $findsrc = $PIVOTX['paths']['pivotx_url'] . 'extensions/media/' . 'audioplayer.swf';
+                $content = str_replace($findsrc, 'Warning! Replace the flash swf files yourself! audioplayer.swf', $content, $replcnt);
+                self::$warncnt = self::$warncnt + $replcnt;
+                $findsrc = $PIVOTX['paths']['pivotx_url'] . 'extensions/media/' . 'videoplayer.swf';
+                $content = str_replace($findsrc, 'Warning! Replace the flash swf files yourself! videoplayer.swf', $content, $replcnt);
+                self::$warncnt = self::$warncnt + $replcnt;
+            }
+            // extension sociable active?
+            if (in_array('sociable',$activeext)) {
+                $findsrc = 'src="' . $PIVOTX['paths']['pivotx_url'] . 'extensions/sociable/images/';
+                $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+                $findsrc = 'src="' . '/sociable/images/';
+                $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+            }
+            // extension nivoslider active?
+            if (in_array('nivoslider',$activeext)) {
+                $findsrc = "data-thumb='" . $PIVOTX['paths']['pivotx_url'] . 'extensions/nivoslider/slides/';
+                $content = str_replace($findsrc, "data-thumb='[imgpath]/", $content);
+                $findsrc = "src='" . $PIVOTX['paths']['pivotx_url'] . 'extensions/nivoslider/slides/';
+                $content = str_replace($findsrc, "src='[imgpath]/", $content);
+            }
+            // extension slidingpanel active?
+            if (in_array('slidingpanel',$activeext)) {
+                $findsrc = 'src="' . $PIVOTX['paths']['host'] . $PIVOTX['paths']['pivotx_url'] . 'extensions/slidingpanel/icons/';
+                $content = str_replace($findsrc, 'src="[imgpath]/', $content);
+            }
         }
 
         // replace the img pointer
@@ -2910,6 +2943,9 @@ THEEND;
         // put pivotx pics and emoticons in another folder
         if (substr($inpfolder,0,12) == 'pivotx/pics/' || $inpfolder == 'pivotx/includes/emoticons/trillian/') {
             $yearfolder = '2000/12';    //  @@CHANGE
+        }
+        if (self::$upload_user_name != '') {
+            $inpurl = str_replace("http://", "http://".self::$upload_user_name.":".self::$upload_user_pw."@", $inpurl);
         }
         //echo $uplcounter . '|' . $uplfilename . '|' . $yearfolder . '|' . $inpurl . '|' . $inpfolder . '|' . $basefolder . '<br/>';
         // sanitize file name with code similar to found in WP formatting / WP converts extension to lower case when uploading

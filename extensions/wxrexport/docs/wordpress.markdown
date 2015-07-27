@@ -43,6 +43,59 @@ Preparation on the PivotX side
 Before you start creating xml files in the extension itself you should set the different variables, especially the "addto" ones for the id's, to a desired value. Search file *hook_wxrexport.php* for string **@@CHANGE** to see the parts of the code where you can customize (this is not only at the beginning of the file!).  
 Then decide what you want to export. It is a good approach to first create all the xml's you want to use and check their content for the warnings generated (just search for string **warning**; at the end of each xml file generated there is also a total count of warnings issued).
 
+Preparation on the Wordpress side
+==============================
+
+__Getting files from site behind userid/password__
+
+If your original site is behind a userid/password you must specify those in the wxrexport.php. The attachment url for the media files will be constructed with these data.  
+Before you can import these media files you need to make a temporary change within WP.  
+Go to file http.php in wp-includes folder and change the code around line 46: 
+
+	function wp_safe_remote_request( $url, $args = array() ) {
+		$args['reject_unsafe_urls'] = false;  // <== original value is true
+		$http = _wp_http_get_object();
+		return $http->request( $url, $args );
+	}
+
+*Do not forget to change this back after you have finished importing!*
+
+__Users & Registered Visitors__
+
+Exporting and importing your users/visitors can be done too. If you change nothing on WP side the users will only be defined with their login names. The rest is skipped. Better is that also email and display name are defined.  
+For that an add on to the WP importer has been created: pivx\_wp\_import\_users.php  
+Put this file in the same folder as wordpress-importer is in.  
+After that you need to change the code of wordpress-importer.php around line 355: 
+
+	 } else if ( $create_users ) {
+         if ( ! empty($_POST['user_new'][$i]) ) {
+             // add extra code for PivotX user import
+             include dirname( __FILE__ ) . '/pivx_wp_import_users.php';
+             $user_id = wp_create_user( $_POST['user_new'][$i], wp_generate_password() );
+
+If you use this code the normal importer will give an error message because the user has already been defined by pivx\_wp\_import\_users.
+
+Note: imported users will always have level "Subscriber". See the export file to see what their original level was and change manually in WP accordingly.  
+
+Note 2: imported visitors (verified or not disabled) will not have their url defined. If set this url is to be found in the export file.
+
+Note 3: PivotX does not support first and last names. The export file already has the tags for that so you fill them before importing.
+
+Preparation on the export files
+===============================
+
+__[urlhome] - Your main url__
+
+All references to your main url or your aliases (set in the aliases array) in the content of the entries and/or pages will be replaced by [urlhome]. You need to replace that string by the desired new url. You can do this now or change your functions.php later (see below). 
+
+__[imgpath] - Your upload path__
+
+When exporting entries and pages their content is scanned for image references. These are replaced by the correct pointer to the exported upload. This pointer contains a shortcode [imgpath] which can be replaced manually in the xml file by the url you are importing on but can also be used as a shortcode in WP (see below).
+
+__Excluding exports from import__
+
+If you want to exclude exported parts from the import you can manually edit the generated xml files before import. Just delete the lines beginning with the `<item>` tag and the `</item>` tag and all lines in between.
+
 Executing the Export/Import
 ===========================
 
@@ -67,9 +120,9 @@ Checking the result and actions afterwards
 
 Obviously all imports have to result in no errors reported. If all is well your content is visible in the Dashboard. Getting all to display correctly on your site means updating your theme :-) .
 
-__[urlhome] - Your main url__
+__Define shortcode [urlhome] - Your main url__
 
-All references to your main url or your aliases (set in the aliases array) in the content of the entries and/or pages will be replaced by [urlhome]. You need to replace that string by the desired new url. Another possibility is to define a shortcode for it in functions.php of your theme:
+All references to your main url or your aliases (set in the aliases array) in the content of the entries and/or pages will be replaced by [urlhome]. You need to replace that string by the desired new url. You can do that by defining a shortcode for it in functions.php of your theme:
 
     //url home
     function myHome() {
@@ -78,7 +131,7 @@ All references to your main url or your aliases (set in the aliases array) in th
     add_shortcode('urlhome', 'myHome');
 
 
-__[imgpath] - Your upload path__
+__Define shortcode [imgpath] - Your upload path__
 
 When exporting entries and pages their content is scanned for image references. These are replaced by the correct pointer to the exported upload. This pointer contains a shortcode [imgpath] which can be replaced manually in the xml file by the url you are importing on but can also be used as a shortcode in WP. This shortcode has to be defined in functions.php of your theme so it can be displayed correctly (the image will not be shown in the visual editor):
 
@@ -90,35 +143,10 @@ When exporting entries and pages their content is scanned for image references. 
 
 Using this shortcode makes the content more portable to other WP's.
 
-__Excluding exports from import__
-
-If you want to exclude exported parts from the import you can manually edit the generated xml files before import. Just delete the lines beginning with the `<item>` tag and the `</item>` tag and all lines in between.
-
 __Check errors__
 
 If the import reports errors you should check these errors obviously. Also important is to check the ids of the imports just in front of the failing import. The WP importer is known to set these ids to the id of the failing import...... If these imported parts are used somewhere (i.e. connected through its id) then this connection will be wrong. 
 In the footer of the generated export the number of warnings is displayed. Check for the string "warning" in the generated file to see what the warning is about.
-
-__Users & Registered Visitors__
-
-Exporting and importing your users/visitors can be done too. If you change nothing on WP side the users will only be defined with their login names. The rest is skipped. Better is that also email and display name are defined.  
-For that an add on to the WP importer has been created: pivx\_wp\_import\_users.php  
-Put this file in the same folder as wordpress-importer is in.  
-After that you need to change the code of wordpress-importer.php around line 355: 
-
-	 } else if ( $create_users ) {
-         if ( ! empty($_POST['user_new'][$i]) ) {
-             // add extra code for PivotX user import
-             include dirname( __FILE__ ) . '/pivx_wp_import_users.php';
-             $user_id = wp_create_user( $_POST['user_new'][$i], wp_generate_password() );
-
-If you use this code the normal importer will give an error message because the user has already been defined by pivx\_wp\_import\_users.
-
-Note: imported users will always have level "Subscriber". See the export file to see what their original level was and change manually in WP accordingly.  
-
-Note 2: imported visitors (verified or not disabled) will not have their url defined. If set this url is to be found in the export file.
-
-Note 3: PivotX does not support first and last names. The export file already has the tags for that so you fill them before importing.
 
 __Introduction and Body (word count)__
 

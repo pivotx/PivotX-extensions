@@ -43,6 +43,9 @@ class pivotxWxrExport
     // addtogall generates fixed ids based on the sequence of encountered galleries;
     // this is necessary to add these galleries to an entry or page in WP Envira plugin
     // 
+    // upload_preserve_name Set it to TRUE if you want to preserve the PivotX filenames. This is useful if you just move
+    // the images from "pivotx/images" to "wp-content/uploads" (instead of exporting them).
+    //
     // upload_dest_def is the folder name to set in the export whenever an upload is encountered that is not in a yyyy-nn
     // subfolder (WP only uses that structure)
     //
@@ -106,6 +109,7 @@ class pivotxWxrExport
     //
     // todo: set default value examples for importing into Bolt
     // @@CHANGE
+    public static $upload_preserve_name = FALSE; // Change to TRUE to preserve file names.
     public static $upload_dest_def = '2010/01';
     public static $upload_input = array('images/');  // always end the element with a "/"
     //public static $upload_input = array('images/','media/','#ROOT#/files/');  // example for 2 relative folders and 1 direct from root
@@ -2383,9 +2387,13 @@ THEEND;
                 $findsrc = 'src="' . $PIVOTX['paths']['host'] . $PIVOTX['paths']['pivotx_url'] . 'extensions/slidingpanel/icons/';
                 $content = str_replace($findsrc, 'src="[imgpath]/', $content);
             }
-        }
+	}
 
-        // replace the img pointer
+        // If we want to keep the file names from PivotX, return here
+        if (self::$upload_preserve_name) {
+            return $content;
+        }
+        // Else continue to replace/modify the img pointer
         $findsrc = '[imgpath]/';
         $srcpos = 0; $srclen = strlen($findsrc);
         while ($srcpos !== false) {

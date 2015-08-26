@@ -1,10 +1,10 @@
 <?php
 // - Extension: WXR Export
-// - Version: 0.2.2
+// - Version: 0.2.3
 // - Author: PivotX team 
 // - Site: http://www.pivotx.net
 // - Description: Export content in WXR (WordPress eXtended RSS) format.
-// - Date: 2015-07-18
+// - Date: 2015-08-19
 // - Identifier: wxrexport
 
 
@@ -72,6 +72,13 @@ class pivotxWxrExport
     //       big files will have a size bigger than the medium value and smaller or equal than the specified value
     //       if a file is identified to have a size even bigger than the big value than a warning will be generated
     //
+    // upload_mediacat_pfx can be used to set the media category used
+    //       special category tags will be generated if this variable has a value
+    // mediacatselect can be used the select which type(s) of media category you want to generate
+    //       possible values:
+    //       eml = Enhanced Media Library (WP Plugin) (WPeyec)
+    //       mla = Media Library Assistant (WP Plugin) (WPeyec)
+    //
     // thumb_repl can contain the replacement string for a thumbnail file whenever it is referenced in the content
     //
     // thumb_skip can be set to true or false to skip thumbnails from being exported
@@ -123,6 +130,9 @@ class pivotxWxrExport
     public static $upload_small  = 0500000;          // file size <= this size
     public static $upload_medium = 2500000;          // file size > small size and <= this size
     public static $upload_big    = 5000000;          // file size > medium size and <= this size (warning will be generated if something bigger comes along!)
+    public static $upload_mediacat_pfx = '';     // if set then xml tags are added to uploads export for WP plug-in Enhanced Media Library (WPeyec)
+    public static $mediacatselect = array();     // select the types of mediacat categories you want
+    //public static $mediacatselect = array('eml','mla');
     public static $thumb_repl = '';  // replacement string for thumbnails of images (WP: Settings/Media/Thumbnail size; defaults to "-150x150")
     public static $thumb_skip = true;  // skip the export of thumbnails
     public static $dest_base = '/wordpress';      // default set for WP
@@ -614,6 +624,47 @@ THEEND;
                 'wp:meta_key' => '_wp_attached_file',
                 'wp:meta_value' => array('cdata', $record['destfolder'] . '/' . $record['filename_new']),
             ));
+        $mediacat_output = '';
+        // construct media category
+        if (self::$upload_mediacat_pfx != '') {
+            $mediacat  = self::$upload_mediacat_pfx;
+            $inpfolder = $record['inputfolder'];
+            // #ROOT# selected? Also keep entire folder structure in mediacat name
+            if (substr($inpfolder,0,1) == '/') {
+                $inpfolder = str_replace("/", "_", substr($inpfolder,1,-1));
+                $mediacat .= 'root_';
+            }
+            // extensions media
+            if (substr($inpfolder,0,18) == 'pivotx/extensions/') {
+                $inpfolder = substr($inpfolder,18);
+                $mediacat .= 'pivxext_';
+            }
+            // pivotx internal
+            if (substr($inpfolder,0,12) == 'pivotx/pics/') {
+                $inpfolder = '';
+                $mediacat .= 'pivxint';
+            }
+            // pivotx internal
+            if (substr($inpfolder,0,16) == 'pivotx/includes/') {
+                $inpfolder = '';
+                $mediacat .= 'pivxint';
+            }
+            // keep part before first slash
+            $slashpos = strpos($inpfolder, '/');
+            if ($slashpos !== false) {
+                $inpfolder = substr($inpfolder,0,$slashpos);
+            }
+            $mediacat .= $inpfolder;
+            // media cat for WP plugin Media Library Assistant?
+            if (in_array('mla',self::$mediacatselect)) {
+                $mediacat_output = '<category domain="attachment_category" nicename="'.htmlspecialchars($mediacat).'"><![CDATA['.$mediacat.']]></category>'."\n";
+            }
+            // media cat for WP plugin Enhanced Media Library?
+            if (in_array('eml',self::$mediacatselect)) {
+                $mediacat_output .= '<category domain="media_category" nicename="'.htmlspecialchars($mediacat).'"><![CDATA['.$mediacat.']]></category>'."\n";
+            }
+        }
+
         $output .= self::outputMap(array(
                 'title' => $record['basename'],
                 'link' => '0',
@@ -634,7 +685,8 @@ THEEND;
                 'wp:menu_order' => '0',
                 'wp:post_type' => 'attachment',
                 'wp:post_password' => '',
-                'wp:attachment_url' => array('html', $record['inputloc'] . str_replace(' ', '%20', $record['filename'])), // only spaces have to be replaced by %20
+                'wp:attachment_url' => array('html', $record['inputloc'] . str_replace(' ', '%20', htmlentities($record['filename']))), // only spaces have to be replaced by %20
+                '#1' => $mediacat_output,
                 'wp:postmeta' => array('html', $attmeta),
             ));
         $output .= '</item>'."\n";

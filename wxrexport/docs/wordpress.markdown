@@ -25,6 +25,10 @@ __Dummy user__
 
 To be able to attach some of the imports to a dummy user in stead of letting the accompanying userid be defined when importing, it is handy to define some dummy user.
 
+__Page tags__
+
+WP only uses tags for its entries. Tags set on PivotX pages are exported and are defined on import but not coupled to the page. If you want to achieve this you need to install and activate plugin Tag Pages before import. If you forget this you can use the plugin afterwards and couple the pages to the tags by just saving each page once.
+
 __Thumbnail generation and initial size (use small/medium/big)__
 
 If there are big files in your uploads you could get into problems when importing those. Active plug-ins and themes can force generation of thumbnails right after upload stretching the total time for the upload to complete. There is a limit set in the importer of 30 seconds. So together with a slow source site the total import of the uploads could fail. So if you are in that situation it is best to switch of those plug-ins and activate a basic WP theme (which also can contain this thumbnail feature by the way -- look in its functions.php for set_post_thumbnail_size; you could switch that temporarily off). Also set your thumbnail sizes in Settings / Media all to width 0 and height 0 (remember their original values!). After the import you can set them back to their original or desired values and use Regenerate thumbnails to create them again.  
@@ -35,7 +39,7 @@ If you want to set the replacement string thumb_repl correctly first check out y
 
 __Additional plugins__
 
-If you are going to export your Extrafields and their values you need to install plugin ACF (Advanced Custom Fields) and if your going to export your Galleries you can install plugin Envira (Lite) or Media Library Assistant. 
+If you are going to export your Extrafields and their values you need to install/activate plugin ACF (Advanced Custom Fields) and if your going to export your Galleries you can install/activate plugin Envira (Lite) or Media Library Assistant. 
 
 Preparation on the PivotX side
 ==============================
@@ -43,8 +47,8 @@ Preparation on the PivotX side
 Before you start creating xml files in the extension itself you should set the different variables, especially the "addto" ones for the id's, to a desired value. Search file *hook_wxrexport.php* for string **@@CHANGE** to see the parts of the code where you can customize (this is not only at the beginning of the file!).  
 Then decide what you want to export. It is a good approach to first create all the xml's you want to use and check their content for the warnings generated (just search for string **warning**; at the end of each xml file generated there is also a total count of warnings issued).
 
-Preparation on the Wordpress side
-==============================
+Changes before import on the Wordpress side
+===========================================
 
 __Getting files from site behind userid/password__
 

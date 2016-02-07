@@ -57,6 +57,11 @@ class pivotxWxrExport
     //
     // upload_toskipext contains extensions that should be skipped for upload export
     //
+    // upload_skipdupl specifies whether you want found duplicates to be skipped
+    //        values: exact - only skip same file size and same file name
+    //                always - skip all files with same file name (and extension!)
+    //        Warning! When using this feature upload links in your content will become invalid as they still point to the skipped media id!
+    //
     // upload_internal_images specifies whether you want the internal images of PivotX to be included
     //
     // upload_extension_images specifies whether you want the images going with extensions to be included
@@ -103,6 +108,9 @@ class pivotxWxrExport
     //
     // aliases is meant to specify the urls of your aliases
     //
+    // urlsok is meant to specify the urls within your own domain to are ok but outside pivotx
+    //                    for instance http://www.myurl.com/opencart
+    //
     // gallselect is meant to select what kind of gallery code you want in your content
     //         currently supported: default - standard code
     //                              mla     - media library assistant WP plugin (WPeyec)
@@ -122,6 +130,7 @@ class pivotxWxrExport
     //public static $upload_input = array('images/','media/','#ROOT#/files/');  // example for 2 relative folders and 1 direct from root
     public static $upload_toskip = array("index.html", ".htaccess", "readme.txt");      // specific files to skip for upload
     public static $upload_toskipext  = array("fla", "swf", "php");      // specific extensions to skip (e.g. because WP thinks they are dangerous)
+    public static $upload_skipdupl  = 'none';      // skip duplicate uploads  (possible value exact/always -- see Warning!)
     public static $upload_internal_images = false;       // also pick the media from internal pivotx structures
     public static $upload_extension_images = true;      // also pick the media going with extensions
     public static $upload_user_name = '';    // user name to use for attachment_url (WPeyec: read how to update http.php to import)
@@ -158,6 +167,8 @@ class pivotxWxrExport
     // array for your aliases (full urls with http) -- you can also enter your main url if your canonical-host setting is incorrect
     public static $aliases = array();
     //public static $aliases = array('http://www.myurl.com','http://www.my-url.com');
+    public static $urlsok = array();
+    //public static $aliases = array('http://www.myurl.com/othersoft');
     // selector to decide which kind of gallery code you want in your exported content (see above for detailed description)
     public static $gallselect = array('default','mla','envira');
     //public static $gallselect = array();
@@ -685,10 +696,17 @@ THEEND;
                 'wp:menu_order' => '0',
                 'wp:post_type' => 'attachment',
                 'wp:post_password' => '',
-                'wp:attachment_url' => array('html', $record['inputloc'] . str_replace(' ', '%20', htmlentities($record['filename']))), // only spaces have to be replaced by %20
+                'wp:attachment_url' => array('html', str_replace(' ', '%20', htmlentities($record['inputloc'] . $record['filename']))), // only spaces have to be replaced by %20
                 '#1' => $mediacat_output,
                 'wp:postmeta' => array('html', $attmeta),
             ));
+        // spaces in file name?
+        $tester1 = str_replace(' ', '%20', htmlentities($record['filename']));
+        $tester2 = htmlentities($record['filename']);
+        if ($tester1 != $tester2) {
+            $output .= '<!-- Warning! File name contains spaces - Read documentation! -->' . "\n";
+            $warncnt++;
+        }
         $output .= '</item>'."\n";
         self::$itemcnt++;
 
@@ -1270,28 +1288,71 @@ THEEND;
                 self::$warncnt++;
                 continue; 
             }
-
+            // skip weird files
+            if ($uplinfo['filesize'] == 0) {
+                $output .= '<!-- Warning! File skipped - 0 bytes size! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
+                self::$warncnt++;
+                continue; 
+            }
+            //echo ('checking duplicates of ' . $uplinfo['filename'] . '-' . $uplinfo['filename_new'] . '<br/>');
+            $skipthisone = 'N';
             $upldupl = self::searchUploadByPostname($UPLFILES, $uplinfo['postname'], $uplinfo['index'] - 1, 0);
             // duplicate file name found?
             if (isset($upldupl['index']) && $uplinfo['index'] != $upldupl['index']) {
-                //echo ($uplinfo['uid'] . ' duplicate of ' . $upldupl['uid'] . '<br/>');
-                // postname has to be unique always
-                $uplinfo['postname'] .= '_dupl.of_' . $upldupl['uid'];
-                $output .= '<!-- Warning! Upload had a duplicate postname! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
-                $output .= '<!--          Other file name info: ' . $upldupl['inputfolder'] . $upldupl['filename'] . ' -->' . "\n";
-                self::$warncnt++;
+                //echo ($uplinfo['uid'] . ' duplicate name of ' . $upldupl['uid'] . '<br/>');
+                if (self::$upload_skipdupl == 'exact' && $upldupl['filesize'] == $uplinfo['filesize']) {
+                    $skipthisone = 'D';
+                }
+                if (self::$upload_skipdupl == 'always') {
+                    $skipthisone = 'D';
+                }
+                if ($skipthisone == 'N') {
+                    // postname has to be unique always
+                    $uplinfo['postname'] .= '_dupl.of_' . $upldupl['uid'];
+                    $output .= '<!-- Warning! Upload found a duplicate postname! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
+                    $output .= '<!--          Other file name info: ' . $upldupl['inputfolder'] . $upldupl['filename'] . ' -->' . "\n";
+                    $output .= '<!--                     file size: ' . $upldupl['filesize'] . ' bytes -->' . "\n";
+                    $output .= '<!--          This file will be uploaded with an adapted postname: ' . $uplinfo['postname'] . ' -->' . "\n";
+                    // if the destination location is also the same the basename needs to be changed too
+                    if ($uplinfo['destfolder'] == $upldupl['destfolder']) {
+                        //echo ($uplinfo['uid'] . ' in the same location of ' . $upldupl['uid'] . '<br/>');
+                        $uplinfo['basename'] .= '_dupl.of_' . $upldupl['uid'];
+                        $uplinfo['basename_new'] .= '_dupl.of_' . $upldupl['uid'];
+                        $output .= '<!--          This file will also be uploaded with an adapted basename: ' . $uplinfo['basename'] . ' -->' . "\n";
+                    }
+                    $output .= '<!--          Links to this file in the content will still point to this file. -->' . "\n";
+                    self::$warncnt++;
+                }
             }
             $uplduplloc = self::searchUploadByDestination($UPLFILES, ($uplinfo['destfolder'] . '/' . $uplinfo['filename_new']), $uplinfo['index'] - 1, 0);
-            // duplicate location found?
+            // duplicate destination location found? 
+            // (file in pivx in different location but in when imported in the same)
             if (isset($uplduplloc['index']) && $uplinfo['index'] != $uplduplloc['index']) {
-                // title has to be unique within same location
-                $uplinfo['basename'] .= '_dupl.of_' . $upldupl['uid'];
-                $uplinfo['basename_new'] .= '_dupl.of_' . $upldupl['uid'];
-                $output .= '<!-- Warning! Upload had a duplicate title! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
-                $output .= '<!--          Other file name info: ' . $upldupl['inputfolder'] . $upldupl['filename'] . ' -->' . "\n";
-                self::$warncnt++;
+                //echo ($uplinfo['uid'] . ' duplicate location of ' . $uplduplloc['uid'] . '<br/>');
+                if (self::$upload_skipdupl == 'exact' && $uplduplloc['filesize'] == $uplinfo['filesize']) {
+                    $skipthisone = 'D';
+                }
+                if ($skipthisone == 'N') {
+                    // title has to be unique within same location
+                    $uplinfo['basename'] .= '_dupl.of_' . $uplduplloc['uid'];
+                    $uplinfo['basename_new'] .= '_dupl.of_' . $uplduplloc['uid'];
+                    $output .= '<!-- Warning! Upload found a duplicate title! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
+                    $output .= '<!--          Other file name info: ' . $uplduplloc['inputfolder'] . $uplduplloc['filename'] . ' -->' . "\n";
+                    $output .= '<!--                     file size: ' . $uplduplloc['filesize'] . ' nytes -->' . "\n";
+                    $output .= '<!--          This file will be uploaded with an adapted basename: ' . $uplinfo['basename'] . ' -->' . "\n";
+                    $output .= '<!--          Links to this file in the content will still point to this file. -->' . "\n";
+                    self::$warncnt++;
+                }
             }
-            $output .= self::outputWXR_Uploads($uplinfo);
+            if ($skipthisone != 'N') {
+                $output .= '<!-- Warning! Duplicate file has been skipped! ' . $uplinfo['inputfolder'] . $uplinfo['filename'] . ' -->' . "\n";
+                $output .= '<!--          Other file name info: ' . $upldupl['inputfolder'] . $upldupl['filename'] . ' -->' . "\n";
+                $output .= '<!--                     file size: ' . $upldupl['filesize'] . ' bytes -->' . "\n";
+                $output .= '<!--          Links to this file in the content will become invalid! -->' . "\n";
+                self::$warncnt++;
+            } else {
+                $output .= self::outputWXR_Uploads($uplinfo);
+            }
         }
 
         $output .= self::outputWXR_Footer('uploads');
@@ -2439,7 +2500,7 @@ THEEND;
                 $findsrc = 'src="' . $PIVOTX['paths']['host'] . $PIVOTX['paths']['pivotx_url'] . 'extensions/slidingpanel/icons/';
                 $content = str_replace($findsrc, 'src="[imgpath]/', $content);
             }
-	}
+        }
 
         // If we want to keep the file names from PivotX, return here
         if (self::$upload_preserve_name) {
@@ -2599,6 +2660,8 @@ THEEND;
         $posbeg = 0; $findlen = strlen($findthis);
         $loopprotect = -1;
         $myhost = $PIVOTX['paths']['canonical_host'];
+        $urlskip = 'N';
+        self::$urlskipcnt = 0;
         while ($posbeg !== false && $posbeg != $loopprotect) {
             $loopprotect = $posbeg;
             $posbeg = strpos($content, $findthis, $posbeg);
@@ -2632,9 +2695,20 @@ THEEND;
                         if (substr($findsearch,0,strlen($myhost . '/index.php')) == $myhost . '/index.php') {
                             $findsearch = substr_replace($findsearch, $myhost, 0, strlen($myhost . '/index.php'));
                         }
+                        // check whether url is in array of urlok
+                        $urlskip = 'N';
+                        foreach (self::$urlsok as $urlok) {
+                            //echo 'urlok' . $urlok . '<br/>';
+                            if (substr($findsearch,0,strlen($urlok)) == $urlok) {
+                                $urlskip = 'Y';
+                                self::$urlskipcnt++;
+                                //echo 'skipped!' . '<br/>';
+                            }
+                        }
                         // skip the ones that are (already) OK
                         if (substr($findsearch,0,9) == '[imgpath]') { // do nothing (img link)
-                        } elseif (substr($findsearch,0,1) == '#') { // do nothing (only hash found)
+                        } elseif ($urlskip == 'Y') {                  // do nothing (url ok)
+                        } elseif (substr($findsearch,0,1) == '#') {   // do nothing (only hash found)
                         //} elseif (substr($findsearch,0,3) == '../') { // do nothing (cannot be an internal link) -- apparently it can be?  todo check it
                         } elseif (substr($findsearch,0,11) == 'javascript:') { // do nothing (js call)
                         } elseif (substr($findsearch,0,1) == '"') { // do nothing (potential js var?)
@@ -2881,8 +2955,9 @@ THEEND;
             $contentorg .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to class=\"pivotx! (without the back slash) -->';
         }
         $content2 = str_replace($PIVOTX['paths']['host'], '==wxrexport==', $content, $replcnt);
-        if ($replcnt != 0) {
+        if ($replcnt != 0 && $replcnt != self::$urlskipcnt) {
             self::$warncnt++;
+            $replcnt = $replcnt - self::$urlskipcnt;
             $contentorg .= '<br/><!-- Warning! This content still contains ' . $replcnt . ' references to this host! -->';
         }
         if ($PIVOTX['paths']['host'] != $PIVOTX['paths']['canonical_host']) {

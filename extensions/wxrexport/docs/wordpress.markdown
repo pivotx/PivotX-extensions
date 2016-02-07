@@ -64,6 +64,16 @@ Go to file http.php in wp-includes folder and change the code around line 46:
 
 *Do not forget to change this back after you have finished importing!*
 
+__File names with spaces in them__
+
+Wordpress importer has a small bug in its code that results in file names with spaces in them ending up weird in WP. To be able to get them read wxrexport sets the url with %20 in the file name. For example test%20file.jpg. After the import the WP file name will be test20file.jpg. To cope with this update file wordpress-importer.php in wp-content/plugins/wordpress-importer around line 895: 
+
+		// extract the file name and extension from the url
+		//$file_name = basename( $url );
+		$file_name = str_replace( '%20', '-', basename( $url ));
+
+After this the import will create file name test-file.jpg.
+
 __Users & Registered Visitors__
 
 Exporting and importing your users/visitors can be done too. If you change nothing on WP side the users will only be defined with their login names. The rest is skipped. Better is that also email and display name are defined.  

@@ -169,7 +169,7 @@ class pivotxWxrExport
     public static $aliases = array();
     //public static $aliases = array('http://www.myurl.com','http://www.my-url.com');
     public static $urlsok = array();
-    //public static $aliases = array('http://www.myurl.com/othersoft');
+    //public static $urlsok = array('http://www.myurl.com/othersoft');
     // selector to decide which kind of gallery code you want in your exported content (see above for detailed description)
     public static $gallselect = array('default','mla','envira');
     //public static $gallselect = array();

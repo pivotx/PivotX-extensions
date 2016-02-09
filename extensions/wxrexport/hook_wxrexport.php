@@ -1,10 +1,10 @@
 <?php
 // - Extension: WXR Export
-// - Version: 0.2.3
+// - Version: 0.2.4
 // - Author: PivotX team 
 // - Site: http://www.pivotx.net
 // - Description: Export content in WXR (WordPress eXtended RSS) format.
-// - Date: 2015-08-19
+// - Date: 2016-02-07
 // - Identifier: wxrexport
 
 
@@ -21,6 +21,7 @@ class pivotxWxrExport
 {
     public static $itemcnt = 0;
     public static $warncnt = 0;
+    public static $urlskipcnt = 0;
     public static $id_min_org = 99999999;
     public static $id_max_org = 0;
     public static $id_min_new = 99999999;

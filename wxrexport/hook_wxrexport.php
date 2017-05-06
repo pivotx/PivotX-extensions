@@ -1,10 +1,10 @@
 <?php
 // - Extension: WXR Export
-// - Version: 0.2.4
+// - Version: 0.2.5
 // - Author: PivotX team 
 // - Site: http://www.pivotx.net
 // - Description: Export content in WXR (WordPress eXtended RSS) format.
-// - Date: 2016-02-07
+// - Date: 2017-05-06
 // - Identifier: wxrexport
 
 
@@ -2260,7 +2260,19 @@ THEEND;
                 'crop_height' => 300,
                 'classes' => array('wxr_galleryclass'),
                 'title' => $gallery['title'],
-                'slug' => $gallery['post_name']
+                'slug' => $gallery['post_name'],
+                'type' => 'default',
+                'gallery_theme' => 'base',
+                'justified_gallery_theme' => 'normal',
+                'image_size' => 'default',
+                'lazy_loading' => 0,
+                'lazy_loading_delay' => 500,
+                'justified_row_height' => 150,
+                'lightbox_enabled' => 1,
+                'lightbox_theme' => 'base',
+                'lightbox_image_size' => 'default',
+                'title_display' => 'float',
+                'rtl' => 0
             )
         );
         $gallidsdatasrc = array(

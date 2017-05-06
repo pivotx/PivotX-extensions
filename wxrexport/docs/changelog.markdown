@@ -1,5 +1,10 @@
 # Changelog
 
+*   ## Version 0.2.5: Minor update
+    2017-05-06
+
+    *   Updated Envira Gallery array to reflect new values
+
 *   ## Version 0.2.4
     2016-02-07
 

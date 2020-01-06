@@ -3114,12 +3114,10 @@ THEEND;
         return $uplinfo;
     }
 
-    private static function searchUploadByPostname($uplfiles, $postname, $start, $end) {
-        if (!isset($start)) { $start = 0; }
-        if (!isset($end)) { $end = (count($uplfiles) - 1); }
+    private static function searchUploadByPostname($uplfiles, $postname, $start = 0, $end = -1) {
+        if ($end < 0) { $end = (count($uplfiles) - 1); }
         $uplsrch = array();
         if ($start < $end) {
-            //echo ('search up for ' . $postname . ' start-end: ' . $start . '-' . $end . '<br/>');
             for ($i = $start; $i <= $end; $i++) {
                 $uplsrch = self::createUplinfo($uplfiles[$i], $i + self::$addtoupl);
                 if ($postname == $uplsrch['postname']) {
@@ -3129,7 +3127,6 @@ THEEND;
                 }
             }
         } else {
-            //echo ('search down for ' . $postname . ' start-end: ' . $start . '-' . $end . '<br/>');
             for ($i = $start; $i >= $end; $i--) {
                 $uplsrch = self::createUplinfo($uplfiles[$i], $i + self::$addtoupl);
                 if ($postname == $uplsrch['postname']) {
@@ -3142,12 +3139,10 @@ THEEND;
         return $uplsrch;
     }
 
-    private static function searchUploadByDestination($uplfiles, $destination, $start, $end) {
-        if (!isset($start)) { $start = 0; }
-        if (!isset($end)) { $end = (count($uplfiles) - 1); }
+    private static function searchUploadByDestination($uplfiles, $destination, $start = 0, $end = -1) {
+        if ($end < 0) { $end = (count($uplfiles) - 1); }
         $uplsrch = array();
         if ($start < $end) {
-            //echo ('search up for ' . $destination . ' start-end: ' . $start . '-' . $end . '<br/>');
             for ($i = $start; $i <= $end; $i++) {
                 $uplsrch = self::createUplinfo($uplfiles[$i], $i + self::$addtoupl);
                 if ($destination == $uplsrch['destfolder'] . '/' . $uplsrch['filename_new']) {
@@ -3170,9 +3165,8 @@ THEEND;
         return $uplsrch;
     }
 
-    private static function searchUploadByFilename($uplfiles, $filename, $start, $end) {
-        if (!isset($start)) { $start = 0; }
-        if (!isset($end)) { $end = (count($uplfiles) - 1); }
+    private static function searchUploadByFilename($uplfiles, $filename, $start = 0, $end = -1) {
+        if ($end < 0) { $end = (count($uplfiles) - 1); }
         $uplsrch = array();
         $path_parts = pathinfo($filename);
         $filesrch = $path_parts['basename'];
@@ -3181,7 +3175,6 @@ THEEND;
             $filebase = $path_parts['dirname'] . '/';
         }
         if ($start < $end) {
-            //echo ('search up for ' . $filename . ' in ' . $filebase . ' start-end: ' . $start . '-' . $end . '<br/>');
             for ($i = $start; $i <= $end; $i++) {
                 $uplsrch = self::createUplinfo($uplfiles[$i], $i + self::$addtoupl);
                 if ($filesrch == $uplsrch['filename'] && $filebase == $uplsrch['basefolder']) {
@@ -3191,7 +3184,6 @@ THEEND;
                 }
             }
         } else {
-            //echo ('search down for ' . $filename . ' in ' . $filebase . ' start-end: ' . $start . '-' . $end . '<br/>');
             for ($i = $start; $i >= $end; $i--) {
                 $uplsrch = self::createUplinfo($uplfiles[$i], $i + self::$addtoupl);
                 if ($filesrch == $uplsrch['filename'] && $filebase == $uplsrch['basefolder']) {

@@ -142,13 +142,15 @@ EOM;
     $output = str_replace("%label1%", __("Add an image"), $output);
     $output = str_replace("%label2%", __("Add"), $output);
 
-    // For ease of use, just try to replace everything in $entry here:
-    foreach($content as $key=>$value) {
+    // For ease of use, just try to replace everything in $entry - first extrafields, then the rest.
+    foreach($page['extrafields'] as $key=>$value) {
         $output = str_replace("%".$key."%", $value, $output);
     }
-    foreach($content['extrafields'] as $key=>$value) {
+    unset($page['extrafields']);
+    foreach($page as $key=>$value) {
         $output = str_replace("%".$key."%", $value, $output);
     }
+
     // Don't keep any %whatever%'s hanging around..
     $output = preg_replace("/%([a-z0-9_-]+)%/i", "", $output);
 

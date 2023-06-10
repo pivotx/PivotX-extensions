@@ -1,22 +1,18 @@
 <?php
 // - Extension: WIE
-// - Version: 0.2
+// - Version: 0.2.x
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A widget to show who's online - wieonline.nl
-// - Date: 2007-06-23
 // - Identifier: wie
 // - Required PivotX version: 2.0.2
-
 
 global $wie_config;
 
 $wie_config = array(
     'wie_userid' => ""
 );
-
-
 
 /**
  * Adds the hook for wieAdmin()
@@ -28,8 +24,6 @@ $this->addHook(
     'wie',
     array("wieAdmin", "W.I.E.")
 );
-
-
 
 /**
  * Adds the hook for the actual widget. We just use the same
@@ -43,9 +37,6 @@ $this->addHook(
     "smarty_wie"
 );
 
-
-
-
 // Register 'wie' as a smarty tag.
 $PIVOTX['template']->register_function('wie', 'smarty_wie');
 
@@ -55,7 +46,7 @@ $PIVOTX['template']->register_function('wie', 'smarty_wie');
  * @param array $params
  * @return string
  */
-function smarty_wie($params) {
+function smarty_wie($params = []) {
     global $PIVOTX;
 
     $userid = $PIVOTX['config']->get('wie_userid');
@@ -70,11 +61,7 @@ function smarty_wie($params) {
     //$output = $PIVOTX['extensions']->getLoadCode('defer_script', $url);
 
     return $output;
-
-
 }
-
-
 
 /**
  * The configuration screen for WIE
@@ -99,16 +86,11 @@ function wieAdmin(&$form_html) {
         'validation' => 'string|min=1|max=32'
     ));
 
-
-
-
     /**
      * Add the form to our (referenced) $form_html. Make sure you use the same key
      * as the first parameter to $PIVOTX['extensions']->getAdminForm
      */
     $form_html['wie'] = $PIVOTX['extensions']->getAdminFormHtml($form, $wie_config);
-
 }
-
 
 ?>

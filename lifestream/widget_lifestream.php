@@ -1,14 +1,12 @@
 <?php
 // - Extension: Lifestream Widget
-// - Version: 1.1
+// - Version: 1.1.x
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A widget to display your lifestream updates from Twitter, Jaiku and other sources.
-// - Date: 2013-06-20
 // - Identifier: lifestream
 // - Required PivotX version: 2.0.2
-
 
 global $lifestream_config;
 
@@ -63,7 +61,7 @@ $PIVOTX['template']->register_function('lifestream', 'smarty_lifestream');
  * @param array $params
  * @return string
  */
-function smarty_lifestream($params) {
+function smarty_lifestream($params = []) {
     global $lifestream_config, $PIVOTX;
 
     $style = getDefault($PIVOTX['config']->get('lifestream_style'), $lifestream_config['lifestream_style']);
@@ -71,10 +69,7 @@ function smarty_lifestream($params) {
     $output = $PIVOTX['extensions']->getLoadCode('defer_file', 'lifestream/lifestream.php', $style);
 
     return $output;
-
 }
-
-
 
 /**
  * The configuration screen for the Lifestream Widget
@@ -220,8 +215,6 @@ function lifestreamAdmin(&$form_html) {
         'validation' => 'integer|min=1|max=60'
     ));
 
-
-
     $form->add( array(
         'type' => 'select',
         'name' => 'lifestream_style',
@@ -232,7 +225,6 @@ function lifestreamAdmin(&$form_html) {
         'text' => "Select the style to use for this widget.",
 
     ));
-
 
     $form->add( array(
         'type' => 'textarea',
@@ -274,9 +266,6 @@ function lifestreamAdmin(&$form_html) {
      * as the first parameter to $PIVOTX['extensions']->getAdminForm
      */
     $form_html['lifestreamupdates'] = $PIVOTX['extensions']->getAdminFormHtml($form, $lifestream_config);
-
-
 }
-
 
 ?>

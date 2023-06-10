@@ -1,14 +1,11 @@
 <?php
 // - Extension: Del.ico.us
-// - Version: 0.3.1
+// - Version: 0.3.x
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A widget to display your Delicous.com feed.
-// - Date: 2007-12-06
 // - Identifier: delicious
-
-
 
 global $delicious_config;
 
@@ -21,8 +18,6 @@ $delicious_config = array(
     'delicious_format' => "<li><a href=\"%link%\" title=\"%description%\">%title%</a> <small>(%tags%)</small></li>",
 );
 
-
-
 /**
  * Adds the hook for deliciousAdmin()
  *
@@ -33,8 +28,6 @@ $this->addHook(
     'delicious',
     array("deliciousAdmin", "Del.icio.us")
 );
-
-
 
 /**
  * Adds the hook for the actual widget. We just use the same
@@ -48,9 +41,6 @@ $this->addHook(
     "smarty_delicious"
 );
 
-
-
-
 // Register 'delicious' as a smarty tag.
 $PIVOTX['template']->register_function('delicious', 'smarty_delicious');
 
@@ -60,7 +50,7 @@ $PIVOTX['template']->register_function('delicious', 'smarty_delicious');
  * @param array $params
  * @return string
  */
-function smarty_delicious($params) {
+function smarty_delicious($params = []) {
     global $delicious_config, $PIVOTX;
 
     $style = getDefault($PIVOTX['config']->get('delicious_style'), $delicious_config['delicious_style']);
@@ -68,10 +58,7 @@ function smarty_delicious($params) {
     $output = $PIVOTX['extensions']->getLoadCode('defer_file', 'delicious/delicious.php', $style);
 
     return $output;
-
 }
-
-
 
 /**
  * The configuration screen for Del.iciou.us
@@ -82,8 +69,6 @@ function deliciousAdmin(&$form_html) {
     global $form_titles, $delicious_config, $PIVOTX;
 
     $form = $PIVOTX['extensions']->getAdminForm('delicious');
-
-
 
     $form->add( array(
         'type' => 'text',
@@ -109,7 +94,6 @@ function deliciousAdmin(&$form_html) {
         'validation' => 'integer|min=1|max=60'
     ));
 
-
     $form->add( array(
         'type' => 'select',
         'name' => 'delicious_style',
@@ -120,8 +104,6 @@ function deliciousAdmin(&$form_html) {
         'text' => "Select the style to use for this widget.",
 
     ));
-
-
 
     $form->add( array(
         'type' => 'textarea',
@@ -145,7 +127,6 @@ function deliciousAdmin(&$form_html) {
         'validation' => 'string|minlen=2|maxlen=4000'
     ));
 
-
     $form->add( array(
         'type' => 'textarea',
         'name' => 'delicious_footer',
@@ -157,15 +138,12 @@ function deliciousAdmin(&$form_html) {
         'validation' => 'ifany|string|minlen=2|maxlen=4000'
     ));
 
-
     /**
      * Add the form to our (referenced) $form_html. Make sure you use the same key
      * as the first parameter to $PIVOTX['extensions']->getAdminForm
      */
     $form_html['delicious'] = $PIVOTX['extensions']->getAdminFormHtml($form, $delicious_config);
 
-
 }
-
 
 ?>

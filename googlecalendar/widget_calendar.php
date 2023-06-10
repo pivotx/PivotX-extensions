@@ -1,11 +1,10 @@
 <?php
 // - Extension: Google Calendar
-// - Version: 1.1
+// - Version: 1.1.x
 // - Author: PivotX Team
 // - Email: admin@pivotx.net
 // - Site: http://www.pivotx.net
 // - Description: A widget and snippet to display events from one or more Google Calendars.
-// - Date: 2013-09-13
 // - Identifier: googlecalendar
 // - Required PivotX version: 2.1.0
 
@@ -57,7 +56,7 @@ $PIVOTX['template']->register_function('googlecalendar', 'smarty_googlecalendar'
  *
  * @return string
  */
-function widget_googlecalendar($params) {
+function widget_googlecalendar() {
     global $PIVOTX, $googlecalendar_config;
 
     $key = 'googlecalendar_only_snippet';
@@ -65,7 +64,7 @@ function widget_googlecalendar($params) {
     if ($disabled) {
         return;
     } else {
-        $output = smarty_googlecalendar($params);
+        $output = smarty_googlecalendar([]);
         return $output;
     }
 

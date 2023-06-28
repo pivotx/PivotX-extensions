@@ -1,0 +1,5 @@
+%header%
+<tr class="%showif%">
+	<td colspan="3"><hr size="1" noshade="noshade"></td>
+</tr>
+%footer%

@@ -1,0 +1,10 @@
+%header%
+<tr class="%showif%">
+	<td valign="top">
+		<strong>%name%:</strong>
+	</td>
+	<td>
+		%text_value%
+	</td>
+</tr>
+%footer%

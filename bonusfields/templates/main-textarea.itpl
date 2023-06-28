@@ -1,0 +1,8 @@
+<div class="%showif%">
+    <p>
+        <strong>%name%:</strong>
+    </p>
+    <span class="description">%description%</span>
+
+    <textarea id="extrafield-%fieldkey%" name="extrafields[%fieldkey%]">%%fieldkey%%</textarea>
+</div>

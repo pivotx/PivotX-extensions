@@ -1,0 +1,27 @@
+%header%
+<tr class="%showif%">
+	<td width="136">
+		<label><strong>%name%:</strong></label>
+	</td>
+	<td colspan="2" width="500">
+        <script type="text/javascript">
+        
+        function update_checkbox_%fieldkey%()
+        {
+            var value_el = document.getElementById('hidden-value-%fieldkey%');
+            var checkbox_el = document.getElementById('checkbox-%fieldkey%');
+
+            if (checkbox_el.checked) {
+                value_el.value = checkbox_el.value;
+            }
+            else {
+                value_el.value = '';
+            }
+        }
+
+        </script>
+		<input id="hidden-value-%fieldkey%" name="extrafields[%fieldkey%]" value="%%fieldkey%%" type="hidden" />
+		<input name="checkbox-%fieldkey%" id="checkbox-%fieldkey%"%checked% type="checkbox" value="%check_value%" onchange="update_checkbox_%fieldkey%()" />
+	</td>
+</tr>
+%footer%

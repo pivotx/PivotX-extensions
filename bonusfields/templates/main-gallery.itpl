@@ -1,0 +1,91 @@
+%header%
+<tr class="%showif%">
+    <td width="136">
+        <label><strong>%name%:</strong></label>
+    </td>
+    <td colspan="2" width="510">
+
+        <table class="formclass bonusfields-gallery" id="gallery-%fieldkey%" data-fieldid="%fieldkey%" cellspacing="0" border="0">
+            <thead>
+                <tr>
+                    <th class="position">%labelpos%</th>
+                    <th class="thumbnail">%labelthumb%</th>
+                    <th class="title">%labeltitle% &amp; Alt</th>
+                    <th class="actions">&#160;</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><span class="description">%description%</span></p>
+
+        <p class="buttons">
+            <a href="#" class="gallery-add" data-fieldid="%fieldkey%"><img src="pics/lightning.png" alt="add" width="16" height="16">%labeladdimg%</a>
+        </p>
+
+        <div id="galleryedit-%fieldkey%" class="galleryedit-form">
+            <h3>%labelgall%: %labeladdimg%</h3>
+
+            <div class="form" method="get" action="">
+                <div>
+                    <input type="hidden" name="gil-position" value="" />
+                </div>
+                <table class="formclass" border="0" cellspacing="0" width="500" style="border:none">
+                <tbody>
+                    <tr class="old-file">
+                        <td><strong>%labelthumb%:</strong></td>
+                        <td><img class="file" src="" alt="" /></td>
+                    </tr>
+                    <tr class="new-file">
+                        <td><strong>%label2%:</strong></td>
+                        <td><div id="uploadcontainer-%fieldkey%">
+                            <p class="buttons">
+                                <span id="spanButtonPlaceHolder">
+                                    <a href="#click-%fieldkey%" id="uploadbutton-%fieldkey%">
+                                        <img src="pics/page_lightning.png" alt="" />%label1%
+                                        <span style="font-size: 7pt;">(2 MB Max)</span>
+                                    </a>                    
+
+                                    <a onclick="top.openFileSelector('%labelselimg%', $('#inputElement-%fieldkey%'), 'gif,jpg,png');" href="#">
+                                        <img src="pics/page.png"> %labelsel%
+                                    </a>
+                                </span>
+                            </p>
+
+                            <div id="divFileProgressContainer-%fieldkey%" style="width:330px; clear:both"></div>
+                            <input type="text" id="inputElement-%fieldkey%" name="newfile" value="" style="width: 300px" />
+                            %uploadelement%
+                        </div></td>
+                    </tr>
+                    <tr>
+                        <td><strong>%labeltitle%:</strong></td>
+                        <td><input type="text" name="gil-title" value="" style="width: 300px" /></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Alt:</strong></td>
+                        <td><input type="text" name="gil-alt" value="" style="width: 300px" /></td>
+                    </tr>
+                    <tr>
+                        <td><strong>%labeldata%:</strong></td>
+                        <td><input type="text" name="gil-data" value="" style="width: 300px" /></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <p class="buttons" style="margin: 8px 0">
+                                <a href="#" class="gallery-save"><img alt="" src="pics/tick.png"> %labelsave%</a>
+                                <a href="#" class="gallery-cancel"><img alt="" src="pics/delete.png"> %labelcancel%</a>
+                            </p>
+                        </td>
+                    </tr>
+                </tbody>
+                </table>
+            </div><!-- /form -->
+        </div>
+
+        <textarea id="extrafield-%fieldkey%" name="extrafields[%fieldkey%]" style="width:400px;display:none">%%fieldkey%%</textarea>
+    </td>
+</tr>
+%footer%

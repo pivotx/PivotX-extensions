@@ -1,0 +1,12 @@
+%header%
+<tr class="%showif%">
+	<td valign="top">
+		<strong>%name%:</strong>
+	</td>
+	<td>
+		<input name="extrafields[%fieldkey%]" type="hidden" class="date-picker-extrafield" id="extrafield-%fieldkey%" value="%%fieldkey%%" size="15" />
+		<input name="deferred[%fieldkey%]" type="text" class='date-picker date-picker-deferred input' id="deferred-%fieldkey%" value="" size="15" />
+		<input name="deferred[%fieldkey%]" type="text" class='time-picker date-picker-deferred input' id="deferred-time-%fieldkey%" value="" size="15" style="width: 60px;" />
+	</td>
+</tr>
+%footer%

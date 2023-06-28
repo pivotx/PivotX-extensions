@@ -1,0 +1,11 @@
+%header%
+<tr class="%showif%">
+	<td width="136">
+		<label><strong>%name%:</strong></label>
+	</td>
+	<td colspan="2" width="500">
+		%radio%
+        <span class="description">%description%</span>
+	</td>
+</tr>
+%footer%

@@ -1,0 +1,13 @@
+%header%
+<tr class="%showif%">
+	<td valign="top">
+		<strong>%name%:</strong>
+	</td>
+	<td class="buttons_small">
+		<input id="extrafield-%fieldkey%" name="extrafields[%fieldkey%]" value="%%fieldkey%%" type="text" style="width: 100px;"/>
+		<a style="float: none; display: inline" href="javascript:;" onclick="openUploadWindow('%label1%', $('#extrafield-%fieldkey%'), 'gif,jpg,png');">
+			<img src='pics/page_lightning.png' alt='' /> %label2%
+		</a>
+	</td>
+</tr>
+%footer%

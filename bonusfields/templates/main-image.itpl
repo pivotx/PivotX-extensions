@@ -1,0 +1,16 @@
+%header%
+<tr class="%showif%">
+	<td width="136">
+		<label><strong>%name%:</strong></label>
+	</td>
+	<td width="400">
+		<input id="extrafield-%fieldkey%" name="extrafields[%fieldkey%]" value="%%fieldkey%%" type="text" style="width: 400px;"/>
+        <span class="description">%description%</span>
+	</td>
+	<td width="100" class="buttons_small">
+		<a href="javascript:;" onclick="openUploadWindow('%label1%', $('#extrafield-%fieldkey%'), 'gif,jpg,png');">
+			<img src='pics/page_lightning.png' alt='' /> %label2%
+		</a>
+	</td>
+</tr>
+%footer%

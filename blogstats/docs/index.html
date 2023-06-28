@@ -1,0 +1,131 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<meta name="robots" content="noindex, nofollow" />
+	<script src="../../../includes/js/pivotx.js" type="text/javascript"></script>
+	<link rel="stylesheet" type="text/css" href="../../../templates_internal/assets/pivotx.css"/>
+	<!--[if lte IE 7]>
+		<link rel="stylesheet" type="text/css" href="../../../templates_internal/assets/pivotx_ie.css"/>
+	<![endif]-->
+	<title>PivotX &raquo; Blog Stats Extension Docs</title>
+</head>
+
+<body>
+	<div id="header">
+		<div id="logo">
+			<a href="../../../index.php"><img src="../../../templates_internal/assets/pivotx.png" alt="PivotX" /></a>
+		</div>
+	</div>
+	<div id="content">
+		<h1>Blog Stats Extension Docs</h1>
+		<p>Blog Stats is an extension that can be used to place entry, comment, and trackback statistics throughout your PivotX blog.  It can be used to count all entries, comments, and trackbacks across all categories in your PivotX or across selected categories (or by omitting select categories), and show the counts per category.  It is based off of the PivotLog extension Total Posts by Bram Nijmeijer (formerly known as Tenshi).</p>
+
+		<h2>Usage</h2>
+
+		<h3>Setup and Configuration</h3>
+		<p>Setup is as simple as putting a checkmark next to Blog Stats under the Extensions tab of your PivotX control panel.</p>
+
+		<h3>Snippet Syntax (since version 1.4)</h3>
+		<p>The minimal usage is:</p>
+		<pre>[[ blogstats cat_format="some html" ]]</pre>
+		or
+		<pre>[[ blogstats user_format="some html" ]]</pre>
+		<p>"Some html" would be replaced by a line of html depicting how the ouput is to be formated.  See below for more details.</p>
+		<p>The snippet takes two required parameters&#x2014;<tt>cat_format</tt> or <tt>user_format</tt>&#x2014;but only one is required at a time.  If either of these parameters is not set, there will be no output.  Both of these parameters can be used at the same time.</p>
+		<ul>
+			<li><tt>cat_format</tt> - html format for the output, counting entries and comments in categories.  The <tt>cat_format</tt> line is repeated for each category that is included (via <tt>cat_include</tt>), not ignored (via <tt>cat_ignore</tt>), or every non-hidden category (if <tt>cat_include</tt> and <tt>cat_ignore</tt> are not used).  In <tt>cat_format</tt>, the following items are parsed:
+			<ul>
+				<li><tt>%category%</tt> - display name of the category.</li>
+				<li><tt>%cat-link%</tt> - simply a link to the category (snippet does <b>not</b> build the anchor tag).</li>
+				<li><tt>%entries%</tt> - number of entries in the category.</li>
+                <li><tt>%comments%</tt> - number of comments in the category.</li>
+                <li><tt>%trackbacks%</tt> - number of trackbacks in the category.</li>
+				<li><tt>%isactive%</tt> - snippet of html code inserted for a category that is active.</li>
+			</ul>
+			<tt>cat_format</tt> is not required if <tt>totalonly</tt> is turned on.</li>
+			<li><tt>user_format</tt> - html format for the output, counting entries (and comments in those entries) per user.  The <tt>user_format</tt> line is repeated for each user that is included (via <tt>user_include</tt>), not ignored (via <tt>user_ignore</tt>), or every user (if <tt>user_include</tt> and <tt>user_ignore</tt> are not used).  In <tt>user_format</tt>, the following items are parsed:
+			<ul>
+				<li><tt>%user%</tt> - display name of the user.</li>
+				<li><tt>%user-link%</tt> - simply a link to the user's entries (snippet does <b>NOT</b> the anchor tag).</li>
+				<li><tt>%entries%</tt> - number of entries authored by user.</li>
+                <li><tt>%comments%</tt> - number of comments in the entries authored by user.</li>
+                <li><tt>%trackbacks%</tt> - number of trackbacks in the entries authored by user.</li>
+			</ul>
+			<tt>cat_format</tt> and <tt>user_format</tt> are not required if <tt>totalonly</tt> is turned on.</li>
+		</ul>
+		<p>Additionally, the snippet takes nine optional parameters:</p>
+		<ul>
+			<li><tt>prefix</tt> / <tt>postfix</tt> - html format for the first / last line(s) of the output.  The format can display the total number of entries and comments, either for the specified categories/users or across all categories/users (depending on the setting of <tt>fulltotal</tt>).  In the format, the following items are parsed:
+			<ul>
+				<li><tt>%entries%</tt> - sum total number of entries in the specified categories or across all categories (depending on the setting of <tt>fulltotal</tt>).</li>
+                <li><tt>%comments%</tt> - sum total number of comments in the specified categories or across all categories (depending on the setting of <tt>fulltotal</tt>).</li>
+                <li><tt>%trackbacks%</tt> - sum total number of trackbacks in the specified categories or across all categories (depending on the setting of <tt>fulltotal</tt>).</li>
+			</ul>
+			</li>
+			<li><tt>cat_prefix</tt> / <tt>cat_postfix</tt> - html format for the first / last line(s) of the output specifically for category output (before / after <tt>cat_format</tt>).</li>
+			<li><tt>cat_include</tt> - comma separated list of categories to be included in the stats gathering.  Use the PivotX internal category names, not the display names.  If you use <tt>cat_include</tt>, the order in which you list the categories is the order in which they will be displayed in the output, unless you specify an order using <tt>sort</tt>.</li>
+			<li><tt>cat_ignore</tt> - comma separated list of categories to be ignored in the stats gathering.  It may be easier to list a couple of categories to ignore than several categories to include.  The order of the displayed categories is determined by the parameter <tt>sort</tt> (defaulted to <i>pivotx</i>).
+			<ul>
+				<li><b>NOTE</b>: hidden categories are automatically ignored.</li>
+				<li><b>NOTE</b>: <tt>cat_ignore</tt> overrides <tt>cat_include</tt>.</li>
+			</ul>
+			</li>
+			<li><tt>user_prefix</tt> / <tt>user_postfix</tt> - html format for the first / last line(s) of the output specifically for user output (before / after <tt>user_format</tt>).</li>
+			<li><tt>user_include</tt> - comma separated list of users to be included in the stats gathering.  Use the PivotX internal user names, not the display names.  If you use <tt>user_include</tt>, the order in which you list the categories is the order in which they will be displayed in the output.</li>
+			<li><tt>user_ignore</tt> - comma separated list of users to be ignored in the stats gathering.  It may be easier to list a couple of users to ignore than several users to include.  The order of the displayed users is determined by the order in which they are encountered internally by the extension.
+			<ul>
+				<li><b>NOTE</b>: if a user has no entries in the included categories (<tt>cat_include</tt>), the non-ignored categories (<tt>cat_ignore</tt>), or the non-hidden categories, there will be no data output for them.</li>
+				<li><b>NOTE</b>: <tt>user_ignore</tt> overrides <tt>user_include</tt>.</li>
+			</ul>
+			</li>
+			<li><tt>year</tt> - limits the counting of entries and comments to the specified year (use four-digit year).</li>
+			<li><tt>month</tt> - further limits the counting of entries and comments to the specified month (use two-digit month; e.g., 02 = February).
+			<ul>
+				<li><b>NOTE</b>: the parameter <tt>year</tt> is required for use with <tt>month</tt>.</li>
+			</ul></li>
+			<li><tt>sort</tt> - order in which you would like the list of categories displayed.  These are the choices:
+			<ul>
+				<li><tt>pivotx</tt> or <tt>pivotx-rev</tt> - ordered as found in the PivotX configuration, either the same or in reverse.</li>
+				<li><tt>alpha-asc</tt> or <tt>alpha-desc</tt> - ordered alphabetically by name, either ascending or descending.</li>
+				<li><tt>entries-asc</tt> or <tt>entries-desc</tt> - ordered according to the number of entries each category has, either ascending or descending.</li>
+                <li><tt>comments-asc</tt> or <tt>comments-desc</tt> - ordered according to the number of comments each category has, either ascending or descending.</li>
+                <li><tt>tracks-asc</tt> or <tt>tracks-desc</tt> - ordered according to the number of trackbacks each category has, either ascending or descending.</li>
+			</ul>
+			The default ordering method is <i>pivotx</i>, unless the parameter <tt>include</tt> is used.  If the parameter <tt>include</tt> is used, the display order can still be specified using <tt>sort</tt>.</li>
+			<li><tt>fulltotal</tt> - determines whether or not the total number of entries and/or comments across all categories will be displayed regardless of the categories included or ignored.  The default is not to use fulltotal.  <tt>fulltotal=1</tt> turns it on.</li>
+			<li><tt>totalonly</tt> - if you only want to display the total number of entries and/or comments, turn this on.  <tt>cat_format</tt> and <tt>user_format</tt> are no longer required with this parameter on, but either <tt>prefix</tt> or <tt>postfix</tt> are.  The default is not to use totalonly.  <tt>totalonly=1</tt> turns it on.</li>
+			<li><tt>usersfirst</tt> - if you display information for both categories and users, by default, the output for categories is displayed first.  If you want the output for users displayed first, turn this parameter on.  <tt>usersfirst=1</tt> turns it on.</li>
+                        </li>
+		</ul>
+
+		<h3>Example</h3>
+		<p>Here is an example:</p>
+		<pre style="border: 1px solid #69756b; padding: 5px;">[[ blogstats
+        prefix="Total Entries: &lt;b&gt;%entries%&lt;/b&gt; || Total Comments: &lt;b&gt;%comments%&lt;/b&gt;&lt;br /&gt;"
+        cat_prefix="&lt;br /&gt;Entries and Comments Per Category:&lt;br /&gt;"
+        cat_format='Entries in &lt;a href="%cat-link%"&gt;%category%&lt;/a&gt;: &lt;b&gt;%entries%&lt;/b&gt; | Comments: &lt;b&gt;%comments%&lt;/b&gt;&lt;br /&gt;'
+	cat_include="my-ramblings, ubuntu, links"
+        user_prefix="&lt;br /&gt;Entries and Comments Per User:&lt;br /&gt;"
+        user_format='Entries by &lt;a href="%user-link%"&gt;%user%&lt;/a&gt;: &lt;b&gt;%entries%&lt;/b&gt; | Comments: &lt;b&gt;%comments%&lt;/b&gt;&lt;br /&gt;'
+        user_include="geoffrey, andrew"
+        sort="pivotx"
+        fulltotal=1
+]]</pre>
+		<p>The example's output would look something like:</p>
+		<div style="border: 1px solid #69756b; padding: 5px;">
+			Total Entries: <b>318</b> || Total Comments: <b>838</b><br />
+			<br />Entries and Comments Per Category:<br />
+			Entries in <a href="http://www.domain.com/?c=my-ramblings">My Ramblings</a>: <b>185</b> | Comments: <b>513</b><br />
+			Entries in <a href="http://www.domain.com/?c=links">Links</a>: <b>36</b> | Comments: <b>99</b><br />
+			Entries in <a href="http://www.domain.com/?c=ubuntu">Ubuntu</a>: <b>17</b> | Comments: <b>76</b><br />
+			<br />Entries and Comments Pers User:<br />
+			Entries by <a href="http://www.domain.com/?u=geoffrey&c=my-ramblings,ubuntu,links">Stingray</a>: <b>199</b> | Comments: <b>613</b><br />
+			Entries by <a href="http://www.domain.com/?u=andrew&c=my-ramblings,ubuntu,links">Kragor</a>: <b>39</b> | Comments: <b>75</b><br />
+		</div>
+		<p>For more information, update notices, changelogs, etc., visit <a href="http://pivotx.mobius-design.net/?p=blog-stats" target="_blank">http://pivotx.mobius-design.net/?p=blog-stats</a>.</p>
+
+</body>
+
+</html>

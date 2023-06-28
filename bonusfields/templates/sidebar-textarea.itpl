@@ -1,0 +1,12 @@
+%header%
+<tr class="%showif%">
+	<td valign="top" colspan="2">
+		<strong>%name%:</strong>
+	</td>
+</tr>
+<tr class="%showif%">
+	<td valign="top" colspan="2">
+		<textarea id="extrafield-%fieldkey%" name="extrafields[%fieldkey%]" style="width: 220px;">%%fieldkey%%</textarea>
+	</td>
+</tr>
+%footer%

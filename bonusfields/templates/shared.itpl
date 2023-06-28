@@ -1,0 +1,675 @@
+<style type="text/css">
+
+span.description {
+    color: #666;
+    font-size: 11px;
+}
+
+div.leftcolumn table.bonusfields-gallery {
+    border: 1px solid #ccc;
+    width: 99%;
+}
+
+table.bonusfields-gallery th {
+    padding-left: 0;
+    text-align: left;
+}
+
+table.bonusfields-gallery th.position {
+    width: 60px;
+}
+
+table.bonusfields-gallery th.thumbnail {
+    width: 60px;
+}
+
+table.bonusfields-gallery th.actions {
+    width: 40px;
+}
+
+table.bonusfields-gallery td.position {
+    padding-left: 4px;
+}
+
+table.bonusfields-gallery td.actions {
+    padding-right: 4px;
+    text-align: right;
+}
+
+table.bonusfields-gallery th.title {
+}
+
+table.bonusfields-gallery td span.alt {
+    font-size: 95%;
+    color: #222;
+}
+
+div.galleryedit-form {
+    background-color: #dee4dd;
+    padding: 2px 5px 2px 15px;
+}
+
+div.galleryedit-form  .formclass {
+    background-color: #dee4dd;
+}
+
+
+div.checkbox-multiple {
+    position: relative;
+}
+
+div.checkbox-multiple h4 {
+    position: absolute;
+    margin-top: 0;
+    top: 0;
+    left: 0;
+    right: 0px;
+    border-bottom: 1px solid #CFCFCF;
+    height: 19px;
+    padding-left: 5px;
+    background-color: #d0d0d0;
+    background: -moz-linear-gradient(-90deg, #DDDDDD, #D0D0D0) repeat scroll 0 0 transparent;
+    color: #666;
+    font-weight: normal;
+}
+
+div.checkbox-multiple {
+    border: 1px solid #bbb;
+    width: 508px;
+    min-height: 300px;
+}
+
+div.rightcolumn div.checkbox-multiple {
+    width: 250px;
+}
+
+div.checkbox-multiple div.summary,
+div.checkbox-multiple div.checkboxes {
+    position: relative;
+    overflow: hidden;
+}
+
+div.checkbox-multiple div.summary {
+    float: right;
+    margin-right: 10px;
+    width: 241px;
+    height: 300px;
+}
+
+div.checkbox-multiple div.summary div.selection,
+div.checkbox-multiple div.checkboxes div.options {
+    margin-top: 20px;
+    width: 241px;
+    height: 274px;
+    padding: 2px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+div.rightcolumn div.checkbox-multiple div.summary {
+    height: 170px;
+}
+
+div.rightcolumn div.checkbox-multiple div.summary div.selection {
+    height: 144px;
+}
+
+div.checkbox-multiple div.checkboxes {
+    floot: left;
+    border-right: 1px solid #bbb;
+    width: 241px;
+    height: 300px;
+    padding: 2px;
+}
+
+div.checkbox-multiple div.checkboxes label {
+    float: left;
+    width: 220px;
+    padding-left: 20px;
+}
+
+div.checkbox-multiple div.checkboxes label input {
+    margin-left: -20px;
+}
+
+</style>
+
+<script type="text/javascript">
+
+var imagearray = [];
+
+function updateShowIf(el,kind)
+{
+    var show_class = [];
+    var prefix = 'showif-' + kind + '-';
+
+    if ((kind == 'chapter') || (kind == 'category')) {
+        jQuery('option:selected',el).each(function(){
+            show_class[show_class.length] = prefix + jQuery(this).attr('value');
+        });
+    }
+    else if (kind == 'uid') {
+        show_class[show_class.length] = prefix + jQuery(el).val();
+    }
+    else if (kind == 'uri') {
+        show_class[show_class.length] = prefix + jQuery(el).val();
+    }
+
+    var did_find = false;
+    jQuery('.showif').each(function(){
+        var found = false;
+        for(var i=0; i < show_class.length; i++) {
+            if (jQuery(this).hasClass(show_class[i])) {
+                found = true;
+                break;
+            }
+        }
+
+        if (found) {
+            did_find = true;
+            jQuery(this).slideDown('slow');
+        }
+        else {
+            jQuery(this).slideUp('fast');
+        }
+    });
+    
+    return did_find;
+}
+
+function updateAllShowIf()
+{
+    jQuery('.showif').each(function(){
+        var classnames = (new String(jQuery(this).attr('class'))).split(' ');
+        var classname = '';
+
+        for(var cn in classnames) {
+            if (classnames[cn] != 'showif') {
+                classname = classnames[cn];
+
+                var parts = classname.split('-');
+                var show = false;
+                if (parts.length >= 3) {
+                    var kind = parts[1];
+                    var condition = parts[2];
+
+                    if (parts.length > 3) {
+                        for(var i=3; i < parts.length; i++) {
+                            condition += '-' + parts[i];
+                        }
+                    }
+
+                    switch (kind) {
+                        case 'uid':
+                            if (jQuery('input[name="code"]').val() == condition) {
+                                show = true;
+                            }
+                            break;
+
+                        case 'uri':
+                            jQuery('input').each(function(){
+                                var name = new String(jQuery(this).attr('name'));
+                                if ((name == 'uri') || (name.substring(name.length-4) == '-uri')) {
+                                    if (jQuery(this).val() == condition) {
+                                        show = true;
+                                    }
+                                }
+                            });
+                            break;
+
+                        case 'chapter':
+                            jQuery('select[name="chapter"] option:selected').each(function(){
+                                if (jQuery(this).val() == condition) {
+                                    show = true;
+                                }
+                            });
+                            break;
+
+                        case 'category':
+                            jQuery('select[name="categories[]"] option:selected').each(function(){
+                                if (jQuery(this).val() == condition) {
+                                    show = true;
+                                }
+                            });
+                            break;
+                    }
+                }
+
+                if (show) {
+                    break;
+                }
+            }
+        }
+
+        //console.log((show ? 'showing ' : 'not showing ') + kind + '/' + condition);
+
+        if (show) {
+            jQuery(this).slideDown('slow');
+        }
+        else {
+            jQuery(this).slideUp('fast');
+        }
+    });
+}
+
+function readGallery(id)
+{
+    var linesvalue = jQuery('#extrafield-'+id).val();
+    var lines = linesvalue.split("\n");
+
+    var html = '';
+    var position = 1;
+    for(var i=0; i < lines.length; i++) {
+        var line = lines[i];
+
+        if (line != '') {
+            var parts = line.split('###');
+            var file = '';
+            var title = '';
+            var alt = '';
+            var data = '';
+
+            switch (parts.length) {
+                case 4:
+                    data = parts[3];
+                case 3:
+                    alt = parts[2];
+                case 2:
+                    title = parts[1];
+                case 1:
+                    file = parts[0];
+            }
+
+            var src = '%upload_base_url%' + file;
+
+            pichtml  = '<div style="display:none" class="position position-' + position + '">';
+            pichtml += '<span class="file">' + file + '</span>';
+            pichtml += '<span class="title">' + title + '</span>';
+            pichtml += '<span class="alt">' + alt + '</span>';
+            pichtml += '<span class="data">' + data + '</span>';
+            pichtml += '</div>';
+
+            if (title == '') {
+                title = '(no title)';
+            }
+
+            html_alt = '';
+            if (alt != '') {
+                html_alt = '<br/><span class="alt">' + alt + '</span>';
+            }
+
+            html_data = '';
+            if (data != '') {
+                html_data = '<br/><span class="data">' + data + '</span>';
+            }
+
+            html += '<tr>';
+            html += '<td class="position"><img src="extensions/bonusfields/images/streepjes.gif" title="move" alt="stripes" style="vertical-align: middle; margin-right: 7px;">№&#160;<span class="v">'+position+'</span></td>';
+            html += '<td><img class="thumbnail" src="' + src + '" width="50" height="50" /></td>';
+            html += '<td><span class="title">' + title + '</span>' + html_alt + html_data + '</td>';
+            html += '<td class="actions">';
+            html += '<a href="#'+position+'" class="gallery-edit" title="%labeledit%"><img width="16" height="16" style="border: 0" src="pics/page_edit.png" alt="%labeledit%" /></a>';
+            html += '&#160;';
+            html += '<a href="#'+position+'" class="gallery-delete" title="%labeldelete%"><img width="16" height="16" style="border: 0" src="pics/page_delete.png" alt="%labeldelete%" /></a>';
+            html += pichtml;
+            html += '</td>';
+            html += '</tr>';
+
+            position++;
+        }
+    }
+
+    if (jQuery('#gallery-'+id+' tbody tr td:first-child').length > 0) {
+        jQuery('#gallery-'+id+' tbody').sortable('destroy');
+    }
+    jQuery('#gallery-'+id+' tbody').html(html);
+
+    jQuery('#gallery-'+id+' tbody').sortable({
+        handle: '.position',
+        update: function(event,ui) {
+            writeGallery(id);
+
+            var position = '1';
+            jQuery('span.v',this).each(function(){
+                if (jQuery(this).closest('tr').is(':visible')) {
+                    jQuery(this).text(position);
+                    position++;
+                }
+            });
+        }
+    });
+
+    jQuery('.bonusfields-gallery a.gallery-edit').bind('click',function(e){
+        e.preventDefault();
+
+        var fieldname = jQuery(this).closest('table').attr('id').substring(8);
+        var position = jQuery(this).attr('href').substring(1);
+
+        jQuery('#galleryedit-'+fieldname+' input[name="gil-position"]').val(position);
+        jQuery(this).closest('td').find('.position-'+position+' span').each(function(){
+            var name = jQuery(this).attr('class');
+            var value = jQuery(this).text();
+
+            if ((typeof name != 'undefined') && (name == 'file')) {
+                var src = '%upload_base_url%' + value;
+                src = '%site_url%pivotx/includes/timthumb.php?src='+escape(src)+'&amp;width=150&amp;height=150;&amp;zc=1';
+                jQuery('#galleryedit-'+fieldname+' img.file').attr('src',src);
+            }
+            else if (typeof name != 'undefined') {
+                jQuery('#galleryedit-'+fieldname+' input[name="gil-'+name+'"]').val(value);
+            }
+        });
+
+        var title = '%labeledit% %labelimage% #'+position;
+
+        showGalleryEdit(fieldname,'edit',title);
+    });
+    jQuery('.bonusfields-gallery a.gallery-delete').bind('click',function(e){
+        if (confirm('Are you sure you want to delete this one?')) {
+            var position = jQuery(this).attr('href').substring(1);
+
+            jQuery(this).closest('tr').find('span.file').text('');
+            jQuery(this).closest('tr').hide();
+
+            var id = jQuery(this).closest('.bonusfields-gallery').attr('data-fieldid');
+
+            writeGallery(id);
+
+            var position = '1';
+            jQuery('#galleryedit-'+id+' span.v').each(function(){
+                if (jQuery(this).closest('tr').is(':visible')) {
+                    jQuery(this).text(position);
+                    position++;
+                }
+            });
+        }
+    });
+}
+
+function writeGallery(id)
+{
+    var html = '';
+
+    jQuery('#gallery-'+id+' div.position').each(function(){
+        var item = {};
+        jQuery('span',this).each(function(){
+            var name = jQuery(this).attr('class');
+            var value = jQuery(this).text();
+
+            item[name] = value;
+        });
+
+        if (item.file != '') {
+            if (html != '') {
+                html += "\n";
+            }
+
+            html += item.file;
+            if ((item.title != '') || (item.alt != '') || (item.data != '')) {
+                html += '###' + item.title;
+            }
+            if ((item.alt != '') || (item.data != '')) {
+                html += '###' + item.alt;
+            }
+            if (item.data != '') {
+                html += '###' + item.data;
+            }
+        }
+    });
+
+    jQuery('#extrafield-'+id).val(html);
+}
+
+function showGalleryEdit(fieldname, action, title)
+{
+    if (action == 'edit') {
+        $('#galleryedit-'+fieldname+' tr.old-file').show();
+        $('#galleryedit-'+fieldname+' tr.new-file').hide();
+    }
+    else {
+        $('#galleryedit-'+fieldname+' tr.old-file').hide();
+        $('#galleryedit-'+fieldname+' tr.new-file').show();
+    }
+
+    imagearray = [];
+
+    /*
+    // old style dialog
+    $('#galleryedit-'+fieldname).show().dialog({
+        bgiframe: true,
+        resizable: false,
+        modal: true,
+        draggable: false,
+        width: 500,
+        height: 360,
+        title: title
+    });
+    //*/
+    $('#galleryedit-'+fieldname).show();
+
+    $('#galleryedit-'+fieldname+' a.gallery-save').unbind('click');
+    $('#galleryedit-'+fieldname+' a.gallery-save').bind('click',function(e){
+        e.preventDefault();
+
+        var item = {};
+        jQuery(this).closest('.galleryedit-form').find('input[name!=""]').each(function(){
+            var name = jQuery(this).attr('name');
+            var value = jQuery(this).val();
+
+            if ((typeof name != 'undefined') && (name.substring(0,4) == 'gil-')) {
+                name = name.substring(4);
+
+                item[name] = value;
+            }
+        });
+
+        if (action == 'edit') {
+            position = item.position;
+            jQuery('#gallery-'+fieldname+' .position-'+position+' .title').text(item.title);
+            jQuery('#gallery-'+fieldname+' .position-'+position+' .alt').text(item.alt);
+            jQuery('#gallery-'+fieldname+' .position-'+position+' .data').text(item.data);
+
+            writeGallery(fieldname);
+        }
+        else {
+            var post_html = '';
+            if ((item.title != '') || (item.alt != '') || (item.data != '')) {
+                post_html += '###' + item.title;
+            }
+            if ((item.alt != '') || (item.data != '')) {
+                post_html += '###' + item.alt;
+            }
+            if (item.data != '') {
+                post_html += '###' + item.data;
+            }
+            var html = '';
+            if (imagearray.length > 0) {
+                for(var i=0; i < imagearray.length; i++) {
+                    html += imagearray[i] + post_html + "\n";
+                }
+            }
+            else {
+                html = jQuery('#inputElement-'+fieldname).val() + post_html + "\n";
+            }
+
+            var old_html = jQuery('#extrafield-'+fieldname).val();
+            jQuery('#extrafield-'+fieldname).val(jQuery.trim(old_html)+"\n"+jQuery.trim(html));
+        }
+
+        readGallery(fieldname);
+
+        jQuery('#galleryedit-'+fieldname).hide();
+    });
+
+    $('#galleryedit-'+fieldname+' a.gallery-cancel').unbind('click');
+    $('#galleryedit-'+fieldname+' a.gallery-cancel').bind('click',function(e){
+        e.preventDefault();
+
+        jQuery('#galleryedit-'+fieldname).hide();
+    });
+}
+
+/**
+ * Ideally we should do an "uploader.refresh()" but we don't know the
+ * uploader variable name so we can't do that..
+ * Should fix PivotX for that.
+ */
+function autoHideGalleryForms()
+{
+    var forms_hidden = false;
+
+    jQuery('.galleryedit-form').each(function(){
+        if ((jQuery(this).width() > 0) && (jQuery(this).height() > 0)) {
+            jQuery(this).closest('.galleryedit-form').hide();
+            console.log('hiding galleryedit-form');
+            forms_hidden = true;
+        }
+    });
+
+    if (jQuery('.galleryedit-form').length == 0) {
+        console.log('no uploaders to hide');
+        return;
+    }
+
+    if (!forms_hidden) {
+        setTimeout('autoHideGalleryForms()',250);
+    }
+}
+
+/**
+ */
+function updateCheckboxSummary(root_el)
+{
+    var summary = [];
+
+    jQuery('input:checked', root_el).each(function(){
+        var label_el = $(this).parent();
+        var text = label_el.text();
+        var href = '#' + label_el.attr('id');
+        summary.push('<a href="' + href + '">' + text + '</a>');
+    });
+
+    var html = '';
+    html += '<ol>';
+    for(idx in summary) {
+        html += '<li>' + summary[idx] + '</li>';
+    }
+    html += '</ol>';
+
+    $(root_el).find('.summary .selection').html(html);
+    $(root_el).find('.summary h4 .count').html('(' + summary.length + ')');
+}
+
+
+jQuery(document).ready(function(){
+    jQuery('.date-picker-extrafield').each(function(){
+        var fieldkey = (new String(jQuery(this).attr('id'))).substr(11);
+
+        var act_el = jQuery('#extrafield-'+fieldkey);
+        var def_el = jQuery('#deferred-'+fieldkey);
+        var tim_el = jQuery('#deferred-time-'+fieldkey);
+
+        var act_val = new String(act_el.val());
+        var def_val = '';
+
+        if (act_val != '') {
+            def_val = act_val.substr(8,2) + '-' + act_val.substr(5,2) + '-' + act_val.substr(0,4);
+
+            if (tim_el.length > 0) {
+                tim_el.val(act_val.substr(11,5));
+            }
+        }
+
+        def_el.val(def_val);
+    });
+
+    jQuery('.date-picker-deferred').bind('change',function(e){
+        var fieldkey = (new String(jQuery(e.target).attr('id'))).substr(9);
+        if (fieldkey.substr(0,5) == 'time-') {
+            fieldkey = fieldkey.substr(5);
+        }
+
+        var act_el = jQuery('#extrafield-'+fieldkey);
+        var def_el = jQuery('#deferred-'+fieldkey);
+        var tim_el = jQuery('#deferred-time-'+fieldkey);
+
+        if (tim_el.length > 0) {
+            var tim_val = new String(tim_el.val());
+
+            tim_val = tim_val.replace(/[^0-9:-]/,'');
+            tim_val = tim_val.replace(':','-');
+
+            tim_el.val(tim_val);
+        }
+
+        var def_val = new String(def_el.val());
+        var act_val = def_val.substr(6,4) + '-' + def_val.substr(3,2) + '-' + def_val.substr(0,2);
+
+        if (tim_el.length > 0) {
+            act_val += ' ' + tim_el.val();
+        }
+
+        act_el.val(act_val);
+
+        return false;
+    });
+
+    jQuery('form .rightcolumn select').each(function(){
+        var name = new String(jQuery(this).attr('name'));
+
+        if ((name == 'categories[]') || (name == 'chapter')) {
+            jQuery(this).bind('change',function(e){
+                updateAllShowIf();
+            });
+        }
+    });
+
+    jQuery('form input').each(function(){
+        if ((name == 'code') || (name == 'uri') || (name.substring(name.length-4) == '-uri')) {
+            jQuery(this).bind('change',function(e){
+                updateAllShowIf();
+            });
+        }
+    });
+    updateAllShowIf();
+
+    jQuery('.bonusfields-gallery').each(function(){
+        readGallery(jQuery(this).attr('data-fieldid'));
+    });
+    jQuery('a.gallery-add').bind('click',function(e){
+        e.preventDefault();
+
+        var id = jQuery(this).attr('data-fieldid');
+
+        jQuery('#galleryedit-'+id+' input[name="newfile"]').val('');
+        jQuery('#galleryedit-'+id+' input[name="gil-title"]').val('');
+        jQuery('#galleryedit-'+id+' input[name="gil-alt"]').val('');
+        jQuery('#galleryedit-'+id+' input[name="gil-data"]').val('');
+
+        var title = '%labeladdimg%';
+
+        showGalleryEdit(id,'add',title);
+    });
+
+    jQuery('div.checkbox-multiple input').on('click', function(){
+        var root_el = $(this).closest('div.checkbox-multiple');
+
+        updateCheckboxSummary(root_el);
+    });
+    jQuery('div.checkbox-multiple').each(function(){
+        updateCheckboxSummary(this);
+    });
+    jQuery('div.checkbox-multiple').on('click', 'a', function(e){
+        e.preventDefault();
+
+        var root_el = jQuery(this).closest('div.checkbox-multiple');
+        var label_el = jQuery('label' + $(this).attr('href'));
+        var position = label_el.position();
+        jQuery('div.options', root_el).scrollTop(position.top);
+    });
+
+    setTimeout('autoHideGalleryForms()',250);
+});
+
+</script>
+

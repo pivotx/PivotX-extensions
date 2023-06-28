@@ -1,0 +1,12 @@
+%header%
+<tr class="%showif%">
+	<td valign="top">
+		<strong>%name%:</strong>
+	</td>
+	<td>
+		<select id="extrafield-%fieldkey%" name="extrafields[%fieldkey%]">
+			%options%
+		</select>
+	</td>
+</tr>
+%footer%

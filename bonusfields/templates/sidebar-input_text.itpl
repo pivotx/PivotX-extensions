@@ -1,0 +1,10 @@
+%header%
+<tr class="%showif%">
+	<td valign="top">
+		<strong>%name%:</strong>
+	</td>
+	<td>
+		<input name="extrafields[%fieldkey%]" id="extrafield-%fieldkey%" type="%fieldtype%" value="%%fieldkey%%" />
+	</td>
+</tr>
+%footer%

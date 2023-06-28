@@ -1,0 +1,27 @@
+%header%
+<tr class="%showif%">
+	<td width="136">
+		<label><strong>%name%:</strong></label>
+	</td>
+	<td colspan="2" width="500">
+        <div class="checkbox-multiple">
+            <h4>Multiple checkbox</h4>
+
+            <div class="summary">
+                <h4>Selection <span class="count"></span></h4>
+                <div class="selection"></div>
+            </div>
+
+            <div class="checkboxes">
+                <h4>Options</h4>
+
+                <div class="options">
+                    %checkboxes%
+                </div>
+            </div>
+
+        </div>
+        <span class="description">%description%</span>
+	</td>
+</tr>
+%footer%
